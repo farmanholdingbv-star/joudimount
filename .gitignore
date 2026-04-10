@@ -1,0 +1,7 @@
+node_modules
+dist
+.DS_Store
+.env
+apps/app/.dart_tool
+apps/app/build
+apps/api/uploads
