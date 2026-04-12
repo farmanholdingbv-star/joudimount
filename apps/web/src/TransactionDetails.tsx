@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
+import ShippingPaperModal from "./ShippingPaperModal";
 import { API_BASE, Role, Transaction } from "./types";
 
 export default function TransactionDetails({ role }: { role: Role }) {
@@ -13,6 +14,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [shippingPaperOpen, setShippingPaperOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -101,6 +103,14 @@ export default function TransactionDetails({ role }: { role: Role }) {
                   }
                 >
                   {t("details.release")}
+                </button>
+              </>
+            ) : null}
+            {transaction ? (
+              <>
+                {" | "}
+                <button type="button" className="primary-button" onClick={() => setShippingPaperOpen(true)}>
+                  {t("details.shippingPaperButton")}
                 </button>
               </>
             ) : null}
@@ -240,6 +250,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
           </div>
         </section>
       )}
+      <ShippingPaperModal open={shippingPaperOpen} transaction={transaction} onClose={() => setShippingPaperOpen(false)} />
     </main>
   );
 }

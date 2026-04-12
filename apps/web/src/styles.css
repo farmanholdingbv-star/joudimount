@@ -335,9 +335,220 @@ th {
   color: #334155;
 }
 
+.autocomplete-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.autocomplete-hint {
+  font-size: 0.82rem;
+  margin-top: 0.1rem;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  z-index: 50;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin: 0.15rem 0 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+.autocomplete-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  color: #0f172a;
+}
+
+.autocomplete-option:hover,
+.autocomplete-option.is-active {
+  background: #eff6ff;
+}
+
+.autocomplete-primary {
+  font-weight: 600;
+}
+
+.autocomplete-secondary {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.shipping-paper-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.shipping-paper-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.shipping-paper-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #dbe5ec;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+.shipping-paper-modal-actions {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e5ebf1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.shipping-paper-modal-actions h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.shipping-paper-modal-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.shipping-print-sheet {
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.shipping-print-header {
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.shipping-print-header h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.shipping-print-sub {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.shipping-print-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 1rem;
+}
+
+.shipping-print-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.88rem;
+}
+
+.shipping-print-label.full {
+  grid-column: 1 / -1;
+}
+
+.shipping-print-label span {
+  font-weight: 600;
+  color: #334155;
+}
+
+.shipping-print-input,
+.shipping-print-textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  background: #fff;
+}
+
+.shipping-print-textarea {
+  resize: vertical;
+  min-height: 4rem;
+}
+
+@media print {
+  /* Set on beforeprint while the shipping paper modal is open (see ShippingPaperModal). */
+  body.shipping-paper-printing .app-header {
+    display: none !important;
+  }
+  body.shipping-paper-printing main.container > .page-actions,
+  body.shipping-paper-printing main.container > h1,
+  body.shipping-paper-printing main.container > p,
+  body.shipping-paper-printing main.container > section.details-card {
+    display: none !important;
+  }
+
+  .shipping-paper-modal-backdrop,
+  .shipping-paper-modal-actions {
+    display: none !important;
+  }
+  .shipping-paper-modal {
+    position: static !important;
+    inset: auto !important;
+    padding: 0 !important;
+    display: block !important;
+    z-index: auto !important;
+  }
+  .shipping-paper-modal-panel {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+  }
+  .shipping-print-target {
+    position: static !important;
+  }
+  .shipping-print-input,
+  .shipping-print-textarea {
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border: 1px solid #94a3b8 !important;
+    background: #fff !important;
+  }
+}
+
 @media (max-width: 800px) {
   .form-grid,
   .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shipping-print-grid {
     grid-template-columns: 1fr;
   }
 

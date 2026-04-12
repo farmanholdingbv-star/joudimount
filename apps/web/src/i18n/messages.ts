@@ -209,7 +209,18 @@ export type MessageKey =
   | "shipping.delete"
   | "shipping.empty"
   | "shipping.active"
-  | "shipping.inactive";
+  | "shipping.inactive"
+  | "form.typeToSearch"
+  | "details.shippingPaperButton"
+  | "details.shippingPaperTitle"
+  | "details.shippingPaperHeading"
+  | "details.shippingPaperSub"
+  | "details.shippingPaperTo"
+  | "details.shippingPaperFrom"
+  | "details.shippingPaperNotes"
+  | "details.shippingPaperNotesPlaceholder"
+  | "details.shippingPaperPrint"
+  | "details.shippingPaperClose";
 
 const messages: Record<Locale, Record<MessageKey, string>> = {
   ar: {
@@ -420,6 +431,17 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "shipping.empty": "لا توجد شركات شحن.",
     "shipping.active": "نشط",
     "shipping.inactive": "غير نشط",
+    "form.typeToSearch": "اكتب للبحث والاختيار من القائمة",
+    "details.shippingPaperButton": "نموذج ورقي لشركة الشحن",
+    "details.shippingPaperTitle": "نموذج إرسال لشركة الشحن",
+    "details.shippingPaperHeading": "مستند شحن / إخلاء",
+    "details.shippingPaperSub": "يُعدّل أدناه ثم يُطبع لإرساله مع الشحنة.",
+    "details.shippingPaperTo": "إلى (شركة الشحن)",
+    "details.shippingPaperFrom": "العميل",
+    "details.shippingPaperNotes": "ملاحظات إضافية",
+    "details.shippingPaperNotesPlaceholder": "تعليمات التسليم، عنوان، هاتف، إلخ.",
+    "details.shippingPaperPrint": "طباعة",
+    "details.shippingPaperClose": "إغلاق",
   },
   en: {
     "lang.label": "Language",
@@ -630,6 +652,17 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "shipping.empty": "No shipping companies found.",
     "shipping.active": "active",
     "shipping.inactive": "inactive",
+    "form.typeToSearch": "Type to search and pick from the list",
+    "details.shippingPaperButton": "Shipping company paper form",
+    "details.shippingPaperTitle": "Paper form for shipping company",
+    "details.shippingPaperHeading": "Shipping / release cover sheet",
+    "details.shippingPaperSub": "Edit the fields below, then print to send with the cargo.",
+    "details.shippingPaperTo": "To (shipping company)",
+    "details.shippingPaperFrom": "Client",
+    "details.shippingPaperNotes": "Additional notes",
+    "details.shippingPaperNotesPlaceholder": "Delivery instructions, address, phone, etc.",
+    "details.shippingPaperPrint": "Print",
+    "details.shippingPaperClose": "Close",
   },
 };
 

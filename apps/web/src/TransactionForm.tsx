@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import AutocompleteField, { type AutocompleteSuggestion } from "./AutocompleteField";
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
-import { DocumentAttachment, GoodsQuality, GoodsUnit, Role, Transaction } from "./types";
+import { Client, DocumentAttachment, GoodsQuality, GoodsUnit, Role, ShippingCompany, Transaction } from "./types";
 
 const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
   { value: "new", labelKey: "form.quality.new" },
@@ -109,6 +110,8 @@ export default function TransactionForm({ role }: { role: Role }) {
   const [loading, setLoading] = useState(false);
   const [retainedDocs, setRetainedDocs] = useState<DocumentAttachment[]>([]);
   const [newDocFiles, setNewDocFiles] = useState<File[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [shippingCompanies, setShippingCompanies] = useState<ShippingCompany[]>([]);
 
   if (role === "accountant") {
     return (
@@ -121,6 +124,17 @@ export default function TransactionForm({ role }: { role: Role }) {
       </main>
     );
   }
+
+  useEffect(() => {
+    apiFetch("/api/clients")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: Client[]) => setClients(Array.isArray(data) ? data : []))
+      .catch(() => setClients([]));
+    apiFetch("/api/shipping-companies")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: ShippingCompany[]) => setShippingCompanies(Array.isArray(data) ? data : []))
+      .catch(() => setShippingCompanies([]));
+  }, []);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -164,6 +178,41 @@ export default function TransactionForm({ role }: { role: Role }) {
     if (!Number.isFinite(inv) || !Number.isFinite(rate) || rate <= 0) return null;
     return inv / rate;
   }, [form.invoiceValue, form.invoiceToWeightRateAedPerKg]);
+
+  const clientSuggestions: AutocompleteSuggestion[] = useMemo(() => {
+    const q = form.clientName.trim().toLowerCase();
+    if (q.length < 1) return [];
+    return clients
+      .filter((c) => {
+        const name = c.companyName.toLowerCase();
+        const trn = c.trn.toLowerCase();
+        const imm = (c.immigrationCode ?? "").toLowerCase();
+        return name.includes(q) || trn.includes(q) || imm.includes(q);
+      })
+      .slice(0, 12)
+      .map((c) => ({
+        key: c.id,
+        primary: c.companyName,
+        secondary: [c.immigrationCode, c.trn].filter(Boolean).join(" · ") || undefined,
+      }));
+  }, [clients, form.clientName]);
+
+  const shippingSuggestions: AutocompleteSuggestion[] = useMemo(() => {
+    const q = form.shippingCompanyName.trim().toLowerCase();
+    if (q.length < 1) return [];
+    return shippingCompanies
+      .filter((s) => {
+        const name = s.companyName.toLowerCase();
+        const code = s.code.toLowerCase();
+        return name.includes(q) || code.includes(q);
+      })
+      .slice(0, 12)
+      .map((s) => ({
+        key: s.id,
+        primary: s.companyName,
+        secondary: s.code,
+      }));
+  }, [shippingCompanies, form.shippingCompanyName]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -239,49 +288,30 @@ export default function TransactionForm({ role }: { role: Role }) {
       <h1>{isEdit ? t("form.editTitle") : t("form.newTitle")}</h1>
       {error ? <p className="error">{error}</p> : null}
       <form className="details-card form-grid" noValidate onSubmit={onSubmit}>
-        <div className="full-row doc-upload-block doc-upload-prominent">
-          <h2 className="doc-upload-heading">{t("form.documentPhotosSection")}</h2>
-          <p className="muted">{t("form.documentPhotosHelp")}</p>
-          {isEdit && retainedDocs.length > 0 ? (
-            <ul className="retained-docs">
-              {retainedDocs.map((d) => (
-                <li key={d.path}>
-                  <span>{d.originalName}</span>
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path))}
-                  >
-                    {t("form.removeAttachment")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            multiple
-            onChange={(e) => setNewDocFiles(Array.from(e.target.files ?? []))}
-          />
-          {newDocFiles.length > 0 ? (
-            <p className="muted">
-              {newDocFiles.length} {t("form.filesSelected")}
-            </p>
-          ) : null}
-        </div>
-        <label>
-          {t("form.clientName")}
-          <input value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required />
-        </label>
-        <label>
-          {t("form.shippingCompanyName")}
-          <input
-            value={form.shippingCompanyName}
-            onChange={(e) => setForm({ ...form, shippingCompanyName: e.target.value })}
-            required
-          />
-        </label>
+        <AutocompleteField
+          label={t("form.clientName")}
+          value={form.clientName}
+          onChange={(clientName) => setForm({ ...form, clientName })}
+          onSelectSuggestion={(key) => {
+            const c = clients.find((x) => x.id === key);
+            if (c) setForm((f) => ({ ...f, clientName: c.companyName }));
+          }}
+          suggestions={clientSuggestions}
+          required
+          hint={t("form.typeToSearch")}
+        />
+        <AutocompleteField
+          label={t("form.shippingCompanyName")}
+          value={form.shippingCompanyName}
+          onChange={(shippingCompanyName) => setForm({ ...form, shippingCompanyName })}
+          onSelectSuggestion={(key) => {
+            const s = shippingCompanies.find((x) => x.id === key);
+            if (s) setForm((f) => ({ ...f, shippingCompanyName: s.companyName, shippingCompanyId: s.id }));
+          }}
+          suggestions={shippingSuggestions}
+          required
+          hint={t("form.typeToSearch")}
+        />
         <label>
           {t("form.shippingCompanyId")}
           <input value={form.shippingCompanyId ?? ""} onChange={(e) => setForm({ ...form, shippingCompanyId: e.target.value })} />
@@ -435,6 +465,37 @@ export default function TransactionForm({ role }: { role: Role }) {
             required
           />
         </label>
+        <div className="full-row doc-upload-block doc-upload-prominent">
+          <h2 className="doc-upload-heading">{t("form.documentPhotosSection")}</h2>
+          <p className="muted">{t("form.documentPhotosHelp")}</p>
+          {isEdit && retainedDocs.length > 0 ? (
+            <ul className="retained-docs">
+              {retainedDocs.map((d) => (
+                <li key={d.path}>
+                  <span>{d.originalName}</span>
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path))}
+                  >
+                    {t("form.removeAttachment")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            multiple
+            onChange={(e) => setNewDocFiles(Array.from(e.target.files ?? []))}
+          />
+          {newDocFiles.length > 0 ? (
+            <p className="muted">
+              {newDocFiles.length} {t("form.filesSelected")}
+            </p>
+          ) : null}
+        </div>
         <button className="primary-button" type="submit" disabled={loading}>
           {loading ? t("form.saving") : t("form.save")}
         </button>
