@@ -247,4 +247,172 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get txUnitSet => 'طقم';
+
+  @override
+  String get employees => 'الموظفون';
+
+  @override
+  String get employeesTitle => 'قسم الموظفين';
+
+  @override
+  String get employeeName => 'الاسم';
+
+  @override
+  String get employeeEmail => 'البريد الإلكتروني';
+
+  @override
+  String get employeePassword => 'كلمة المرور';
+
+  @override
+  String get employeeRole => 'الدور';
+
+  @override
+  String get managerOnlyEmployees => 'المدير فقط يمكنه إضافة الموظفين وتعديلهم وحذفهم.';
+
+  @override
+  String get addEmployee => 'إضافة موظف';
+
+  @override
+  String get passwordHintEdit => 'اتركه فارغًا للإبقاء على كلمة المرور الحالية';
+
+  @override
+  String get cancelEdit => 'إلغاء التعديل';
+
+  @override
+  String get goTracker => 'الذهاب إلى المتتبع';
+
+  @override
+  String get roleFromAccount => 'يُحدَّد الدور من حساب تسجيل الدخول.';
+
+  @override
+  String get currentRole => 'الدور الحالي';
+
+  @override
+  String get editTransaction => 'تعديل المعاملة';
+
+  @override
+  String get documentStatus => 'حالة المستند';
+
+  @override
+  String get paymentStatus => 'حالة الدفع';
+
+  @override
+  String get document => 'المستند';
+
+  @override
+  String get payment => 'الدفع';
+
+  @override
+  String get releaseCode => 'رمز الإفراج';
+
+  @override
+  String get notIssued => 'لم يُصدر';
+
+  @override
+  String get risk => 'المخاطر';
+
+  @override
+  String get goods => 'البضائع';
+
+  @override
+  String get origin => 'المنشأ';
+
+  @override
+  String get deleteTransaction => 'حذف المعاملة';
+
+  @override
+  String get confirmDeleteTransaction => 'حذف هذه المعاملة؟';
+
+  @override
+  String get shippingPaper => 'نموذج ورقي لشركة الشحن';
+
+  @override
+  String get shippingPaperHeading => 'مستند شحن / إخلاء';
+
+  @override
+  String get shippingPaperSub => 'عدّل أدناه ثم اطبع أو شارك.';
+
+  @override
+  String get printAction => 'طباعة / PDF';
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get typeToSearch => 'اكتب للبحث والاختيار من القائمة';
+
+  @override
+  String get documentPhotosSection => 'مرفقات المستندات';
+
+  @override
+  String get removeAttachment => 'إزالة';
+
+  @override
+  String get toShippingCompany => 'إلى (شركة الشحن)';
+
+  @override
+  String get fromClient => 'العميل';
+
+  @override
+  String get additionalNotes => 'ملاحظات إضافية';
+
+  @override
+  String get airwayBillShort => 'بوليصة الشحن';
+
+  @override
+  String get valueAed => 'القيمة (درهم)';
+
+  @override
+  String get weightKg => 'الوزن (كجم)';
+
+  @override
+  String get quantity => 'الكمية';
+
+  @override
+  String get clientStatus => 'حالة العميل';
+
+  @override
+  String get statusActive => 'نشط';
+
+  @override
+  String get statusSuspended => 'موقوف';
+
+  @override
+  String get shippingStatus => 'حالة الشركة';
+
+  @override
+  String get statusInactive => 'غير نشط';
+
+  @override
+  String get originalBl => 'استلام البوليصة الأصلية';
+
+  @override
+  String get txDocumentStatusCopy => 'copy_received';
+
+  @override
+  String get txDocumentStatusOriginal => 'original_received';
+
+  @override
+  String get txDocumentStatusTelex => 'telex_release';
+
+  @override
+  String get txPaymentPending => 'pending';
+
+  @override
+  String get txPaymentPaid => 'paid';
+
+  @override
+  String get roleManager => 'مدير';
+
+  @override
+  String get roleEmployee => 'موظف';
+
+  @override
+  String get roleAccountant => 'محاسب';
+
+  @override
+  String get optionalSelect => '— اختر —';
+
+  @override
+  String get accountantNoTransactionForm => 'دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا.';
 }

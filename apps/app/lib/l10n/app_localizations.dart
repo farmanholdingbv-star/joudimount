@@ -574,6 +574,342 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'set'**
   String get txUnitSet;
+
+  /// No description provided for @employees.
+  ///
+  /// In en, this message translates to:
+  /// **'Employees'**
+  String get employees;
+
+  /// No description provided for @employeesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee section'**
+  String get employeesTitle;
+
+  /// No description provided for @employeeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get employeeName;
+
+  /// No description provided for @employeeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get employeeEmail;
+
+  /// No description provided for @employeePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get employeePassword;
+
+  /// No description provided for @employeeRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get employeeRole;
+
+  /// No description provided for @managerOnlyEmployees.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the manager can add, edit, or delete employees.'**
+  String get managerOnlyEmployees;
+
+  /// No description provided for @addEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'Add employee'**
+  String get addEmployee;
+
+  /// No description provided for @passwordHintEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to keep current password'**
+  String get passwordHintEdit;
+
+  /// No description provided for @cancelEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel edit'**
+  String get cancelEdit;
+
+  /// No description provided for @goTracker.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to tracker'**
+  String get goTracker;
+
+  /// No description provided for @roleFromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Your role is determined by your login account.'**
+  String get roleFromAccount;
+
+  /// No description provided for @currentRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Current role'**
+  String get currentRole;
+
+  /// No description provided for @editTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get editTransaction;
+
+  /// No description provided for @documentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Document status'**
+  String get documentStatus;
+
+  /// No description provided for @paymentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment status'**
+  String get paymentStatus;
+
+  /// No description provided for @document.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get document;
+
+  /// No description provided for @payment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get payment;
+
+  /// No description provided for @releaseCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Release code'**
+  String get releaseCode;
+
+  /// No description provided for @notIssued.
+  ///
+  /// In en, this message translates to:
+  /// **'Not issued'**
+  String get notIssued;
+
+  /// No description provided for @risk.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk'**
+  String get risk;
+
+  /// No description provided for @goods.
+  ///
+  /// In en, this message translates to:
+  /// **'Goods'**
+  String get goods;
+
+  /// No description provided for @origin.
+  ///
+  /// In en, this message translates to:
+  /// **'Origin'**
+  String get origin;
+
+  /// No description provided for @deleteTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete transaction'**
+  String get deleteTransaction;
+
+  /// No description provided for @confirmDeleteTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transaction?'**
+  String get confirmDeleteTransaction;
+
+  /// No description provided for @shippingPaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping paper form'**
+  String get shippingPaper;
+
+  /// No description provided for @shippingPaperHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping / release cover sheet'**
+  String get shippingPaperHeading;
+
+  /// No description provided for @shippingPaperSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit below, then print or share.'**
+  String get shippingPaperSub;
+
+  /// No description provided for @printAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Print / PDF'**
+  String get printAction;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @typeToSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search and pick from the list'**
+  String get typeToSearch;
+
+  /// No description provided for @documentPhotosSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Document attachments'**
+  String get documentPhotosSection;
+
+  /// No description provided for @removeAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeAttachment;
+
+  /// No description provided for @toShippingCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'To (shipping company)'**
+  String get toShippingCompany;
+
+  /// No description provided for @fromClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get fromClient;
+
+  /// No description provided for @additionalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional notes'**
+  String get additionalNotes;
+
+  /// No description provided for @airwayBillShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Airway bill'**
+  String get airwayBillShort;
+
+  /// No description provided for @valueAed.
+  ///
+  /// In en, this message translates to:
+  /// **'Value (AED)'**
+  String get valueAed;
+
+  /// No description provided for @weightKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight (kg)'**
+  String get weightKg;
+
+  /// No description provided for @quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantity;
+
+  /// No description provided for @clientStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Client status'**
+  String get clientStatus;
+
+  /// No description provided for @statusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'active'**
+  String get statusActive;
+
+  /// No description provided for @statusSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'suspended'**
+  String get statusSuspended;
+
+  /// No description provided for @shippingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Company status'**
+  String get shippingStatus;
+
+  /// No description provided for @statusInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'inactive'**
+  String get statusInactive;
+
+  /// No description provided for @originalBl.
+  ///
+  /// In en, this message translates to:
+  /// **'Original BL received'**
+  String get originalBl;
+
+  /// No description provided for @txDocumentStatusCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'copy_received'**
+  String get txDocumentStatusCopy;
+
+  /// No description provided for @txDocumentStatusOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'original_received'**
+  String get txDocumentStatusOriginal;
+
+  /// No description provided for @txDocumentStatusTelex.
+  ///
+  /// In en, this message translates to:
+  /// **'telex_release'**
+  String get txDocumentStatusTelex;
+
+  /// No description provided for @txPaymentPending.
+  ///
+  /// In en, this message translates to:
+  /// **'pending'**
+  String get txPaymentPending;
+
+  /// No description provided for @txPaymentPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'paid'**
+  String get txPaymentPaid;
+
+  /// No description provided for @roleManager.
+  ///
+  /// In en, this message translates to:
+  /// **'manager'**
+  String get roleManager;
+
+  /// No description provided for @roleEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'employee'**
+  String get roleEmployee;
+
+  /// No description provided for @roleAccountant.
+  ///
+  /// In en, this message translates to:
+  /// **'accountant'**
+  String get roleAccountant;
+
+  /// No description provided for @optionalSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'— select —'**
+  String get optionalSelect;
+
+  /// No description provided for @accountantNoTransactionForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Accountant role cannot create or edit transactions in this form.'**
+  String get accountantNoTransactionForm;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

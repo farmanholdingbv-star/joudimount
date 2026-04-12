@@ -1,11 +1,13 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'api.dart';
+import 'employees.dart';
 import 'l10n/app_localizations.dart';
+import 'transactions_list.dart';
 
 void main() {
   runApp(const TrackerMobileApp());
@@ -24,70 +26,6 @@ class Lang {
     locale.value = value == 'en' ? 'en' : 'ar';
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('locale', locale.value);
-  }
-}
-
-class Api {
-  static const String baseUrl = 'http://localhost:4000';
-
-  static Future<Map<String, String>> _authHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    final headers = <String, String>{'Content-Type': 'application/json'};
-    if (token != null && token.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-    return headers;
-  }
-
-  static Future<dynamic> get(String path) async {
-    final headers = await _authHeaders();
-    final res = await http.get(Uri.parse('$baseUrl$path'), headers: headers);
-    return _handle(res);
-  }
-
-  static Future<dynamic> post(String path, Map<String, dynamic> body) async {
-    final headers = await _authHeaders();
-    final res = await http.post(Uri.parse('$baseUrl$path'), headers: headers, body: jsonEncode(body));
-    return _handle(res);
-  }
-
-  /// Multipart POST for transactions with [documentPhotos] files (field name matches API).
-  static Future<dynamic> postMultipart(String path, Map<String, String> fields, List<PlatformFile> files) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    final uri = Uri.parse('$baseUrl$path');
-    final req = http.MultipartRequest('POST', uri);
-    if (token != null && token.isNotEmpty) {
-      req.headers['Authorization'] = 'Bearer $token';
-    }
-    fields.forEach((k, v) => req.fields[k] = v);
-    for (final pf in files) {
-      if (pf.path != null) {
-        req.files.add(await http.MultipartFile.fromPath('documentPhotos', pf.path!));
-      }
-    }
-    final streamed = await req.send();
-    final res = await http.Response.fromStream(streamed);
-    return _handle(res);
-  }
-
-  static Future<dynamic> put(String path, Map<String, dynamic> body) async {
-    final headers = await _authHeaders();
-    final res = await http.put(Uri.parse('$baseUrl$path'), headers: headers, body: jsonEncode(body));
-    return _handle(res);
-  }
-
-  static Future<dynamic> delete(String path) async {
-    final headers = await _authHeaders();
-    final res = await http.delete(Uri.parse('$baseUrl$path'), headers: headers);
-    return _handle(res);
-  }
-
-  static dynamic _handle(http.Response res) {
-    final body = res.body.isEmpty ? null : jsonDecode(res.body);
-    if (res.statusCode >= 200 && res.statusCode < 300) return body;
-    throw Exception((body is Map && body['error'] != null) ? body['error'] : 'Request failed');
   }
 }
 
@@ -256,6 +194,9 @@ class _HomePageState extends State<HomePage> {
   int _index = 0;
 
   Future<void> _logout() async {
+    try {
+      await Api.post('/api/auth/logout', {});
+    } catch (_) {}
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('user');
@@ -270,6 +211,7 @@ class _HomePageState extends State<HomePage> {
       TransactionsTab(role: role),
       ClientsTab(role: role),
       ShippingTab(role: role),
+      EmployeesTab(role: role),
       ProfileTab(user: widget.user, onLogout: _logout),
     ];
 
@@ -306,393 +248,10 @@ class _HomePageState extends State<HomePage> {
           NavigationDestination(icon: const Icon(Icons.receipt_long), label: l10n.transactions),
           NavigationDestination(icon: const Icon(Icons.groups), label: l10n.clients),
           NavigationDestination(icon: const Icon(Icons.local_shipping), label: l10n.shipping),
+          NavigationDestination(icon: const Icon(Icons.badge_outlined), label: l10n.employees),
           NavigationDestination(icon: const Icon(Icons.person), label: l10n.profile),
         ],
       ),
-    );
-  }
-}
-
-class TransactionsTab extends StatefulWidget {
-  final String role;
-  const TransactionsTab({super.key, required this.role});
-
-  @override
-  State<TransactionsTab> createState() => _TransactionsTabState();
-}
-
-class _TransactionsTabState extends State<TransactionsTab> {
-  List<Map<String, dynamic>> _items = [];
-  bool _loading = true;
-  String _error = '';
-  String _query = '';
-  String _status = 'all';
-  String _channel = 'all';
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = '';
-    });
-    try {
-      final data = await Api.get('/api/transactions') as List<dynamic>;
-      _items = data.cast<Map<String, dynamic>>();
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final statuses = _items.map((e) => (e['clearanceStatus'] ?? '').toString()).where((e) => e.isNotEmpty).toSet().toList();
-    final filtered = _items.where((tx) {
-      final q = _query.toLowerCase();
-      final matchesQ = q.isEmpty ||
-          (tx['clientName'] ?? '').toString().toLowerCase().contains(q) ||
-          (tx['shippingCompanyName'] ?? '').toString().toLowerCase().contains(q) ||
-          (tx['declarationNumber'] ?? '').toString().toLowerCase().contains(q) ||
-          (tx['airwayBill'] ?? '').toString().toLowerCase().contains(q);
-      final matchesS = _status == 'all' || (tx['clearanceStatus'] ?? '') == _status;
-      final matchesC = _channel == 'all' || (tx['channel'] ?? '') == _channel;
-      return matchesQ && matchesS && matchesC;
-    }).toList();
-
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: l10n.search),
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (widget.role != 'accountant')
-                FilledButton.icon(
-                  onPressed: () async {
-                    final created = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(builder: (_) => const TransactionFormPage()),
-                    );
-                    if (created == true) _load();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: Text(l10n.newLabel),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _status,
-                  items: ['all', ...statuses]
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e == 'all' ? l10n.allStatuses : e)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _status = v ?? 'all'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _channel,
-                  items: [
-                    DropdownMenuItem(value: 'all', child: Text(l10n.allChannels)),
-                    const DropdownMenuItem(value: 'green', child: Text('Green')),
-                    const DropdownMenuItem(value: 'yellow', child: Text('Yellow')),
-                    const DropdownMenuItem(value: 'red', child: Text('Red')),
-                  ],
-                  onChanged: (v) => setState(() => _channel = v ?? 'all'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
-          ...filtered.map(
-            (tx) => Card(
-              child: ListTile(
-                title: Text('${tx['declarationNumber']} - ${tx['clientName']}'),
-                subtitle: Text('${tx['shippingCompanyName']} • ${tx['clearanceStatus']}'),
-                trailing: Text((tx['channel'] ?? '').toString().toUpperCase()),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => TransactionDetailsPage(id: tx['id'] as String, role: widget.role)),
-                ),
-              ),
-            ),
-          ),
-          if (!_loading && filtered.isEmpty) Padding(padding: const EdgeInsets.all(16), child: Text(l10n.noMatch)),
-        ],
-      ),
-    );
-  }
-}
-
-class TransactionDetailsPage extends StatefulWidget {
-  final String id;
-  final String role;
-  const TransactionDetailsPage({super.key, required this.id, required this.role});
-
-  @override
-  State<TransactionDetailsPage> createState() => _TransactionDetailsPageState();
-}
-
-class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
-  Map<String, dynamic>? tx;
-  String error = '';
-  bool loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    load();
-  }
-
-  Future<void> load() async {
-    setState(() {
-      loading = true;
-      error = '';
-    });
-    try {
-      tx = await Api.get('/api/transactions/${widget.id}') as Map<String, dynamic>;
-    } catch (e) {
-      error = e.toString();
-    } finally {
-      setState(() => loading = false);
-    }
-  }
-
-  Future<void> _action(String name) async {
-    try {
-      await Api.post('/api/transactions/${widget.id}/$name', {});
-      await load();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.details)),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : error.isNotEmpty
-              ? Center(child: Text(error))
-              : ListView(
-                  padding: const EdgeInsets.all(12),
-                  children: [
-                    _kv(l10n.client, '${tx!['clientName']}'),
-                    _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
-                    _kv(l10n.declaration, '${tx!['declarationNumber']}'),
-                    _kv(l10n.status, '${tx!['clearanceStatus']}'),
-                    _kv(l10n.channel, '${tx!['channel']}'),
-                    _kv(l10n.createdAt, '${tx!['createdAt']}'),
-                    _kv(l10n.duty, '${tx!['customsDuty']}'),
-                    const SizedBox(height: 8),
-                    if (widget.role == 'manager' || widget.role == 'accountant')
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          FilledButton(onPressed: () => _action('pay'), child: Text(l10n.markPaid)),
-                          FilledButton(onPressed: () => _action('release'), child: Text(l10n.release)),
-                        ],
-                      ),
-                  ],
-                ),
-    );
-  }
-
-  Widget _kv(String k, String v) => Card(
-        child: ListTile(
-          title: Text(k),
-          subtitle: Text(v),
-        ),
-      );
-}
-
-class TransactionFormPage extends StatefulWidget {
-  const TransactionFormPage({super.key});
-
-  @override
-  State<TransactionFormPage> createState() => _TransactionFormPageState();
-}
-
-class _TransactionFormPageState extends State<TransactionFormPage> {
-  final _client = TextEditingController();
-  final _shippingName = TextEditingController();
-  final _shippingId = TextEditingController();
-  final _awb = TextEditingController();
-  final _hs = TextEditingController();
-  final _goods = TextEditingController();
-  final _origin = TextEditingController(text: 'AE');
-  final _value = TextEditingController(text: '1000');
-  final _rate = TextEditingController();
-  final _weight = TextEditingController();
-  final _containers = TextEditingController();
-  final _containerArrival = TextEditingController();
-  final _documentArrival = TextEditingController();
-  final _postal = TextEditingController();
-  final _qty = TextEditingController();
-  String? _quality;
-  String? _unit;
-  List<PlatformFile> _picked = [];
-  bool _saving = false;
-  String _error = '';
-
-  Map<String, dynamic> _jsonBody() {
-    final body = <String, dynamic>{
-      'clientName': _client.text.trim(),
-      'shippingCompanyName': _shippingName.text.trim(),
-      'airwayBill': _awb.text.trim(),
-      'hsCode': _hs.text.trim(),
-      'goodsDescription': _goods.text.trim(),
-      'originCountry': _origin.text.trim().toUpperCase(),
-      'invoiceValue': double.tryParse(_value.text.trim()) ?? 0,
-    };
-    final sid = _shippingId.text.trim();
-    if (sid.isNotEmpty) body['shippingCompanyId'] = sid;
-    void addD(String k, TextEditingController c) {
-      final v = double.tryParse(c.text.trim());
-      if (v != null) body[k] = v;
-    }
-
-    void addI(String k, TextEditingController c) {
-      final v = int.tryParse(c.text.trim());
-      if (v != null) body[k] = v;
-    }
-
-    addD('invoiceToWeightRateAedPerKg', _rate);
-    addD('goodsWeightKg', _weight);
-    addI('containerCount', _containers);
-    addD('goodsQuantity', _qty);
-    if (_quality != null) body['goodsQuality'] = _quality;
-    if (_unit != null) body['goodsUnit'] = _unit;
-    if (_containerArrival.text.trim().isNotEmpty) body['containerArrivalDate'] = _containerArrival.text.trim();
-    if (_documentArrival.text.trim().isNotEmpty) body['documentArrivalDate'] = _documentArrival.text.trim();
-    if (_postal.text.trim().isNotEmpty) body['documentPostalNumber'] = _postal.text.trim();
-    return body;
-  }
-
-  Map<String, String> _multipartFields() {
-    final b = _jsonBody();
-    return b.map((k, v) => MapEntry(k, v == null ? '' : v.toString()));
-  }
-
-  Future<void> _pickFiles() async {
-    final r = await FilePicker.pickFiles(
-      allowMultiple: true,
-      type: FileType.custom,
-      allowedExtensions: const ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
-    );
-    if (r == null || r.files.isEmpty) return;
-    setState(() => _picked = r.files);
-  }
-
-  Future<void> _save() async {
-    setState(() {
-      _saving = true;
-      _error = '';
-    });
-    try {
-      if (_picked.isEmpty) {
-        await Api.post('/api/transactions', _jsonBody());
-      } else {
-        await Api.postMultipart('/api/transactions', _multipartFields(), _picked);
-      }
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.newTransaction)),
-      body: ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          _field(_client, l10n.client),
-          _field(_shippingName, l10n.shippingCompany),
-          _field(_shippingId, l10n.shippingCompanyIdOptional),
-          _field(_awb, l10n.airwayBill),
-          _field(_hs, l10n.hsCode),
-          _field(_goods, l10n.goodsDescription),
-          _field(_origin, l10n.originCountry),
-          _field(_value, l10n.invoiceValue, keyboard: TextInputType.number),
-          _field(_rate, l10n.txRateAedPerKg, keyboard: const TextInputType.numberWithOptions(decimal: true)),
-          _field(_weight, l10n.txGoodsWeightKg, keyboard: const TextInputType.numberWithOptions(decimal: true)),
-          _field(_containers, l10n.txContainerCount, keyboard: TextInputType.number),
-          _field(_containerArrival, l10n.txContainerArrival),
-          _field(_documentArrival, l10n.txDocumentArrival),
-          _field(_postal, l10n.txDocumentPostal),
-          _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true)),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(labelText: l10n.txGoodsQuality),
-            initialValue: _quality,
-            items: [
-              DropdownMenuItem(value: 'new', child: Text(l10n.txQualityNew)),
-              DropdownMenuItem(value: 'like_new', child: Text(l10n.txQualityLikeNew)),
-              DropdownMenuItem(value: 'used', child: Text(l10n.txQualityUsed)),
-              DropdownMenuItem(value: 'refurbished', child: Text(l10n.txQualityRefurbished)),
-              DropdownMenuItem(value: 'damaged', child: Text(l10n.txQualityDamaged)),
-              DropdownMenuItem(value: 'mixed', child: Text(l10n.txQualityMixed)),
-            ],
-            onChanged: (v) => setState(() => _quality = v),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(labelText: l10n.txGoodsUnit),
-            initialValue: _unit,
-            items: [
-              DropdownMenuItem(value: 'kg', child: Text(l10n.txUnitKg)),
-              DropdownMenuItem(value: 'ton', child: Text(l10n.txUnitTon)),
-              DropdownMenuItem(value: 'piece', child: Text(l10n.txUnitPiece)),
-              DropdownMenuItem(value: 'carton', child: Text(l10n.txUnitCarton)),
-              DropdownMenuItem(value: 'pallet', child: Text(l10n.txUnitPallet)),
-              DropdownMenuItem(value: 'cbm', child: Text(l10n.txUnitCbm)),
-              DropdownMenuItem(value: 'liter', child: Text(l10n.txUnitLiter)),
-              DropdownMenuItem(value: 'set', child: Text(l10n.txUnitSet)),
-            ],
-            onChanged: (v) => setState(() => _unit = v),
-          ),
-          const SizedBox(height: 8),
-          Text(l10n.txAttachDocs, style: Theme.of(context).textTheme.titleSmall),
-          OutlinedButton.icon(onPressed: _pickFiles, icon: const Icon(Icons.attach_file), label: Text(l10n.txPickFiles)),
-          if (_picked.isNotEmpty) Text('${_picked.length} files'),
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
-          const SizedBox(height: 8),
-          FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? l10n.saving : l10n.save)),
-        ],
-      ),
-    );
-  }
-
-  Widget _field(TextEditingController c, String label, {TextInputType keyboard = TextInputType.text}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TextField(controller: c, keyboardType: keyboard, decoration: InputDecoration(labelText: label)),
     );
   }
 }
@@ -830,6 +389,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
   late final TextEditingController _email;
   late final TextEditingController _country;
   late final TextEditingController _credit;
+  String _status = 'active';
   bool _saving = false;
   String _error = '';
 
@@ -843,6 +403,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
     _email = TextEditingController(text: (e?['email'] ?? '').toString());
     _country = TextEditingController(text: (e?['country'] ?? '').toString());
     _credit = TextEditingController(text: (e?['creditLimit'] ?? 0).toString());
+    _status = (e?['status'] ?? 'active').toString();
   }
 
   String get _existingId => (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
@@ -860,7 +421,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
         'email': _email.text.trim(),
         'country': _country.text.trim(),
         'creditLimit': double.tryParse(_credit.text.trim()) ?? 0,
-        'status': (widget.existing?['status'] ?? 'active').toString(),
+        'status': _status,
       };
       final id = _existingId;
       if (id.isNotEmpty) {
@@ -899,6 +460,15 @@ class _ClientFormPageState extends State<ClientFormPage> {
           ),
           TextField(controller: _country, decoration: InputDecoration(labelText: l10n.country)),
           TextField(controller: _credit, decoration: InputDecoration(labelText: l10n.creditLimit)),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(labelText: l10n.clientStatus),
+            value: _status,
+            items: [
+              DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
+              DropdownMenuItem(value: 'suspended', child: Text(l10n.statusSuspended)),
+            ],
+            onChanged: (v) => setState(() => _status = v ?? 'active'),
+          ),
           if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),
           FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? l10n.saving : l10n.save)),
@@ -1040,6 +610,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
   late final TextEditingController _email;
   late final TextEditingController _lat;
   late final TextEditingController _lng;
+  String _shipStatus = 'active';
   bool _saving = false;
   String _error = '';
 
@@ -1058,6 +629,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
     _lng = TextEditingController(
       text: e != null && e['longitude'] != null ? '${e['longitude']}' : '',
     );
+    _shipStatus = (e?['status'] ?? 'active').toString();
   }
 
   String get _existingId => (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
@@ -1079,7 +651,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
         'code': _code.text.trim(),
         'contactName': _contact.text.trim(),
         'phone': _phone.text.trim(),
-        'status': (widget.existing?['status'] ?? 'active').toString(),
+        'status': _shipStatus,
       };
       final em = _email.text.trim();
       if (em.isNotEmpty) {
@@ -1141,6 +713,15 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
             controller: _lng,
             keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
             decoration: InputDecoration(labelText: l10n.longitudeOptional),
+          ),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(labelText: l10n.shippingStatus),
+            value: _shipStatus,
+            items: [
+              DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
+              DropdownMenuItem(value: 'inactive', child: Text(l10n.statusInactive)),
+            ],
+            onChanged: (v) => setState(() => _shipStatus = v ?? 'active'),
           ),
           if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),

@@ -247,4 +247,172 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txUnitSet => 'set';
+
+  @override
+  String get employees => 'Employees';
+
+  @override
+  String get employeesTitle => 'Employee section';
+
+  @override
+  String get employeeName => 'Name';
+
+  @override
+  String get employeeEmail => 'Email';
+
+  @override
+  String get employeePassword => 'Password';
+
+  @override
+  String get employeeRole => 'Role';
+
+  @override
+  String get managerOnlyEmployees => 'Only the manager can add, edit, or delete employees.';
+
+  @override
+  String get addEmployee => 'Add employee';
+
+  @override
+  String get passwordHintEdit => 'Leave blank to keep current password';
+
+  @override
+  String get cancelEdit => 'Cancel edit';
+
+  @override
+  String get goTracker => 'Go to tracker';
+
+  @override
+  String get roleFromAccount => 'Your role is determined by your login account.';
+
+  @override
+  String get currentRole => 'Current role';
+
+  @override
+  String get editTransaction => 'Edit transaction';
+
+  @override
+  String get documentStatus => 'Document status';
+
+  @override
+  String get paymentStatus => 'Payment status';
+
+  @override
+  String get document => 'Document';
+
+  @override
+  String get payment => 'Payment';
+
+  @override
+  String get releaseCode => 'Release code';
+
+  @override
+  String get notIssued => 'Not issued';
+
+  @override
+  String get risk => 'Risk';
+
+  @override
+  String get goods => 'Goods';
+
+  @override
+  String get origin => 'Origin';
+
+  @override
+  String get deleteTransaction => 'Delete transaction';
+
+  @override
+  String get confirmDeleteTransaction => 'Delete this transaction?';
+
+  @override
+  String get shippingPaper => 'Shipping paper form';
+
+  @override
+  String get shippingPaperHeading => 'Shipping / release cover sheet';
+
+  @override
+  String get shippingPaperSub => 'Edit below, then print or share.';
+
+  @override
+  String get printAction => 'Print / PDF';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get typeToSearch => 'Type to search and pick from the list';
+
+  @override
+  String get documentPhotosSection => 'Document attachments';
+
+  @override
+  String get removeAttachment => 'Remove';
+
+  @override
+  String get toShippingCompany => 'To (shipping company)';
+
+  @override
+  String get fromClient => 'Client';
+
+  @override
+  String get additionalNotes => 'Additional notes';
+
+  @override
+  String get airwayBillShort => 'Airway bill';
+
+  @override
+  String get valueAed => 'Value (AED)';
+
+  @override
+  String get weightKg => 'Weight (kg)';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String get clientStatus => 'Client status';
+
+  @override
+  String get statusActive => 'active';
+
+  @override
+  String get statusSuspended => 'suspended';
+
+  @override
+  String get shippingStatus => 'Company status';
+
+  @override
+  String get statusInactive => 'inactive';
+
+  @override
+  String get originalBl => 'Original BL received';
+
+  @override
+  String get txDocumentStatusCopy => 'copy_received';
+
+  @override
+  String get txDocumentStatusOriginal => 'original_received';
+
+  @override
+  String get txDocumentStatusTelex => 'telex_release';
+
+  @override
+  String get txPaymentPending => 'pending';
+
+  @override
+  String get txPaymentPaid => 'paid';
+
+  @override
+  String get roleManager => 'manager';
+
+  @override
+  String get roleEmployee => 'employee';
+
+  @override
+  String get roleAccountant => 'accountant';
+
+  @override
+  String get optionalSelect => '— select —';
+
+  @override
+  String get accountantNoTransactionForm => 'Accountant role cannot create or edit transactions in this form.';
 }
