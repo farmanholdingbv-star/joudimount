@@ -197,6 +197,8 @@ export type MessageKey =
   | "shipping.contactName"
   | "shipping.phone"
   | "shipping.email"
+  | "shipping.dispatchFormTemplate"
+  | "shipping.dispatchFormTemplateHint"
   | "shipping.location"
   | "shipping.mapClickHint"
   | "shipping.clearLocation"
@@ -217,8 +219,8 @@ export type MessageKey =
   | "details.shippingPaperSub"
   | "details.shippingPaperTo"
   | "details.shippingPaperFrom"
-  | "details.shippingPaperNotes"
-  | "details.shippingPaperNotesPlaceholder"
+  | "details.shippingPaperMessage"
+  | "details.shippingPaperMessagePlaceholder"
   | "details.shippingPaperPrint"
   | "details.shippingPaperClose";
 
@@ -418,6 +420,9 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "shipping.contactName": "اسم جهة الاتصال",
     "shipping.phone": "الهاتف",
     "shipping.email": "البريد الإلكتروني",
+    "shipping.dispatchFormTemplate": "نموذج رسالة إرسال الشحن",
+    "shipping.dispatchFormTemplateHint":
+      "يُستخدم كنص افتراضي في حقل الملاحظات عند طباعة نموذج الإرسال لشركة الشحن؛ يمكن للموظف تعديله قبل الطباعة.",
     "shipping.location": "الموقع",
     "shipping.mapClickHint": "انقر على الخريطة لتحديد موقع المكتب.",
     "shipping.clearLocation": "إزالة الموقع",
@@ -438,8 +443,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "details.shippingPaperSub": "يُعدّل أدناه ثم يُطبع لإرساله مع الشحنة.",
     "details.shippingPaperTo": "إلى (شركة الشحن)",
     "details.shippingPaperFrom": "العميل",
-    "details.shippingPaperNotes": "ملاحظات إضافية",
-    "details.shippingPaperNotesPlaceholder": "تعليمات التسليم، عنوان، هاتف، إلخ.",
+    "details.shippingPaperMessage": "رسالة",
+    "details.shippingPaperMessagePlaceholder": "تعليمات التسليم، عنوان، هاتف، إلخ.",
     "details.shippingPaperPrint": "طباعة",
     "details.shippingPaperClose": "إغلاق",
   },
@@ -639,6 +644,9 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "shipping.contactName": "Contact Name",
     "shipping.phone": "Phone",
     "shipping.email": "Email",
+    "shipping.dispatchFormTemplate": "Dispatch form message template",
+    "shipping.dispatchFormTemplateHint":
+      "Default text for the notes field when printing the shipping company dispatch form; employees can edit it before printing.",
     "shipping.location": "Location",
     "shipping.mapClickHint": "Click the map to set the office location.",
     "shipping.clearLocation": "Clear location",
@@ -659,8 +667,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "details.shippingPaperSub": "Edit the fields below, then print to send with the cargo.",
     "details.shippingPaperTo": "To (shipping company)",
     "details.shippingPaperFrom": "Client",
-    "details.shippingPaperNotes": "Additional notes",
-    "details.shippingPaperNotesPlaceholder": "Delivery instructions, address, phone, etc.",
+    "details.shippingPaperMessage": "message",
+    "details.shippingPaperMessagePlaceholder": "Delivery instructions, address, phone, etc.",
     "details.shippingPaperPrint": "Print",
     "details.shippingPaperClose": "Close",
   },

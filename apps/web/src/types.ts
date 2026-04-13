@@ -74,6 +74,8 @@ export interface ShippingCompany {
   contactName?: string;
   phone?: string;
   email?: string;
+  /** Default dispatch form message; prefilled in the print dialog for employees to edit. */
+  dispatchFormTemplate?: string;
   latitude?: number;
   longitude?: number;
   status: "active" | "inactive";

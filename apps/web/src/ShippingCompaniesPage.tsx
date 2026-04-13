@@ -11,6 +11,7 @@ type ShippingCompanyForm = {
   contactName: string;
   phone: string;
   email: string;
+  dispatchFormTemplate: string;
   latitude: number | null;
   longitude: number | null;
   status: "active" | "inactive";
@@ -22,6 +23,7 @@ const emptyCompany: ShippingCompanyForm = {
   contactName: "",
   phone: "",
   email: "",
+  dispatchFormTemplate: "",
   latitude: null,
   longitude: null,
   status: "active",
@@ -69,6 +71,7 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
       body.latitude = null;
       body.longitude = null;
     }
+    body.dispatchFormTemplate = form.dispatchFormTemplate.trim();
     const res = await apiFetch(path, { method, body: JSON.stringify(body) });
     if (!res.ok) {
       setError(t("shipping.saveError"));
@@ -87,6 +90,7 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
       contactName: item.contactName ?? "",
       phone: item.phone ?? "",
       email: item.email ?? "",
+      dispatchFormTemplate: item.dispatchFormTemplate ?? "",
       latitude: item.latitude ?? null,
       longitude: item.longitude ?? null,
       status: item.status,
@@ -143,6 +147,15 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
           </label>
+          <label className="full-row">
+            {t("shipping.dispatchFormTemplate")}
+            <textarea
+              value={form.dispatchFormTemplate}
+              onChange={(e) => setForm({ ...form, dispatchFormTemplate: e.target.value })}
+              rows={5}
+            />
+          </label>
+          <p className="muted full-row">{t("shipping.dispatchFormTemplateHint")}</p>
           <LocationMapPicker
             latitude={form.latitude}
             longitude={form.longitude}

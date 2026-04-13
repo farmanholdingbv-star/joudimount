@@ -39,6 +39,8 @@ interface ShippingCompanyDoc {
   contactName?: string;
   phone?: string;
   email?: string;
+  /** Default text for the shipping dispatch form notes area; employees can edit per print. */
+  dispatchFormTemplate?: string;
   latitude?: number;
   longitude?: number;
   status: "active" | "inactive";
@@ -182,6 +184,7 @@ const shippingCompanySchema = new Schema<ShippingCompanyDoc>(
     contactName: { type: String },
     phone: { type: String },
     email: { type: String },
+    dispatchFormTemplate: { type: String },
     latitude: { type: Number },
     longitude: { type: Number },
     status: { type: String, enum: ["active", "inactive"], default: "active" },

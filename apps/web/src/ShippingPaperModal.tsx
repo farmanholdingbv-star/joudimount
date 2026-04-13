@@ -1,40 +1,22 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
-import type { Transaction } from "./types";
+import type { ShippingCompany, Transaction } from "./types";
 
 export type ShippingPaperState = {
   toCompany: string;
   client: string;
-  declaration: string;
   airwayBill: string;
-  hsCode: string;
-  goods: string;
-  origin: string;
-  invoiceValue: string;
-  releaseCode: string;
-  weight: string;
-  quantity: string;
-  notes: string;
+  message: string;
 };
 
-function buildInitialPaper(tx: Transaction, numberLocale: string): ShippingPaperState {
-  const weight =
-    tx.goodsWeightKg != null ? tx.goodsWeightKg.toLocaleString(numberLocale) : "";
-  const qty = tx.goodsQuantity != null ? tx.goodsQuantity.toLocaleString(numberLocale) : "";
+function buildInitialPaper(tx: Transaction): ShippingPaperState {
   return {
     toCompany: tx.shippingCompanyName,
     client: tx.clientName,
-    declaration: tx.declarationNumber,
     airwayBill: tx.airwayBill,
-    hsCode: tx.hsCode,
-    goods: tx.goodsDescription,
-    origin: tx.originCountry,
-    invoiceValue: `${tx.invoiceValue.toLocaleString(numberLocale)}`,
-    releaseCode: tx.releaseCode ?? "",
-    weight,
-    quantity: qty,
-    notes: "",
+    message: "",
   };
 }
 
@@ -47,16 +29,43 @@ export default function ShippingPaperModal({
   transaction: Transaction | null;
   onClose: () => void;
 }) {
-  const { t, numberLocale } = useI18n();
+  const { t } = useI18n();
   const [paper, setPaper] = useState<ShippingPaperState | null>(null);
 
   useEffect(() => {
-    if (open && transaction) {
-      setPaper(buildInitialPaper(transaction, numberLocale));
-    } else if (!open) {
+    if (!open || !transaction) {
       setPaper(null);
+      return;
     }
-  }, [open, transaction, numberLocale]);
+    setPaper(buildInitialPaper(transaction));
+    let cancelled = false;
+    (async () => {
+      let template = "";
+      try {
+        const res = await apiFetch("/api/shipping-companies");
+        if (res.ok) {
+          const list = (await res.json()) as ShippingCompany[];
+          const match = transaction.shippingCompanyId
+            ? list.find((c) => c.id === transaction.shippingCompanyId)
+            : list.find(
+                (c) => c.companyName?.trim() === transaction.shippingCompanyName?.trim(),
+              );
+          template = (match?.dispatchFormTemplate ?? "").trim();
+        }
+      } catch {
+        /* ignore */
+      }
+      if (cancelled || !template) return;
+      setPaper((p) => {
+        const base = p ?? buildInitialPaper(transaction);
+        if (base.message.trim() !== "") return base;
+        return { ...base, message: template };
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, transaction]);
 
   useEffect(() => {
     if (!open) {
@@ -80,11 +89,11 @@ export default function ShippingPaperModal({
 
   if (!open || !transaction) return null;
 
-  const effectivePaper = paper ?? buildInitialPaper(transaction, numberLocale);
+  const effectivePaper = paper ?? buildInitialPaper(transaction);
 
   const setField = (field: keyof ShippingPaperState, value: string) => {
     setPaper((p) => {
-      const base = p ?? buildInitialPaper(transaction, numberLocale);
+      const base = p ?? buildInitialPaper(transaction);
       return { ...base, [field]: value };
     });
   };
@@ -137,14 +146,6 @@ export default function ShippingPaperModal({
                 />
               </label>
               <label className="shipping-print-label">
-                <span>{label("details.declaration")}</span>
-                <input
-                  value={effectivePaper.declaration}
-                  onChange={(e) => setField("declaration", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
-              <label className="shipping-print-label">
                 <span>{label("details.airwayBill")}</span>
                 <input
                   value={effectivePaper.airwayBill}
@@ -152,71 +153,14 @@ export default function ShippingPaperModal({
                   className="shipping-print-input"
                 />
               </label>
-              <label className="shipping-print-label">
-                <span>{label("details.hsCode")}</span>
-                <input
-                  value={effectivePaper.hsCode}
-                  onChange={(e) => setField("hsCode", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
-              <label className="shipping-print-label">
-                <span>{label("details.origin")}</span>
-                <input
-                  value={effectivePaper.origin}
-                  onChange={(e) => setField("origin", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
-              <label className="shipping-print-label">
-                <span>{label("details.invoiceValue")}</span>
-                <input
-                  value={effectivePaper.invoiceValue}
-                  onChange={(e) => setField("invoiceValue", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
-              <label className="shipping-print-label">
-                <span>{label("details.releaseCode")}</span>
-                <input
-                  value={effectivePaper.releaseCode}
-                  onChange={(e) => setField("releaseCode", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
-              <label className="shipping-print-label">
-                <span>{label("details.goodsWeightKg")}</span>
-                <input
-                  value={effectivePaper.weight}
-                  onChange={(e) => setField("weight", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
-              <label className="shipping-print-label">
-                <span>{label("details.goodsQuantity")}</span>
-                <input
-                  value={effectivePaper.quantity}
-                  onChange={(e) => setField("quantity", e.target.value)}
-                  className="shipping-print-input"
-                />
-              </label>
               <label className="shipping-print-label full">
-                <span>{label("details.goods")}</span>
+                <span>{label("details.shippingPaperMessage")}</span>
                 <textarea
-                  value={effectivePaper.goods}
-                  onChange={(e) => setField("goods", e.target.value)}
+                  value={effectivePaper.message}
+                  onChange={(e) => setField("message", e.target.value)}
                   className="shipping-print-textarea"
-                  rows={4}
-                />
-              </label>
-              <label className="shipping-print-label full">
-                <span>{label("details.shippingPaperNotes")}</span>
-                <textarea
-                  value={effectivePaper.notes}
-                  onChange={(e) => setField("notes", e.target.value)}
-                  className="shipping-print-textarea"
-                  rows={3}
-                  placeholder={t("details.shippingPaperNotesPlaceholder")}
+                  rows={8}
+                  placeholder={t("details.shippingPaperMessagePlaceholder")}
                 />
               </label>
             </div>
