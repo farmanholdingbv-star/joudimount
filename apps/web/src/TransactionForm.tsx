@@ -301,6 +301,7 @@ export default function TransactionForm({ role }: { role: Role }) {
       <h1>{isEdit ? t("form.editTitle") : t("form.newTitle")}</h1>
       {error ? <p className="error">{error}</p> : null}
       <form className="details-card form-grid" noValidate onSubmit={onSubmit}>
+        <h2 className="form-section-title full-row">Parties</h2>
         <AutocompleteField
           label={t("form.clientName")}
           value={form.clientName}
@@ -329,6 +330,8 @@ export default function TransactionForm({ role }: { role: Role }) {
           {t("form.shippingCompanyId")}
           <input value={form.shippingCompanyId ?? ""} onChange={(e) => setForm({ ...form, shippingCompanyId: e.target.value })} />
         </label>
+
+        <h2 className="form-section-title full-row">Shipment Core</h2>
         <label>
           {t("form.airwayBill")}
           <input value={form.airwayBill} onChange={(e) => setForm({ ...form, airwayBill: e.target.value })} required />
@@ -357,6 +360,17 @@ export default function TransactionForm({ role }: { role: Role }) {
             required
           />
         </label>
+        <label className="full-row">
+          {t("form.goodsDescription")}
+          <textarea
+            value={form.goodsDescription}
+            onChange={(e) => setForm({ ...form, goodsDescription: e.target.value })}
+            rows={3}
+            required
+          />
+        </label>
+
+        <h2 className="form-section-title full-row">Cargo & Containers</h2>
         <label>
           {t("form.invoiceToWeightRate")}
           <input
@@ -398,6 +412,27 @@ export default function TransactionForm({ role }: { role: Role }) {
           />
         </label>
         <label>
+          {t("form.goodsQuantity")}
+          <input
+            type="number"
+            min={0}
+            step="any"
+            value={form.goodsQuantity}
+            onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })}
+          />
+        </label>
+        <label>
+          {t("form.goodsUnit")}
+          <select value={form.goodsUnit} onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })}>
+            <option value="">{t("form.optionalSelect")}</option>
+            {UNIT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {t(o.labelKey as MessageKey)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           {t("form.documentArrivalDate")}
           <input
             type="date"
@@ -431,6 +466,8 @@ export default function TransactionForm({ role }: { role: Role }) {
             onChange={(e) => setForm({ ...form, unitCount: e.target.value })}
           />
         </label>
+
+        <h2 className="form-section-title full-row">Workflow</h2>
         <label>
           Stop Transaction
           <select value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
@@ -457,27 +494,6 @@ export default function TransactionForm({ role }: { role: Role }) {
           </label>
         ) : null}
         <label>
-          {t("form.goodsQuantity")}
-          <input
-            type="number"
-            min={0}
-            step="any"
-            value={form.goodsQuantity}
-            onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })}
-          />
-        </label>
-        <label>
-          {t("form.goodsUnit")}
-          <select value={form.goodsUnit} onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })}>
-            <option value="">{t("form.optionalSelect")}</option>
-            {UNIT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {t(o.labelKey as MessageKey)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
           {t("form.documentStatus")}
           <select
             value={form.documentStatus}
@@ -499,15 +515,8 @@ export default function TransactionForm({ role }: { role: Role }) {
             <option value="paid">paid</option>
           </select>
         </label>
-        <label className="full-row">
-          {t("form.goodsDescription")}
-          <textarea
-            value={form.goodsDescription}
-            onChange={(e) => setForm({ ...form, goodsDescription: e.target.value })}
-            rows={3}
-            required
-          />
-        </label>
+
+        <h2 className="form-section-title full-row">Attachments</h2>
         <div className="full-row doc-upload-block doc-upload-prominent">
           <h2 className="doc-upload-heading">{t("form.documentPhotosSection")}</h2>
           <p className="muted">{t("form.documentPhotosHelp")}</p>

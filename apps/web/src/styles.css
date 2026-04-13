@@ -235,6 +235,13 @@ th {
   grid-column: 1 / -1;
 }
 
+.form-section-title {
+  margin: 0.2rem 0 0.1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .role-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
