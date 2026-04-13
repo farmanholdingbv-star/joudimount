@@ -30,10 +30,14 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _containers = TextEditingController();
   final _containerArrival = TextEditingController();
   final _documentArrival = TextEditingController();
-  final _postal = TextEditingController();
+  final _fileNumber = TextEditingController();
+  final _containerNumbers = TextEditingController();
+  final _unitCount = TextEditingController();
+  final _holdReason = TextEditingController();
+  final _stopReason = TextEditingController();
   final _qty = TextEditingController();
-  String? _quality;
-  String? _unit;
+  String? _unit = 'cbm';
+  bool _isStopped = false;
   String _docStatus = 'copy_received';
   String _paymentStatus = 'pending';
   List<PlatformFile> _picked = [];
@@ -97,10 +101,16 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       if (tx['containerCount'] != null) _containers.text = tx['containerCount'].toString();
       _containerArrival.text = _isoToDateInput(tx['containerArrivalDate']);
       _documentArrival.text = _isoToDateInput(tx['documentArrivalDate']);
-      _postal.text = (tx['documentPostalNumber'] ?? '').toString();
+      _fileNumber.text = (tx['fileNumber'] ?? '').toString();
+      final nums = tx['containerNumbers'];
+      if (nums is List) {
+        _containerNumbers.text = nums.map((e) => e.toString()).join(', ');
+      }
+      if (tx['unitCount'] != null) _unitCount.text = tx['unitCount'].toString();
+      _isStopped = tx['isStopped'] == true;
+      _holdReason.text = (tx['holdReason'] ?? '').toString();
+      _stopReason.text = (tx['stopReason'] ?? '').toString();
       if (tx['goodsQuantity'] != null) _qty.text = tx['goodsQuantity'].toString();
-      _quality = tx['goodsQuality']?.toString();
-      if (_quality != null && _quality!.isEmpty) _quality = null;
       _unit = tx['goodsUnit']?.toString();
       if (_unit != null && _unit!.isEmpty) _unit = null;
       final att = tx['documentAttachments'];
@@ -142,11 +152,21 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     addD('goodsWeightKg', _weight);
     addI('containerCount', _containers);
     addD('goodsQuantity', _qty);
-    if (_quality != null && _quality!.isNotEmpty) body['goodsQuality'] = _quality;
     if (_unit != null && _unit!.isNotEmpty) body['goodsUnit'] = _unit;
     if (_containerArrival.text.trim().isNotEmpty) body['containerArrivalDate'] = _containerArrival.text.trim();
     if (_documentArrival.text.trim().isNotEmpty) body['documentArrivalDate'] = _documentArrival.text.trim();
-    if (_postal.text.trim().isNotEmpty) body['documentPostalNumber'] = _postal.text.trim();
+    if (_fileNumber.text.trim().isNotEmpty) body['fileNumber'] = _fileNumber.text.trim();
+    final containerNumbers = _containerNumbers.text
+        .split(RegExp(r'[\n,]+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (containerNumbers.isNotEmpty) body['containerNumbers'] = containerNumbers;
+    final unitCount = int.tryParse(_unitCount.text.trim());
+    if (unitCount != null) body['unitCount'] = unitCount;
+    body['isStopped'] = _isStopped;
+    if (_holdReason.text.trim().isNotEmpty) body['holdReason'] = _holdReason.text.trim();
+    if (_stopReason.text.trim().isNotEmpty) body['stopReason'] = _stopReason.text.trim();
     return body;
   }
 
@@ -232,7 +252,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _containers.dispose();
     _containerArrival.dispose();
     _documentArrival.dispose();
-    _postal.dispose();
+    _fileNumber.dispose();
+    _containerNumbers.dispose();
+    _unitCount.dispose();
+    _holdReason.dispose();
+    _stopReason.dispose();
     _qty.dispose();
     super.dispose();
   }
@@ -312,22 +336,21 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           _field(_containers, l10n.txContainerCount, keyboard: TextInputType.number),
           _field(_containerArrival, l10n.txContainerArrival),
           _field(_documentArrival, l10n.txDocumentArrival),
-          _field(_postal, l10n.txDocumentPostal),
-          _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true)),
-          DropdownButtonFormField<String?>(
-            decoration: InputDecoration(labelText: l10n.txGoodsQuality),
-            value: _quality,
-            items: [
-              DropdownMenuItem<String?>(value: null, child: Text(l10n.optionalSelect)),
-              DropdownMenuItem(value: 'new', child: Text(l10n.txQualityNew)),
-              DropdownMenuItem(value: 'like_new', child: Text(l10n.txQualityLikeNew)),
-              DropdownMenuItem(value: 'used', child: Text(l10n.txQualityUsed)),
-              DropdownMenuItem(value: 'refurbished', child: Text(l10n.txQualityRefurbished)),
-              DropdownMenuItem(value: 'damaged', child: Text(l10n.txQualityDamaged)),
-              DropdownMenuItem(value: 'mixed', child: Text(l10n.txQualityMixed)),
+          _field(_fileNumber, 'File Number'),
+          _field(_containerNumbers, 'Container Numbers', maxLines: 3),
+          _field(_unitCount, 'Number of Units', keyboard: TextInputType.number),
+          DropdownButtonFormField<bool>(
+            decoration: const InputDecoration(labelText: 'Stop Transaction'),
+            value: _isStopped,
+            items: const [
+              DropdownMenuItem(value: false, child: Text('No')),
+              DropdownMenuItem(value: true, child: Text('Yes')),
             ],
-            onChanged: (v) => setState(() => _quality = v),
+            onChanged: (v) => setState(() => _isStopped = v ?? false),
           ),
+          _field(_holdReason, 'Hold Reason'),
+          if (_isStopped) _field(_stopReason, 'Stop Reason', maxLines: 2),
+          _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true)),
           DropdownButtonFormField<String?>(
             decoration: InputDecoration(labelText: l10n.txGoodsUnit),
             value: _unit,

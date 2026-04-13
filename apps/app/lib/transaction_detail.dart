@@ -210,29 +210,31 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                   children: [
                     _kv(l10n.client, '${tx!['clientName']}'),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
-                    _kv(l10n.declaration, '${tx!['declarationNumber']}'),
                     _kv(l10n.airwayBill, '${tx!['airwayBill']}'),
                     _kv(l10n.hsCode, '${tx!['hsCode']}'),
                     _kv(l10n.goods, '${tx!['goodsDescription']}'),
                     _kv(l10n.origin, '${tx!['originCountry']}'),
-                    _kv(l10n.invoiceValue, '${tx!['invoiceValue']}'),
                     _kv(l10n.duty, '${tx!['customsDuty']}'),
-                    _kv(l10n.risk, '${tx!['riskLevel']}'),
-                    _kv(l10n.channel, '${tx!['channel']}'),
                     _kv(l10n.document, '${tx!['documentStatus']}'),
                     _kv(l10n.status, '${tx!['clearanceStatus']}'),
                     _kv(l10n.payment, '${tx!['paymentStatus']}'),
-                    _kv(l10n.releaseCode, '${tx!['releaseCode'] ?? l10n.notIssued}'),
                     if (tx!['containerCount'] != null) _kv(l10n.txContainerCount, '${tx!['containerCount']}'),
                     if (tx!['goodsWeightKg'] != null) _kv(l10n.txGoodsWeightKg, '${tx!['goodsWeightKg']}'),
                     if (tx!['invoiceToWeightRateAedPerKg'] != null)
                       _kv(l10n.txRateAedPerKg, '${tx!['invoiceToWeightRateAedPerKg']}'),
                     if (tx!['containerArrivalDate'] != null) _kv(l10n.txContainerArrival, '${tx!['containerArrivalDate']}'),
                     if (tx!['documentArrivalDate'] != null) _kv(l10n.txDocumentArrival, '${tx!['documentArrivalDate']}'),
-                    if (tx!['documentPostalNumber'] != null && tx!['documentPostalNumber'].toString().isNotEmpty)
-                      _kv(l10n.txDocumentPostal, '${tx!['documentPostalNumber']}'),
+                    if (tx!['fileNumber'] != null && tx!['fileNumber'].toString().isNotEmpty)
+                      _kv('File Number', '${tx!['fileNumber']}'),
+                    if (tx!['containerNumbers'] is List && (tx!['containerNumbers'] as List).isNotEmpty)
+                      _kv('Container Numbers', (tx!['containerNumbers'] as List).map((e) => '$e').join(', ')),
+                    if (tx!['unitCount'] != null) _kv('Number of Units', '${tx!['unitCount']}'),
+                    _kv('Stopped', tx!['isStopped'] == true ? 'Yes' : 'No'),
+                    if (tx!['holdReason'] != null && tx!['holdReason'].toString().isNotEmpty)
+                      _kv('Hold Reason', '${tx!['holdReason']}'),
+                    if (tx!['isStopped'] == true && tx!['stopReason'] != null && tx!['stopReason'].toString().isNotEmpty)
+                      _kv('Stop Reason', '${tx!['stopReason']}'),
                     if (tx!['goodsQuantity'] != null) _kv(l10n.txGoodsQty, '${tx!['goodsQuantity']}'),
-                    if (tx!['goodsQuality'] != null) _kv(l10n.txGoodsQuality, '${tx!['goodsQuality']}'),
                     if (tx!['goodsUnit'] != null) _kv(l10n.txGoodsUnit, '${tx!['goodsUnit']}'),
                     _kv(l10n.createdAt, '${tx!['createdAt']}'),
                     const SizedBox(height: 12),

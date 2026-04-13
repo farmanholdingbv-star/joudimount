@@ -156,6 +156,12 @@ function mapTransaction(doc: any): Transaction {
     invoiceToWeightRateAedPerKg: doc.invoiceToWeightRateAedPerKg,
     containerArrivalDate: mapOptionalDate(doc.containerArrivalDate),
     documentArrivalDate: mapOptionalDate(doc.documentArrivalDate),
+    fileNumber: doc.fileNumber,
+    containerNumbers: Array.isArray(doc.containerNumbers) ? doc.containerNumbers : undefined,
+    unitCount: doc.unitCount,
+    isStopped: doc.isStopped,
+    holdReason: doc.holdReason,
+    stopReason: doc.stopReason,
     documentPostalNumber: doc.documentPostalNumber,
     goodsQuantity: doc.goodsQuantity,
     goodsQuality: doc.goodsQuality,
@@ -303,6 +309,12 @@ type CreateTransactionFields = Pick<
       | "invoiceToWeightRateAedPerKg"
       | "containerArrivalDate"
       | "documentArrivalDate"
+      | "fileNumber"
+      | "containerNumbers"
+      | "unitCount"
+      | "isStopped"
+      | "holdReason"
+      | "stopReason"
       | "documentPostalNumber"
       | "goodsQuantity"
       | "goodsQuality"
@@ -385,6 +397,12 @@ export async function updateTransaction(
       | "invoiceToWeightRateAedPerKg"
       | "containerArrivalDate"
       | "documentArrivalDate"
+      | "fileNumber"
+      | "containerNumbers"
+      | "unitCount"
+      | "isStopped"
+      | "holdReason"
+      | "stopReason"
       | "documentPostalNumber"
       | "goodsQuantity"
       | "goodsQuality"

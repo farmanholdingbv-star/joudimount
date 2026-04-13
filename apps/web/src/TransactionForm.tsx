@@ -4,16 +4,7 @@ import AutocompleteField, { type AutocompleteSuggestion } from "./AutocompleteFi
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
-import { Client, DocumentAttachment, GoodsQuality, GoodsUnit, Role, ShippingCompany, Transaction } from "./types";
-
-const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
-  { value: "new", labelKey: "form.quality.new" },
-  { value: "like_new", labelKey: "form.quality.like_new" },
-  { value: "used", labelKey: "form.quality.used" },
-  { value: "refurbished", labelKey: "form.quality.refurbished" },
-  { value: "damaged", labelKey: "form.quality.damaged" },
-  { value: "mixed", labelKey: "form.quality.mixed" },
-];
+import { Client, DocumentAttachment, GoodsUnit, Role, ShippingCompany, Transaction } from "./types";
 
 const UNIT_OPTIONS: { value: GoodsUnit; labelKey: string }[] = [
   { value: "kg", labelKey: "form.unit.kg" },
@@ -49,9 +40,13 @@ type FormState = {
   invoiceToWeightRateAedPerKg: string;
   containerArrivalDate: string;
   documentArrivalDate: string;
-  documentPostalNumber: string;
+  fileNumber: string;
+  containerNumbers: string;
+  unitCount: string;
+  isStopped: "no" | "yes";
+  holdReason: string;
+  stopReason: string;
   goodsQuantity: string;
-  goodsQuality: GoodsQuality | "";
   goodsUnit: GoodsUnit | "";
 };
 
@@ -71,10 +66,14 @@ const emptyForm: FormState = {
   invoiceToWeightRateAedPerKg: "",
   containerArrivalDate: "",
   documentArrivalDate: "",
-  documentPostalNumber: "",
+  fileNumber: "",
+  containerNumbers: "",
+  unitCount: "",
+  isStopped: "no",
+  holdReason: "",
+  stopReason: "",
   goodsQuantity: "",
-  goodsQuality: "",
-  goodsUnit: "",
+  goodsUnit: "cbm",
 };
 
 function appendOptionalNumber(fd: FormData, key: string, raw: string) {
@@ -161,10 +160,14 @@ export default function TransactionForm({ role }: { role: Role }) {
             data.invoiceToWeightRateAedPerKg != null ? String(data.invoiceToWeightRateAedPerKg) : "",
           containerArrivalDate: isoToDateInput(data.containerArrivalDate),
           documentArrivalDate: isoToDateInput(data.documentArrivalDate),
-          documentPostalNumber: data.documentPostalNumber ?? "",
+          fileNumber: data.fileNumber ?? "",
+          containerNumbers: data.containerNumbers?.join(", ") ?? "",
+          unitCount: data.unitCount != null ? String(data.unitCount) : "",
+          isStopped: data.isStopped ? "yes" : "no",
+          holdReason: data.holdReason ?? "",
+          stopReason: data.stopReason ?? "",
           goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
-          goodsQuality: data.goodsQuality ?? "",
-          goodsUnit: data.goodsUnit ?? "",
+          goodsUnit: data.goodsUnit ?? "cbm",
         });
         setRetainedDocs(data.documentAttachments ?? []);
         setNewDocFiles([]);
@@ -248,9 +251,19 @@ export default function TransactionForm({ role }: { role: Role }) {
       appendOptionalNumber(fd, "invoiceToWeightRateAedPerKg", form.invoiceToWeightRateAedPerKg);
       if (form.containerArrivalDate) fd.append("containerArrivalDate", form.containerArrivalDate);
       if (form.documentArrivalDate) fd.append("documentArrivalDate", form.documentArrivalDate);
-      if (form.documentPostalNumber.trim()) fd.append("documentPostalNumber", form.documentPostalNumber.trim());
+      if (form.fileNumber.trim()) fd.append("fileNumber", form.fileNumber.trim());
+      if (form.containerNumbers.trim()) {
+        const values = form.containerNumbers
+          .split(/[\n,]+/)
+          .map((v) => v.trim())
+          .filter(Boolean);
+        if (values.length) fd.append("containerNumbers", JSON.stringify(values));
+      }
+      appendOptionalNumber(fd, "unitCount", form.unitCount);
+      fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
+      if (form.holdReason.trim()) fd.append("holdReason", form.holdReason.trim());
+      if (form.stopReason.trim()) fd.append("stopReason", form.stopReason.trim());
       appendOptionalNumber(fd, "goodsQuantity", form.goodsQuantity);
-      if (form.goodsQuality) fd.append("goodsQuality", form.goodsQuality);
       if (form.goodsUnit) fd.append("goodsUnit", form.goodsUnit);
 
       if (isEdit) {
@@ -393,12 +406,56 @@ export default function TransactionForm({ role }: { role: Role }) {
           />
         </label>
         <label>
-          {t("form.documentPostalNumber")}
+          File Number
           <input
-            value={form.documentPostalNumber}
-            onChange={(e) => setForm({ ...form, documentPostalNumber: e.target.value })}
+            value={form.fileNumber}
+            onChange={(e) => setForm({ ...form, fileNumber: e.target.value })}
           />
         </label>
+        <label>
+          Container Numbers
+          <textarea
+            value={form.containerNumbers}
+            onChange={(e) => setForm({ ...form, containerNumbers: e.target.value })}
+            rows={3}
+            placeholder="e.g. MSKU1234567, TGHU9876543"
+          />
+        </label>
+        <label>
+          Number of Units
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={form.unitCount}
+            onChange={(e) => setForm({ ...form, unitCount: e.target.value })}
+          />
+        </label>
+        <label>
+          Stop Transaction
+          <select value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </label>
+        <label>
+          Hold Reason
+          <input
+            value={form.holdReason}
+            onChange={(e) => setForm({ ...form, holdReason: e.target.value })}
+          />
+        </label>
+        {form.isStopped === "yes" ? (
+          <label>
+            Stop Reason
+            <textarea
+              value={form.stopReason}
+              onChange={(e) => setForm({ ...form, stopReason: e.target.value })}
+              rows={2}
+              required
+            />
+          </label>
+        ) : null}
         <label>
           {t("form.goodsQuantity")}
           <input
@@ -408,20 +465,6 @@ export default function TransactionForm({ role }: { role: Role }) {
             value={form.goodsQuantity}
             onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })}
           />
-        </label>
-        <label>
-          {t("form.goodsQuality")}
-          <select
-            value={form.goodsQuality}
-            onChange={(e) => setForm({ ...form, goodsQuality: e.target.value as GoodsQuality | "" })}
-          >
-            <option value="">{t("form.optionalSelect")}</option>
-            {QUALITY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {t(o.labelKey as MessageKey)}
-              </option>
-            ))}
-          </select>
         </label>
         <label>
           {t("form.goodsUnit")}

@@ -23,7 +23,6 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [channelFilter, setChannelFilter] = useState("all");
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const pageSize = 30;
@@ -44,13 +43,12 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
       tx.declarationNumber.toLowerCase().includes(q) ||
       tx.airwayBill.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || tx.clearanceStatus === statusFilter;
-    const matchesChannel = channelFilter === "all" || tx.channel === channelFilter;
-    return matchesQuery && matchesStatus && matchesChannel;
+    return matchesQuery && matchesStatus;
   });
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter, channelFilter]);
+  }, [query, statusFilter]);
 
   const statusOptions = Array.from(new Set(transactions.map((tx) => tx.clearanceStatus)));
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
@@ -103,12 +101,6 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
               </option>
             ))}
           </select>
-          <select className="filter-select" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)}>
-            <option value="all">{t("list.filterAllChannels")}</option>
-            <option value="green">GREEN</option>
-            <option value="yellow">YELLOW</option>
-            <option value="red">RED</option>
-          </select>
         </div>
       </div>
       {error ? <p className="error">{error}</p> : null}
@@ -118,10 +110,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
             <tr>
               <th>{t("list.col.client")}</th>
               <th>{t("list.col.shippingCompany")}</th>
-              <th>{t("list.col.declaration")}</th>
               <th>{t("list.col.status")}</th>
-              <th>{t("list.col.channel")}</th>
-              <th>{t("list.col.value")}</th>
               <th>{t("list.col.createdAt")}</th>
             </tr>
           </thead>
@@ -130,18 +119,15 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
               <tr key={tx.id} className="clickable-row" onClick={() => navigate(`/transactions/${tx.id}`)}>
                 <td>{tx.clientName}</td>
                 <td>{tx.shippingCompanyName}</td>
-                <td>{tx.declarationNumber}</td>
                 <td>
                   <span className="status-badge">{tx.clearanceStatus}</span>
                 </td>
-                <td>{tx.channel.toUpperCase()}</td>
-                <td>{tx.invoiceValue.toLocaleString(numberLocale)}</td>
                 <td>{new Date(tx.createdAt).toLocaleString(numberLocale)}</td>
               </tr>
             ))}
             {!filteredTransactions.length && (
               <tr>
-                <td colSpan={7}>{t("list.noResults")}</td>
+                <td colSpan={4}>{t("list.noResults")}</td>
               </tr>
             )}
           </tbody>

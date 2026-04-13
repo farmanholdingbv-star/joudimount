@@ -19,7 +19,6 @@ class _TransactionsTabState extends State<TransactionsTab> {
   String _error = '';
   String _query = '';
   String _status = 'all';
-  String _channel = 'all';
 
   @override
   void initState() {
@@ -54,8 +53,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
           (tx['declarationNumber'] ?? '').toString().toLowerCase().contains(q) ||
           (tx['airwayBill'] ?? '').toString().toLowerCase().contains(q);
       final matchesS = _status == 'all' || (tx['clearanceStatus'] ?? '') == _status;
-      final matchesC = _channel == 'all' || (tx['channel'] ?? '') == _channel;
-      return matchesQ && matchesS && matchesC;
+      return matchesQ && matchesS;
     }).toList();
 
     return RefreshIndicator(
@@ -86,31 +84,12 @@ class _TransactionsTabState extends State<TransactionsTab> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _status,
-                  items: ['all', ...statuses]
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e == 'all' ? l10n.allStatuses : e)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _status = v ?? 'all'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _channel,
-                  items: [
-                    DropdownMenuItem(value: 'all', child: Text(l10n.allChannels)),
-                    const DropdownMenuItem(value: 'green', child: Text('green')),
-                    const DropdownMenuItem(value: 'yellow', child: Text('yellow')),
-                    const DropdownMenuItem(value: 'red', child: Text('red')),
-                  ],
-                  onChanged: (v) => setState(() => _channel = v ?? 'all'),
-                ),
-              ),
-            ],
+          DropdownButtonFormField<String>(
+            value: _status,
+            items: ['all', ...statuses]
+                .map((e) => DropdownMenuItem(value: e, child: Text(e == 'all' ? l10n.allStatuses : e)))
+                .toList(),
+            onChanged: (v) => setState(() => _status = v ?? 'all'),
           ),
           const SizedBox(height: 8),
           if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
@@ -118,9 +97,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
           ...filtered.map(
             (tx) => Card(
               child: ListTile(
-                title: Text('${tx['declarationNumber']} - ${tx['clientName']}'),
+                title: Text('${tx['clientName']}'),
                 subtitle: Text('${tx['shippingCompanyName']} • ${tx['clearanceStatus']}'),
-                trailing: Text((tx['channel'] ?? '').toString().toUpperCase()),
                 onTap: () async {
                   await Navigator.of(context).push<bool>(
                     MaterialPageRoute(

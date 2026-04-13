@@ -76,6 +76,12 @@ export interface Transaction {
   invoiceToWeightRateAedPerKg?: number;
   containerArrivalDate?: string;
   documentArrivalDate?: string;
+  fileNumber?: string;
+  containerNumbers?: string[];
+  unitCount?: number;
+  isStopped?: boolean;
+  holdReason?: string;
+  stopReason?: string;
   documentPostalNumber?: string;
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;

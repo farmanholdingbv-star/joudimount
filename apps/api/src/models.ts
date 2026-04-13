@@ -69,6 +69,12 @@ interface TransactionDoc {
   invoiceToWeightRateAedPerKg?: number;
   containerArrivalDate?: Date;
   documentArrivalDate?: Date;
+  fileNumber?: string;
+  containerNumbers?: string[];
+  unitCount?: number;
+  isStopped?: boolean;
+  holdReason?: string;
+  stopReason?: string;
   documentPostalNumber?: string;
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
@@ -139,6 +145,12 @@ const transactionSchema = new Schema<TransactionDoc>(
     invoiceToWeightRateAedPerKg: { type: Number },
     containerArrivalDate: { type: Date },
     documentArrivalDate: { type: Date },
+    fileNumber: { type: String },
+    containerNumbers: [{ type: String }],
+    unitCount: { type: Number },
+    isStopped: { type: Boolean, default: false },
+    holdReason: { type: String },
+    stopReason: { type: String },
     documentPostalNumber: { type: String },
     goodsQuantity: { type: Number },
     goodsQuality: {

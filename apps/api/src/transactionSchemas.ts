@@ -8,10 +8,50 @@ export const optionalPositiveNumber = z.preprocess(emptyToUndef, z.coerce.number
 export const optionalNonNegativeNumber = z.preprocess(emptyToUndef, z.coerce.number().nonnegative().optional());
 
 export const optionalNonNegativeInt = z.preprocess(emptyToUndef, z.coerce.number().int().nonnegative().optional());
+export const optionalBoolean = z.preprocess(
+  (v) => (v === "" || v === null || v === undefined ? undefined : v),
+  z.coerce.boolean().optional(),
+);
 
 export const optionalDateIso = z.preprocess(emptyToUndef, z.string().optional());
 
 export const optionalPostal = z.preprocess(emptyToUndef, z.string().max(120).optional());
+export const optionalFileNumber = z.preprocess(emptyToUndef, z.string().max(120).optional());
+export const optionalStopReason = z.preprocess(emptyToUndef, z.string().max(500).optional());
+export const optionalHoldReason = z.preprocess(emptyToUndef, z.string().max(500).optional());
+
+const parseOptionalStringArray = (v: unknown): string[] | undefined => {
+  if (v == null || v === "") return undefined;
+  if (Array.isArray(v)) {
+    return v
+      .map((x) => String(x).trim())
+      .filter((x) => x.length > 0);
+  }
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (!s) return undefined;
+    try {
+      const parsed = JSON.parse(s) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((x) => String(x).trim())
+          .filter((x) => x.length > 0);
+      }
+    } catch {
+      // Fallback to CSV/newline parsing.
+    }
+    return s
+      .split(/[\n,]+/)
+      .map((x) => x.trim())
+      .filter((x) => x.length > 0);
+  }
+  return undefined;
+};
+
+export const optionalContainerNumbers = z.preprocess(
+  parseOptionalStringArray,
+  z.array(z.string().min(1).max(60)).max(200).optional(),
+);
 
 export const goodsQualityEnum = z.enum(["new", "like_new", "used", "refurbished", "damaged", "mixed"]);
 
@@ -36,6 +76,12 @@ export const createTransactionPayloadSchema = z.object({
   invoiceToWeightRateAedPerKg: optionalPositiveNumber,
   containerArrivalDate: optionalDateIso,
   documentArrivalDate: optionalDateIso,
+  fileNumber: optionalFileNumber,
+  containerNumbers: optionalContainerNumbers,
+  unitCount: optionalNonNegativeInt,
+  isStopped: optionalBoolean,
+  holdReason: optionalHoldReason,
+  stopReason: optionalStopReason,
   documentPostalNumber: optionalPostal,
   goodsQuantity: optionalNonNegativeNumber,
   goodsQuality: optionalGoodsQuality,
@@ -77,6 +123,12 @@ export const updateTransactionPayloadSchema = z
     invoiceToWeightRateAedPerKg: optionalPositiveNumber,
     containerArrivalDate: optionalDateIso,
     documentArrivalDate: optionalDateIso,
+    fileNumber: optionalFileNumber,
+    containerNumbers: optionalContainerNumbers,
+    unitCount: optionalNonNegativeInt,
+    isStopped: optionalBoolean,
+    holdReason: optionalHoldReason,
+    stopReason: optionalStopReason,
     documentPostalNumber: optionalPostal,
     goodsQuantity: optionalNonNegativeNumber,
     goodsQuality: optionalGoodsQuality,

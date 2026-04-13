@@ -133,9 +133,6 @@ export default function TransactionDetails({ role }: { role: Role }) {
             <strong>{t("details.createdAt")}:</strong> {new Date(transaction.createdAt).toLocaleString(numberLocale)}
           </p>
           <p className="details-item">
-            <strong>{t("details.declaration")}:</strong> {transaction.declarationNumber}
-          </p>
-          <p className="details-item">
             <strong>{t("details.airwayBill")}:</strong> {transaction.airwayBill}
           </p>
           <p className="details-item">
@@ -148,18 +145,8 @@ export default function TransactionDetails({ role }: { role: Role }) {
             <strong>{t("details.origin")}:</strong> {transaction.originCountry}
           </p>
           <p className="details-item">
-            <strong>{t("details.invoiceValue")}:</strong> {transaction.invoiceValue.toLocaleString(numberLocale)}{" "}
-            {t("details.currencySuffix")}
-          </p>
-          <p className="details-item">
             <strong>{t("details.duty")}:</strong> {transaction.customsDuty.toLocaleString(numberLocale)}{" "}
             {t("details.currencySuffix")}
-          </p>
-          <p className="details-item">
-            <strong>{t("details.risk")}:</strong> {transaction.riskLevel.toUpperCase()}
-          </p>
-          <p className="details-item">
-            <strong>{t("details.channel")}:</strong> {transaction.channel.toUpperCase()}
           </p>
           <p className="details-item">
             <strong>{t("details.document")}:</strong> {transaction.documentStatus}
@@ -169,9 +156,6 @@ export default function TransactionDetails({ role }: { role: Role }) {
           </p>
           <p className="details-item">
             <strong>{t("details.payment")}:</strong> {transaction.paymentStatus}
-          </p>
-          <p className="details-item">
-            <strong>{t("details.releaseCode")}:</strong> {transaction.releaseCode ?? t("details.notIssued")}
           </p>
           {transaction.containerCount != null ? (
             <p className="details-item">
@@ -201,20 +185,37 @@ export default function TransactionDetails({ role }: { role: Role }) {
               {new Date(transaction.documentArrivalDate).toLocaleString(numberLocale)}
             </p>
           ) : null}
-          {transaction.documentPostalNumber ? (
+          {transaction.fileNumber ? (
             <p className="details-item">
-              <strong>{t("details.documentPostalNumber")}:</strong> {transaction.documentPostalNumber}
+              <strong>File Number:</strong> {transaction.fileNumber}
+            </p>
+          ) : null}
+          {transaction.containerNumbers && transaction.containerNumbers.length > 0 ? (
+            <p className="details-item">
+              <strong>Container Numbers:</strong> {transaction.containerNumbers.join(", ")}
+            </p>
+          ) : null}
+          {transaction.unitCount != null ? (
+            <p className="details-item">
+              <strong>Number of Units:</strong> {transaction.unitCount}
+            </p>
+          ) : null}
+          <p className="details-item">
+            <strong>Stopped:</strong> {transaction.isStopped ? "Yes" : "No"}
+          </p>
+          {transaction.holdReason ? (
+            <p className="details-item">
+              <strong>Hold Reason:</strong> {transaction.holdReason}
+            </p>
+          ) : null}
+          {transaction.isStopped && transaction.stopReason ? (
+            <p className="details-item">
+              <strong>Stop Reason:</strong> {transaction.stopReason}
             </p>
           ) : null}
           {transaction.goodsQuantity != null ? (
             <p className="details-item">
               <strong>{t("details.goodsQuantity")}:</strong> {transaction.goodsQuantity.toLocaleString(numberLocale)}
-            </p>
-          ) : null}
-          {transaction.goodsQuality ? (
-            <p className="details-item">
-              <strong>{t("details.goodsQuality")}:</strong>{" "}
-              {t(`form.quality.${transaction.goodsQuality}` as MessageKey)}
             </p>
           ) : null}
           {transaction.goodsUnit ? (

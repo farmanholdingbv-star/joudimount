@@ -4,14 +4,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import AutocompleteField from "./AutocompleteField";
 import { apiFetch } from "./api";
 import { useI18n } from "./i18n/I18nContext";
-const QUALITY_OPTIONS = [
-    { value: "new", labelKey: "form.quality.new" },
-    { value: "like_new", labelKey: "form.quality.like_new" },
-    { value: "used", labelKey: "form.quality.used" },
-    { value: "refurbished", labelKey: "form.quality.refurbished" },
-    { value: "damaged", labelKey: "form.quality.damaged" },
-    { value: "mixed", labelKey: "form.quality.mixed" },
-];
 const UNIT_OPTIONS = [
     { value: "kg", labelKey: "form.unit.kg" },
     { value: "ton", labelKey: "form.unit.ton" },
@@ -46,10 +38,14 @@ const emptyForm = {
     invoiceToWeightRateAedPerKg: "",
     containerArrivalDate: "",
     documentArrivalDate: "",
-    documentPostalNumber: "",
+    fileNumber: "",
+    containerNumbers: "",
+    unitCount: "",
+    isStopped: "no",
+    holdReason: "",
+    stopReason: "",
     goodsQuantity: "",
-    goodsQuality: "",
-    goodsUnit: "",
+    goodsUnit: "cbm",
 };
 function appendOptionalNumber(fd, key, raw) {
     const t = raw.trim();
@@ -129,10 +125,14 @@ export default function TransactionForm({ role }) {
                 invoiceToWeightRateAedPerKg: data.invoiceToWeightRateAedPerKg != null ? String(data.invoiceToWeightRateAedPerKg) : "",
                 containerArrivalDate: isoToDateInput(data.containerArrivalDate),
                 documentArrivalDate: isoToDateInput(data.documentArrivalDate),
-                documentPostalNumber: data.documentPostalNumber ?? "",
+                fileNumber: data.fileNumber ?? "",
+                containerNumbers: data.containerNumbers?.join(", ") ?? "",
+                unitCount: data.unitCount != null ? String(data.unitCount) : "",
+                isStopped: data.isStopped ? "yes" : "no",
+                holdReason: data.holdReason ?? "",
+                stopReason: data.stopReason ?? "",
                 goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
-                goodsQuality: data.goodsQuality ?? "",
-                goodsUnit: data.goodsUnit ?? "",
+                goodsUnit: data.goodsUnit ?? "cbm",
             });
             setRetainedDocs(data.documentAttachments ?? []);
             setNewDocFiles([]);
@@ -217,11 +217,23 @@ export default function TransactionForm({ role }) {
                 fd.append("containerArrivalDate", form.containerArrivalDate);
             if (form.documentArrivalDate)
                 fd.append("documentArrivalDate", form.documentArrivalDate);
-            if (form.documentPostalNumber.trim())
-                fd.append("documentPostalNumber", form.documentPostalNumber.trim());
+            if (form.fileNumber.trim())
+                fd.append("fileNumber", form.fileNumber.trim());
+            if (form.containerNumbers.trim()) {
+                const values = form.containerNumbers
+                    .split(/[\n,]+/)
+                    .map((v) => v.trim())
+                    .filter(Boolean);
+                if (values.length)
+                    fd.append("containerNumbers", JSON.stringify(values));
+            }
+            appendOptionalNumber(fd, "unitCount", form.unitCount);
+            fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
+            if (form.holdReason.trim())
+                fd.append("holdReason", form.holdReason.trim());
+            if (form.stopReason.trim())
+                fd.append("stopReason", form.stopReason.trim());
             appendOptionalNumber(fd, "goodsQuantity", form.goodsQuantity);
-            if (form.goodsQuality)
-                fd.append("goodsQuality", form.goodsQuality);
             if (form.goodsUnit)
                 fd.append("goodsUnit", form.goodsUnit);
             if (isEdit) {
@@ -257,5 +269,5 @@ export default function TransactionForm({ role }) {
                             const s = shippingCompanies.find((x) => x.id === key);
                             if (s)
                                 setForm((f) => ({ ...f, shippingCompanyName: s.companyName, shippingCompanyId: s.id }));
-                        }, suggestions: shippingSuggestions, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.shippingCompanyId"), _jsx("input", { value: form.shippingCompanyId ?? "", onChange: (e) => setForm({ ...form, shippingCompanyId: e.target.value }) })] }), _jsxs("label", { children: [t("form.airwayBill"), _jsx("input", { value: form.airwayBill, onChange: (e) => setForm({ ...form, airwayBill: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: [t("form.invoiceValue"), _jsx("input", { type: "number", value: form.invoiceValue, onChange: (e) => setForm({ ...form, invoiceValue: Number(e.target.value) }), min: 1, required: true })] }), _jsxs("label", { children: [t("form.invoiceToWeightRate"), _jsx("input", { type: "number", min: 0, step: "any", value: form.invoiceToWeightRateAedPerKg, onChange: (e) => setForm({ ...form, invoiceToWeightRateAedPerKg: e.target.value }), placeholder: t("form.invoiceToWeightRateHint") })] }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), placeholder: derivedWeight != null ? `${t("form.derivedWeight")}: ${derivedWeight.toFixed(3)}` : undefined })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerArrivalDate"), _jsx("input", { type: "date", value: form.containerArrivalDate, onChange: (e) => setForm({ ...form, containerArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.documentArrivalDate"), _jsx("input", { type: "date", value: form.documentArrivalDate, onChange: (e) => setForm({ ...form, documentArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.documentPostalNumber"), _jsx("input", { value: form.documentPostalNumber, onChange: (e) => setForm({ ...form, documentPostalNumber: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuality"), _jsxs("select", { value: form.goodsQuality, onChange: (e) => setForm({ ...form, goodsQuality: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), QUALITY_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.documentStatus"), _jsxs("select", { value: form.documentStatus, onChange: (e) => setForm({ ...form, documentStatus: e.target.value }), children: [_jsx("option", { value: "copy_received", children: "copy_received" }), _jsx("option", { value: "original_received", children: "original_received" }), _jsx("option", { value: "telex_release", children: "telex_release" })] })] }), _jsxs("label", { children: [t("form.paymentStatus"), _jsxs("select", { value: form.paymentStatus, onChange: (e) => setForm({ ...form, paymentStatus: e.target.value }), disabled: role === "employee", children: [_jsx("option", { value: "pending", children: "pending" }), _jsx("option", { value: "paid", children: "paid" })] })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), isEdit && retainedDocs.length > 0 ? (_jsx("ul", { className: "retained-docs", children: retainedDocs.map((d) => (_jsxs("li", { children: [_jsx("span", { children: d.originalName }), _jsx("button", { type: "button", className: "link-button", onClick: () => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path)), children: t("form.removeAttachment") })] }, d.path))) })) : null, _jsx("input", { type: "file", accept: "image/*,application/pdf", multiple: true, onChange: (e) => setNewDocFiles(Array.from(e.target.files ?? [])) }), newDocFiles.length > 0 ? (_jsxs("p", { className: "muted", children: [newDocFiles.length, " ", t("form.filesSelected")] })) : null] }), _jsx("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? t("form.saving") : t("form.save") })] })] }));
+                        }, suggestions: shippingSuggestions, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.shippingCompanyId"), _jsx("input", { value: form.shippingCompanyId ?? "", onChange: (e) => setForm({ ...form, shippingCompanyId: e.target.value }) })] }), _jsxs("label", { children: [t("form.airwayBill"), _jsx("input", { value: form.airwayBill, onChange: (e) => setForm({ ...form, airwayBill: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: [t("form.invoiceValue"), _jsx("input", { type: "number", value: form.invoiceValue, onChange: (e) => setForm({ ...form, invoiceValue: Number(e.target.value) }), min: 1, required: true })] }), _jsxs("label", { children: [t("form.invoiceToWeightRate"), _jsx("input", { type: "number", min: 0, step: "any", value: form.invoiceToWeightRateAedPerKg, onChange: (e) => setForm({ ...form, invoiceToWeightRateAedPerKg: e.target.value }), placeholder: t("form.invoiceToWeightRateHint") })] }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), placeholder: derivedWeight != null ? `${t("form.derivedWeight")}: ${derivedWeight.toFixed(3)}` : undefined })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerArrivalDate"), _jsx("input", { type: "date", value: form.containerArrivalDate, onChange: (e) => setForm({ ...form, containerArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.documentArrivalDate"), _jsx("input", { type: "date", value: form.documentArrivalDate, onChange: (e) => setForm({ ...form, documentArrivalDate: e.target.value }) })] }), _jsxs("label", { children: ["File Number", _jsx("input", { value: form.fileNumber, onChange: (e) => setForm({ ...form, fileNumber: e.target.value }) })] }), _jsxs("label", { children: ["Container Numbers", _jsx("textarea", { value: form.containerNumbers, onChange: (e) => setForm({ ...form, containerNumbers: e.target.value }), rows: 3, placeholder: "e.g. MSKU1234567, TGHU9876543" })] }), _jsxs("label", { children: ["Number of Units", _jsx("input", { type: "number", min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] }), _jsxs("label", { children: ["Stop Transaction", _jsxs("select", { value: form.isStopped, onChange: (e) => setForm({ ...form, isStopped: e.target.value }), children: [_jsx("option", { value: "no", children: "No" }), _jsx("option", { value: "yes", children: "Yes" })] })] }), _jsxs("label", { children: ["Hold Reason", _jsx("input", { value: form.holdReason, onChange: (e) => setForm({ ...form, holdReason: e.target.value }) })] }), form.isStopped === "yes" ? (_jsxs("label", { children: ["Stop Reason", _jsx("textarea", { value: form.stopReason, onChange: (e) => setForm({ ...form, stopReason: e.target.value }), rows: 2, required: true })] })) : null, _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.documentStatus"), _jsxs("select", { value: form.documentStatus, onChange: (e) => setForm({ ...form, documentStatus: e.target.value }), children: [_jsx("option", { value: "copy_received", children: "copy_received" }), _jsx("option", { value: "original_received", children: "original_received" }), _jsx("option", { value: "telex_release", children: "telex_release" })] })] }), _jsxs("label", { children: [t("form.paymentStatus"), _jsxs("select", { value: form.paymentStatus, onChange: (e) => setForm({ ...form, paymentStatus: e.target.value }), disabled: role === "employee", children: [_jsx("option", { value: "pending", children: "pending" }), _jsx("option", { value: "paid", children: "paid" })] })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), isEdit && retainedDocs.length > 0 ? (_jsx("ul", { className: "retained-docs", children: retainedDocs.map((d) => (_jsxs("li", { children: [_jsx("span", { children: d.originalName }), _jsx("button", { type: "button", className: "link-button", onClick: () => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path)), children: t("form.removeAttachment") })] }, d.path))) })) : null, _jsx("input", { type: "file", accept: "image/*,application/pdf", multiple: true, onChange: (e) => setNewDocFiles(Array.from(e.target.files ?? [])) }), newDocFiles.length > 0 ? (_jsxs("p", { className: "muted", children: [newDocFiles.length, " ", t("form.filesSelected")] })) : null] }), _jsx("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? t("form.saving") : t("form.save") })] })] }));
 }
