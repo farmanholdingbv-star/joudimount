@@ -2,12 +2,49 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Api {
-  /// Use `http://10.0.2.2:4000` on Android emulator to reach the host machine.
-  static const String baseUrl = 'http://localhost:4000';
+  static void _clearSessionIfUnauthorized(int statusCode) {
+    if (statusCode != 401) return;
+    SharedPreferences.getInstance().then((prefs) async {
+      await prefs.remove('token');
+      await prefs.remove('user');
+    });
+  }
+
+  /// Optional override: use a **real** LAN IP, e.g.
+  /// `flutter run --dart-define=API_BASE=http://192.168.1.10:4000`
+  /// (do not use the words `your_pc_lan_ip` — that was documentation, not a hostname).
+  static const String _apiBaseFromEnv = String.fromEnvironment('API_BASE');
+
+  static bool _isInvalidApiBasePlaceholder(String raw) {
+    final s = raw.trim().toLowerCase();
+    if (s.isEmpty) return true;
+    // Common mistake: copying doc text instead of an actual IP.
+    if (s.contains('your_pc') || s.contains('<') || s.contains('>')) return true;
+    final uri = Uri.tryParse(raw.trim());
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return true;
+    return false;
+  }
+
+  /// API origin. On Android emulator, `localhost` is the device — use host alias [10.0.2.2].
+  /// On a **physical phone**, use [API_BASE] with your PC’s real LAN IP (e.g. 192.168.x.x), or
+  /// `adb reverse tcp:4000 tcp:4000` and `API_BASE=http://127.0.0.1:4000`.
+  static String get baseUrl {
+    if (_apiBaseFromEnv.isNotEmpty && !_isInvalidApiBasePlaceholder(_apiBaseFromEnv)) {
+      final t = _apiBaseFromEnv.trim();
+      return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
+    }
+    const port = 4000;
+    if (kIsWeb) return 'http://192.168.1.104:$port';
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://192.168.1.104:$port';
+    }
+    return 'http://192.168.1.104:$port';
+  }
 
   static Future<Map<String, String>> _authHeaders({bool jsonBody = true}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,6 +74,7 @@ class Api {
     final uri = path.startsWith('http') ? Uri.parse(path) : Uri.parse('$baseUrl$path');
     final res = await http.get(uri, headers: headers);
     if (res.statusCode >= 200 && res.statusCode < 300) return res.bodyBytes;
+    _clearSessionIfUnauthorized(res.statusCode);
     throw Exception('Failed to load asset');
   }
 
@@ -97,6 +135,7 @@ class Api {
   }
 
   static dynamic _handle(http.Response res) {
+    _clearSessionIfUnauthorized(res.statusCode);
     dynamic body;
     if (res.body.isNotEmpty) {
       try {

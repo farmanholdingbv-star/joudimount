@@ -3,7 +3,9 @@ import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import TransactionDetails from "./TransactionDetails";
 import TransactionForm from "./TransactionForm";
 import ClientsPage from "./ClientsPage";
+import ClientDetailPage from "./ClientDetailPage";
 import ShippingCompaniesPage from "./ShippingCompaniesPage";
+import ShippingCompanyDetailPage from "./ShippingCompanyDetailPage";
 import EmployeeSection from "./EmployeeSection";
 import Login from "./Login";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -209,7 +211,9 @@ function AuthenticatedRoutes({ user, onLogout }: { user: AuthUser; onLogout: () 
       <Route path="/" element={<TransactionsList role={role} user={user} onLogout={onLogout} />} />
       <Route path="/employees" element={<EmployeeSection role={role} />} />
       <Route path="/clients" element={<ClientsPage role={role} />} />
+      <Route path="/clients/:id" element={<ClientDetailPage />} />
       <Route path="/shipping-companies" element={<ShippingCompaniesPage role={role} />} />
+      <Route path="/shipping-companies/:id" element={<ShippingCompanyDetailPage />} />
       <Route path="/transactions/new" element={<TransactionForm role={role} />} />
       <Route path="/transactions/:id/edit" element={<TransactionForm role={role} />} />
       <Route path="/transactions/:id" element={<TransactionDetails role={role} />} />

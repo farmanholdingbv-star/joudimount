@@ -137,6 +137,9 @@ function mapTransaction(doc: any): Transaction {
     shippingCompanyId: doc.shippingCompanyId,
     shippingCompanyName: doc.shippingCompanyName ?? "Unknown Shipping Company",
     declarationNumber: doc.declarationNumber,
+    declarationDate: mapOptionalDate(doc.declarationDate),
+    declarationType: doc.declarationType,
+    portType: doc.portType,
     airwayBill: doc.airwayBill,
     hsCode: doc.hsCode,
     goodsDescription: doc.goodsDescription,
@@ -176,6 +179,11 @@ export async function listClients() {
   return docs.map(mapClient);
 }
 
+export async function getClientById(id: string): Promise<Client | null> {
+  const doc = await ClientModel.findById(id).lean();
+  return doc ? mapClient(doc) : null;
+}
+
 export async function createClient(input: Omit<Client, "id">): Promise<Client> {
   const created = await ClientModel.create(input);
   return mapClient(created.toObject());
@@ -209,6 +217,11 @@ function mapShippingCompany(doc: any) {
 export async function listShippingCompanies() {
   const docs = await ShippingCompanyModel.find().sort({ createdAt: -1 }).lean();
   return docs.map(mapShippingCompany);
+}
+
+export async function getShippingCompanyById(id: string) {
+  const doc = await ShippingCompanyModel.findById(id).lean();
+  return doc ? mapShippingCompany(doc) : null;
 }
 
 export async function createShippingCompany(input: {
@@ -309,6 +322,10 @@ type CreateTransactionFields = Pick<
   Partial<
     Pick<
       Transaction,
+      | "declarationNumber"
+      | "declarationDate"
+      | "declarationType"
+      | "portType"
       | "documentAttachments"
       | "containerCount"
       | "goodsWeightKg"
@@ -332,16 +349,17 @@ export async function createTransaction(input: CreateTransactionFields) {
   const risk = assessRisk(input);
   const status: ClearanceStatus = risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
   const nextCounter = await getNextDeclarationCounter();
-  const { containerArrivalDate, documentArrivalDate, ...restInput } = input;
+  const { containerArrivalDate, documentArrivalDate, declarationDate, declarationNumber, ...restInput } = input;
   const created = await TransactionModel.create({
     ...restInput,
     ...risk,
-    declarationNumber: generateDeclarationNumber(nextCounter),
+    declarationNumber: declarationNumber ?? generateDeclarationNumber(nextCounter),
     documentStatus: "copy_received",
     paymentStatus: "pending",
     xrayResult: risk.channel === "red" ? "manual_inspection" : "not_required",
     customsDuty: calculateDuty(input.invoiceValue),
     clearanceStatus: status,
+    declarationDate: declarationDate ? new Date(declarationDate) : undefined,
     containerArrivalDate: containerArrivalDate ? new Date(containerArrivalDate) : undefined,
     documentArrivalDate: documentArrivalDate ? new Date(documentArrivalDate) : undefined,
   });
@@ -389,6 +407,10 @@ export async function updateTransaction(
       | "clientId"
       | "shippingCompanyId"
       | "shippingCompanyName"
+      | "declarationNumber"
+      | "declarationDate"
+      | "declarationType"
+      | "portType"
       | "airwayBill"
       | "hsCode"
       | "goodsDescription"
@@ -428,8 +450,11 @@ export async function updateTransaction(
   const suggestedStatus: ClearanceStatus =
     risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
 
-  const { containerArrivalDate, documentArrivalDate, ...rest } = input;
+  const { containerArrivalDate, documentArrivalDate, declarationDate, ...rest } = input;
   const datePatch: Record<string, unknown> = { ...rest };
+  if (declarationDate !== undefined) {
+    datePatch.declarationDate = declarationDate ? new Date(declarationDate) : null;
+  }
   if (containerArrivalDate !== undefined) {
     datePatch.containerArrivalDate = containerArrivalDate ? new Date(containerArrivalDate) : null;
   }

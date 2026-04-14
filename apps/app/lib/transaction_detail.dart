@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -163,6 +164,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final numberFormat = intl.NumberFormat.decimalPattern(locale);
     final canEdit = widget.role != 'accountant';
     final canAccounting = widget.role == 'manager' || widget.role == 'accountant';
     final paid = tx?['paymentStatus'] == 'paid';
@@ -210,11 +213,20 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                   children: [
                     _kv(l10n.client, '${tx!['clientName']}'),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
+                    _kv(l10n.declaration, '${tx!['declarationNumber']}'),
+                    if (tx!['declarationDate'] != null)
+                      _kv('Declaration Date', _formatDateTime('${tx!['declarationDate']}', locale)),
+                    if (tx!['declarationType'] != null && tx!['declarationType'].toString().isNotEmpty)
+                      _kv('Declaration Type', '${tx!['declarationType']}'),
+                    if (tx!['portType'] != null && tx!['portType'].toString().isNotEmpty) _kv('Port Type', '${tx!['portType']}'),
+                    if (tx!['shippingCompanyId'] != null && tx!['shippingCompanyId'].toString().isNotEmpty)
+                      _kv(l10n.shippingCompanyIdOptional, '${tx!['shippingCompanyId']}'),
                     _kv(l10n.airwayBill, '${tx!['airwayBill']}'),
                     _kv(l10n.hsCode, '${tx!['hsCode']}'),
                     _kv(l10n.goods, '${tx!['goodsDescription']}'),
                     _kv(l10n.origin, '${tx!['originCountry']}'),
-                    _kv(l10n.duty, '${tx!['customsDuty']}'),
+                    _kv(l10n.invoiceValue, numberFormat.format(tx!['invoiceValue'] ?? 0)),
+                    _kv(l10n.duty, numberFormat.format(tx!['customsDuty'] ?? 0)),
                     _kv(l10n.document, '${tx!['documentStatus']}'),
                     _kv(l10n.status, '${tx!['clearanceStatus']}'),
                     _kv(l10n.payment, '${tx!['paymentStatus']}'),
@@ -230,13 +242,11 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                       _kv('Container Numbers', (tx!['containerNumbers'] as List).map((e) => '$e').join(', ')),
                     if (tx!['unitCount'] != null) _kv('Number of Units', '${tx!['unitCount']}'),
                     _kv('Stopped', tx!['isStopped'] == true ? 'Yes' : 'No'),
-                    if (tx!['holdReason'] != null && tx!['holdReason'].toString().isNotEmpty)
-                      _kv('Hold Reason', '${tx!['holdReason']}'),
                     if (tx!['isStopped'] == true && tx!['stopReason'] != null && tx!['stopReason'].toString().isNotEmpty)
                       _kv('Stop Reason', '${tx!['stopReason']}'),
                     if (tx!['goodsQuantity'] != null) _kv(l10n.txGoodsQty, '${tx!['goodsQuantity']}'),
-                    if (tx!['goodsUnit'] != null) _kv(l10n.txGoodsUnit, '${tx!['goodsUnit']}'),
-                    _kv(l10n.createdAt, '${tx!['createdAt']}'),
+                    if (tx!['goodsUnit'] != null) _kv(l10n.txGoodsUnit, _unitLabel('${tx!['goodsUnit']}', l10n)),
+                    _kv(l10n.createdAt, _formatDateTime('${tx!['createdAt']}', locale)),
                     const SizedBox(height: 12),
                     if ((tx!['documentAttachments'] as List?)?.isNotEmpty ?? false) ...[
                       Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
@@ -278,6 +288,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     return Card(
       child: ListTile(
         title: Text(name),
+        onTap: () => _openAttachment(path, name),
         subtitle: isImg
             ? SizedBox(
                 height: 120,
@@ -290,9 +301,56 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                   },
                 ),
               )
-            : const Text('PDF / file'),
+            : const Text('PDF / file (tap to open)'),
       ),
     );
+  }
+
+  String _formatDateTime(String raw, String locale) {
+    final dt = DateTime.tryParse(raw);
+    if (dt == null) return raw;
+    return intl.DateFormat.yMd(locale).add_jm().format(dt.toLocal());
+  }
+
+  String _unitLabel(String unit, AppLocalizations l10n) {
+    switch (unit) {
+      case 'kg':
+        return l10n.txUnitKg;
+      case 'ton':
+        return l10n.txUnitTon;
+      case 'piece':
+        return l10n.txUnitPiece;
+      case 'carton':
+        return l10n.txUnitCarton;
+      case 'pallet':
+        return l10n.txUnitPallet;
+      case 'cbm':
+        return l10n.txUnitCbm;
+      case 'liter':
+        return l10n.txUnitLiter;
+      case 'set':
+        return l10n.txUnitSet;
+      default:
+        return unit;
+    }
+  }
+
+  Future<void> _openAttachment(String path, String name) async {
+    try {
+      final bytes = await Api.getBytes(path);
+      final ext = name.toLowerCase();
+      final mime = ext.endsWith('.pdf') ? 'application/pdf' : null;
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile.fromData(bytes, name: name, mimeType: mime)],
+          title: name,
+          subject: name,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Widget _kv(String k, String v) => Card(

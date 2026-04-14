@@ -4,7 +4,9 @@ import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import TransactionDetails from "./TransactionDetails";
 import TransactionForm from "./TransactionForm";
 import ClientsPage from "./ClientsPage";
+import ClientDetailPage from "./ClientDetailPage";
 import ShippingCompaniesPage from "./ShippingCompaniesPage";
+import ShippingCompanyDetailPage from "./ShippingCompanyDetailPage";
 import EmployeeSection from "./EmployeeSection";
 import Login from "./Login";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -70,5 +72,5 @@ function NotFoundPage() {
 }
 function AuthenticatedRoutes({ user, onLogout }) {
     const role = user.role;
-    return (_jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(TransactionsList, { role: role, user: user, onLogout: onLogout }) }), _jsx(Route, { path: "/employees", element: _jsx(EmployeeSection, { role: role }) }), _jsx(Route, { path: "/clients", element: _jsx(ClientsPage, { role: role }) }), _jsx(Route, { path: "/shipping-companies", element: _jsx(ShippingCompaniesPage, { role: role }) }), _jsx(Route, { path: "/transactions/new", element: _jsx(TransactionForm, { role: role }) }), _jsx(Route, { path: "/transactions/:id/edit", element: _jsx(TransactionForm, { role: role }) }), _jsx(Route, { path: "/transactions/:id", element: _jsx(TransactionDetails, { role: role }) }), _jsx(Route, { path: "*", element: _jsx(NotFoundPage, {}) })] }));
+    return (_jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(TransactionsList, { role: role, user: user, onLogout: onLogout }) }), _jsx(Route, { path: "/employees", element: _jsx(EmployeeSection, { role: role }) }), _jsx(Route, { path: "/clients", element: _jsx(ClientsPage, { role: role }) }), _jsx(Route, { path: "/clients/:id", element: _jsx(ClientDetailPage, {}) }), _jsx(Route, { path: "/shipping-companies", element: _jsx(ShippingCompaniesPage, { role: role }) }), _jsx(Route, { path: "/shipping-companies/:id", element: _jsx(ShippingCompanyDetailPage, {}) }), _jsx(Route, { path: "/transactions/new", element: _jsx(TransactionForm, { role: role }) }), _jsx(Route, { path: "/transactions/:id/edit", element: _jsx(TransactionForm, { role: role }) }), _jsx(Route, { path: "/transactions/:id", element: _jsx(TransactionDetails, { role: role }) }), _jsx(Route, { path: "*", element: _jsx(NotFoundPage, {}) })] }));
 }

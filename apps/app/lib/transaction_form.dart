@@ -20,6 +20,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _client = TextEditingController();
   final _shippingName = TextEditingController();
   final _shippingId = TextEditingController();
+  final _declarationNumberInput = TextEditingController();
+  final _declarationDateInput = TextEditingController();
+  final _declarationTypeInput = TextEditingController();
+  final _portTypeInput = TextEditingController();
   final _awb = TextEditingController();
   final _hs = TextEditingController();
   final _goods = TextEditingController();
@@ -33,7 +37,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _fileNumber = TextEditingController();
   final _containerNumbers = TextEditingController();
   final _unitCount = TextEditingController();
-  final _holdReason = TextEditingController();
   final _stopReason = TextEditingController();
   final _qty = TextEditingController();
   String? _unit = 'cbm';
@@ -47,6 +50,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   bool _saving = false;
   String _error = '';
   bool _loadingTx = false;
+  String? _releaseCode;
+  String? _clearanceStatus;
+  double? _customsDuty;
 
   bool get _isEdit => widget.transactionId != null;
 
@@ -87,6 +93,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _client.text = (tx['clientName'] ?? '').toString();
       _shippingName.text = (tx['shippingCompanyName'] ?? '').toString();
       _shippingId.text = (tx['shippingCompanyId'] ?? '').toString();
+      _declarationNumberInput.text = (tx['declarationNumber'] ?? '').toString();
+      _declarationDateInput.text = _isoToDateInput(tx['declarationDate']);
+      _declarationTypeInput.text = (tx['declarationType'] ?? '').toString();
+      _portTypeInput.text = (tx['portType'] ?? '').toString();
       _awb.text = (tx['airwayBill'] ?? '').toString();
       _hs.text = (tx['hsCode'] ?? '').toString();
       _goods.text = (tx['goodsDescription'] ?? '').toString();
@@ -108,11 +118,14 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       }
       if (tx['unitCount'] != null) _unitCount.text = tx['unitCount'].toString();
       _isStopped = tx['isStopped'] == true;
-      _holdReason.text = (tx['holdReason'] ?? '').toString();
       _stopReason.text = (tx['stopReason'] ?? '').toString();
       if (tx['goodsQuantity'] != null) _qty.text = tx['goodsQuantity'].toString();
       _unit = tx['goodsUnit']?.toString();
       if (_unit != null && _unit!.isEmpty) _unit = null;
+      _releaseCode = tx['releaseCode']?.toString();
+      _clearanceStatus = tx['clearanceStatus']?.toString();
+      final dutyNum = tx['customsDuty'];
+      _customsDuty = dutyNum is num ? dutyNum.toDouble() : null;
       final att = tx['documentAttachments'];
       if (att is List) {
         _retainedDocs = att.cast<Map<String, dynamic>>();
@@ -128,6 +141,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final body = <String, dynamic>{
       'clientName': _client.text.trim(),
       'shippingCompanyName': _shippingName.text.trim(),
+      'declarationNumber': _declarationNumberInput.text.trim(),
+      'declarationDate': _declarationDateInput.text.trim(),
+      'declarationType': _declarationTypeInput.text.trim(),
+      'portType': _portTypeInput.text.trim(),
       'airwayBill': _awb.text.trim(),
       'hsCode': _hs.text.trim(),
       'goodsDescription': _goods.text.trim(),
@@ -138,6 +155,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     };
     final sid = _shippingId.text.trim();
     if (sid.isNotEmpty) body['shippingCompanyId'] = sid;
+    if (_declarationNumberInput.text.trim().isEmpty) body.remove('declarationNumber');
+    if (_declarationDateInput.text.trim().isEmpty) body.remove('declarationDate');
+    if (_declarationTypeInput.text.trim().isEmpty) body.remove('declarationType');
+    if (_portTypeInput.text.trim().isEmpty) body.remove('portType');
     void addD(String k, TextEditingController c) {
       final v = double.tryParse(c.text.trim());
       if (v != null) body[k] = v;
@@ -148,6 +169,14 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       if (v != null) body[k] = v;
     }
 
+    final parsedWeight = double.tryParse(_weight.text.trim());
+    if (parsedWeight == null) {
+      final invoice = double.tryParse(_value.text.trim());
+      final rate = double.tryParse(_rate.text.trim());
+      if (invoice != null && rate != null && rate > 0) {
+        body['goodsWeightKg'] = invoice / rate;
+      }
+    }
     addD('invoiceToWeightRateAedPerKg', _rate);
     addD('goodsWeightKg', _weight);
     addI('containerCount', _containers);
@@ -165,7 +194,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final unitCount = int.tryParse(_unitCount.text.trim());
     if (unitCount != null) body['unitCount'] = unitCount;
     body['isStopped'] = _isStopped;
-    if (_holdReason.text.trim().isNotEmpty) body['holdReason'] = _holdReason.text.trim();
     if (_stopReason.text.trim().isNotEmpty) body['stopReason'] = _stopReason.text.trim();
     return body;
   }
@@ -242,6 +270,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _client.dispose();
     _shippingName.dispose();
     _shippingId.dispose();
+    _declarationNumberInput.dispose();
+    _declarationDateInput.dispose();
+    _declarationTypeInput.dispose();
+    _portTypeInput.dispose();
     _awb.dispose();
     _hs.dispose();
     _goods.dispose();
@@ -255,7 +287,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _fileNumber.dispose();
     _containerNumbers.dispose();
     _unitCount.dispose();
-    _holdReason.dispose();
     _stopReason.dispose();
     _qty.dispose();
     super.dispose();
@@ -279,12 +310,22 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
 
     final clientOpts = _filterClients();
     final shipOpts = _filterShipping();
+    final invoice = double.tryParse(_value.text.trim());
+    final rate = double.tryParse(_rate.text.trim());
+    final derivedWeight = (invoice != null && rate != null && rate > 0) ? (invoice / rate) : null;
 
     return Scaffold(
       appBar: AppBar(title: Text(_isEdit ? l10n.editTransaction : l10n.newTransaction)),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
+          if (_isEdit) ...[
+            Text('Read-only Transaction Fields', style: Theme.of(context).textTheme.titleMedium),
+            if ((_releaseCode ?? '').isNotEmpty) _readonlyField(l10n.releaseCode, _releaseCode!),
+            if (_customsDuty != null) _readonlyField(l10n.duty, _customsDuty!.toStringAsFixed(2)),
+            if ((_clearanceStatus ?? '').isNotEmpty) _readonlyField(l10n.status, _clearanceStatus!),
+            const SizedBox(height: 8),
+          ],
           _field(_client, l10n.client, onChanged: (_) => setState(() {})),
           if (clientOpts.isNotEmpty)
             Card(
@@ -327,12 +368,21 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               ),
             ),
           _field(_shippingId, l10n.shippingCompanyIdOptional),
+          _field(_declarationNumberInput, 'Declaration Number'),
+          _field(_declarationDateInput, 'Declaration Date (YYYY-MM-DD)'),
+          _field(_declarationTypeInput, 'Declaration Type'),
+          _field(_portTypeInput, 'Port Type'),
           _field(_awb, l10n.airwayBill),
           _field(_hs, l10n.hsCode),
           _field(_origin, l10n.originCountry),
           _field(_value, l10n.invoiceValue, keyboard: TextInputType.number),
           _field(_rate, l10n.txRateAedPerKg, keyboard: const TextInputType.numberWithOptions(decimal: true)),
           _field(_weight, l10n.txGoodsWeightKg, keyboard: const TextInputType.numberWithOptions(decimal: true)),
+          if (derivedWeight != null && _weight.text.trim().isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text('${l10n.weightKg}: ${derivedWeight.toStringAsFixed(3)}', style: Theme.of(context).textTheme.bodySmall),
+            ),
           _field(_containers, l10n.txContainerCount, keyboard: TextInputType.number),
           _field(_containerArrival, l10n.txContainerArrival),
           _field(_documentArrival, l10n.txDocumentArrival),
@@ -340,20 +390,21 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           _field(_containerNumbers, 'Container Numbers', maxLines: 3),
           _field(_unitCount, 'Number of Units', keyboard: TextInputType.number),
           DropdownButtonFormField<bool>(
+            key: ValueKey('tx-stop-$_isStopped'),
             decoration: const InputDecoration(labelText: 'Stop Transaction'),
-            value: _isStopped,
+            initialValue: _isStopped,
             items: const [
               DropdownMenuItem(value: false, child: Text('No')),
               DropdownMenuItem(value: true, child: Text('Yes')),
             ],
             onChanged: (v) => setState(() => _isStopped = v ?? false),
           ),
-          _field(_holdReason, 'Hold Reason'),
           if (_isStopped) _field(_stopReason, 'Stop Reason', maxLines: 2),
           _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true)),
           DropdownButtonFormField<String?>(
+            key: ValueKey('tx-unit-${_unit ?? 'none'}'),
             decoration: InputDecoration(labelText: l10n.txGoodsUnit),
-            value: _unit,
+            initialValue: _unit,
             items: [
               DropdownMenuItem<String?>(value: null, child: Text(l10n.optionalSelect)),
               DropdownMenuItem(value: 'kg', child: Text(l10n.txUnitKg)),
@@ -368,8 +419,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             onChanged: (v) => setState(() => _unit = v),
           ),
           DropdownButtonFormField<String>(
+            key: ValueKey('tx-doc-status-$_docStatus'),
             decoration: InputDecoration(labelText: l10n.documentStatus),
-            value: _docStatus,
+            initialValue: _docStatus,
             items: [
               DropdownMenuItem(value: 'copy_received', child: Text(l10n.txDocumentStatusCopy)),
               DropdownMenuItem(value: 'original_received', child: Text(l10n.txDocumentStatusOriginal)),
@@ -378,8 +430,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             onChanged: (v) => setState(() => _docStatus = v ?? 'copy_received'),
           ),
           DropdownButtonFormField<String>(
+            key: ValueKey('tx-payment-status-$_paymentStatus'),
             decoration: InputDecoration(labelText: l10n.paymentStatus),
-            value: _paymentStatus,
+            initialValue: _paymentStatus,
             items: [
               DropdownMenuItem(value: 'pending', child: Text(l10n.txPaymentPending)),
               DropdownMenuItem(value: 'paid', child: Text(l10n.txPaymentPaid)),
@@ -420,6 +473,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         maxLines: maxLines,
         onChanged: onChanged,
         decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+
+  Widget _readonlyField(String label, String value) {
+    return Card(
+      child: ListTile(
+        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(value),
       ),
     );
   }

@@ -13,6 +13,9 @@ export interface Transaction {
   shippingCompanyId?: string;
   shippingCompanyName: string;
   declarationNumber: string;
+  declarationDate?: string;
+  declarationType?: string;
+  portType?: string;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -35,7 +38,6 @@ export interface Transaction {
   containerNumbers?: string[];
   unitCount?: number;
   isStopped?: boolean;
-  holdReason?: string;
   stopReason?: string;
   documentPostalNumber?: string;
   goodsQuantity?: number;

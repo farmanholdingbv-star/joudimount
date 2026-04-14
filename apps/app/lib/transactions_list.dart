@@ -85,7 +85,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _status,
+            key: ValueKey('tx-list-status-$_status'),
+            initialValue: _status,
             items: ['all', ...statuses]
                 .map((e) => DropdownMenuItem(value: e, child: Text(e == 'all' ? l10n.allStatuses : e)))
                 .toList(),

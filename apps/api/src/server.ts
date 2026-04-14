@@ -18,6 +18,8 @@ import {
   deleteEmployee,
   deleteShippingCompany,
   deleteTransaction,
+  getClientById,
+  getShippingCompanyById,
   getTransaction,
   issueRelease,
   listClients,
@@ -103,6 +105,12 @@ function parseExistingAttachmentsJson(raw: unknown): DocumentAttachment[] {
   } catch {
     return [];
   }
+}
+
+function attachmentDisplayNameFromStoredFilename(filename: string): string {
+  const ext = path.extname(filename) || ".bin";
+  const id = path.basename(filename, ext).replace(/-/g, "").slice(0, 12);
+  return `doc_${id}${ext.toLowerCase()}`;
 }
 
 async function removeOrphanFiles(previous: DocumentAttachment[] | undefined, merged: DocumentAttachment[]) {
@@ -261,6 +269,12 @@ app.get("/api/clients", authenticate, async (_req, res) => {
   res.json(await listClients());
 });
 
+app.get("/api/clients/:id", authenticate, async (req, res) => {
+  const client = await getClientById(req.params.id);
+  if (!client) return res.status(404).json({ error: "Client not found" });
+  return res.json(client);
+});
+
 const optionalClientEmail = z.preprocess(
   (v) => (v === "" || v === null || v === undefined ? undefined : v),
   z.string().email().optional(),
@@ -324,6 +338,12 @@ app.delete("/api/clients/:id", authenticate, async (req: AuthRequest, res) => {
 
 app.get("/api/shipping-companies", authenticate, async (_req, res) => {
   res.json(await listShippingCompanies());
+});
+
+app.get("/api/shipping-companies/:id", authenticate, async (req, res) => {
+  const item = await getShippingCompanyById(req.params.id);
+  if (!item) return res.status(404).json({ error: "Shipping company not found" });
+  return res.json(item);
 });
 
 app.post("/api/shipping-companies", authenticate, async (req: AuthRequest, res) => {
@@ -418,7 +438,7 @@ app.post("/api/transactions", authenticate, maybeUpload, async (req: AuthRequest
     const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
     const documentAttachments: DocumentAttachment[] = files.map((f) => ({
       path: publicPathForUploadedFile(f.filename),
-      originalName: f.originalname,
+      originalName: attachmentDisplayNameFromStoredFilename(f.filename),
     }));
     const data = {
       ...result.data,
@@ -505,7 +525,7 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
       const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
       const uploaded: DocumentAttachment[] = files.map((f) => ({
         path: publicPathForUploadedFile(f.filename),
-        originalName: f.originalname,
+        originalName: attachmentDisplayNameFromStoredFilename(f.filename),
       }));
       const retained = parseExistingAttachmentsJson(existingRaw);
       const merged = [...retained, ...uploaded];

@@ -185,6 +185,8 @@ export type MessageKey =
   | "clients.empty"
   | "clients.active"
   | "clients.suspended"
+  | "clients.detailTitle"
+  | "clients.detailLoadError"
   | "shipping.title"
   | "shipping.back"
   | "shipping.managerOnly"
@@ -212,6 +214,8 @@ export type MessageKey =
   | "shipping.empty"
   | "shipping.active"
   | "shipping.inactive"
+  | "shipping.detailTitle"
+  | "shipping.detailLoadError"
   | "form.typeToSearch"
   | "details.shippingPaperButton"
   | "details.shippingPaperTitle"
@@ -408,6 +412,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "clients.empty": "لا يوجد عملاء.",
     "clients.active": "نشط",
     "clients.suspended": "موقوف",
+    "clients.detailTitle": "تفاصيل العميل",
+    "clients.detailLoadError": "تعذر تحميل بيانات العميل.",
     "shipping.title": "قسم شركات الشحن",
     "shipping.back": "العودة",
     "shipping.managerOnly": "التعديل والإدارة متاحة للمدير فقط.",
@@ -436,6 +442,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "shipping.empty": "لا توجد شركات شحن.",
     "shipping.active": "نشط",
     "shipping.inactive": "غير نشط",
+    "shipping.detailTitle": "تفاصيل شركة الشحن",
+    "shipping.detailLoadError": "تعذر تحميل بيانات شركة الشحن.",
     "form.typeToSearch": "اكتب للبحث والاختيار من القائمة",
     "details.shippingPaperButton": "نموذج ورقي لشركة الشحن",
     "details.shippingPaperTitle": "نموذج إرسال لشركة الشحن",
@@ -632,6 +640,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "clients.empty": "No clients found.",
     "clients.active": "active",
     "clients.suspended": "suspended",
+    "clients.detailTitle": "Client details",
+    "clients.detailLoadError": "Unable to load client.",
     "shipping.title": "Shipping Companies Section",
     "shipping.back": "Back",
     "shipping.managerOnly": "Only manager can edit and manage shipping companies.",
@@ -660,6 +670,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "shipping.empty": "No shipping companies found.",
     "shipping.active": "active",
     "shipping.inactive": "inactive",
+    "shipping.detailTitle": "Shipping company details",
+    "shipping.detailLoadError": "Unable to load shipping company.",
     "form.typeToSearch": "Type to search and pick from the list",
     "details.shippingPaperButton": "Shipping company paper form",
     "details.shippingPaperTitle": "Paper form for shipping company",

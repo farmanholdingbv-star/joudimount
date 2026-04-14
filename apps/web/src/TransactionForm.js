@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import AutocompleteField from "./AutocompleteField";
@@ -26,6 +26,10 @@ const emptyForm = {
     clientName: "",
     shippingCompanyId: "",
     shippingCompanyName: "",
+    declarationNumber: "",
+    declarationDate: "",
+    declarationType: "",
+    portType: "",
     airwayBill: "",
     hsCode: "",
     goodsDescription: "",
@@ -42,7 +46,6 @@ const emptyForm = {
     containerNumbers: "",
     unitCount: "",
     isStopped: "no",
-    holdReason: "",
     stopReason: "",
     goodsQuantity: "",
     goodsUnit: "cbm",
@@ -75,7 +78,7 @@ async function parseApiErrorMessage(res) {
     }
 }
 export default function TransactionForm({ role }) {
-    const { t } = useI18n();
+    const { t, numberLocale } = useI18n();
     const navigate = useNavigate();
     const { id } = useParams();
     const isEdit = Boolean(id);
@@ -86,6 +89,7 @@ export default function TransactionForm({ role }) {
     const [newDocFiles, setNewDocFiles] = useState([]);
     const [clients, setClients] = useState([]);
     const [shippingCompanies, setShippingCompanies] = useState([]);
+    const [editMeta, setEditMeta] = useState(null);
     if (role === "accountant") {
         return (_jsxs("main", { className: "container", children: [_jsx("h1", { children: t("form.accessLimitedTitle") }), _jsx("p", { children: t("form.accessLimitedBody") }), _jsx(Link, { to: "/", className: "link-button", children: t("form.back") })] }));
     }
@@ -109,10 +113,21 @@ export default function TransactionForm({ role }) {
             return res.json();
         })
             .then((data) => {
+            setEditMeta({
+                declarationNumber: data.declarationNumber,
+                releaseCode: data.releaseCode,
+                customsDuty: data.customsDuty,
+                clearanceStatus: data.clearanceStatus,
+                createdAt: data.createdAt,
+            });
             setForm({
                 clientName: data.clientName,
                 shippingCompanyId: data.shippingCompanyId,
                 shippingCompanyName: data.shippingCompanyName,
+                declarationNumber: data.declarationNumber ?? "",
+                declarationDate: isoToDateInput(data.declarationDate),
+                declarationType: data.declarationType ?? "",
+                portType: data.portType ?? "",
                 airwayBill: data.airwayBill,
                 hsCode: data.hsCode,
                 goodsDescription: data.goodsDescription,
@@ -129,7 +144,6 @@ export default function TransactionForm({ role }) {
                 containerNumbers: data.containerNumbers?.join(", ") ?? "",
                 unitCount: data.unitCount != null ? String(data.unitCount) : "",
                 isStopped: data.isStopped ? "yes" : "no",
-                holdReason: data.holdReason ?? "",
                 stopReason: data.stopReason ?? "",
                 goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
                 goodsUnit: data.goodsUnit ?? "cbm",
@@ -197,6 +211,14 @@ export default function TransactionForm({ role }) {
             fd.append("shippingCompanyName", form.shippingCompanyName);
             if (form.shippingCompanyId?.trim())
                 fd.append("shippingCompanyId", form.shippingCompanyId.trim());
+            if (form.declarationNumber.trim())
+                fd.append("declarationNumber", form.declarationNumber.trim());
+            if (form.declarationDate)
+                fd.append("declarationDate", form.declarationDate);
+            if (form.declarationType.trim())
+                fd.append("declarationType", form.declarationType.trim());
+            if (form.portType.trim())
+                fd.append("portType", form.portType.trim());
             fd.append("airwayBill", form.airwayBill);
             fd.append("hsCode", form.hsCode);
             fd.append("goodsDescription", form.goodsDescription);
@@ -229,8 +251,6 @@ export default function TransactionForm({ role }) {
             }
             appendOptionalNumber(fd, "unitCount", form.unitCount);
             fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
-            if (form.holdReason.trim())
-                fd.append("holdReason", form.holdReason.trim());
             if (form.stopReason.trim())
                 fd.append("stopReason", form.stopReason.trim());
             appendOptionalNumber(fd, "goodsQuantity", form.goodsQuantity);
@@ -261,7 +281,7 @@ export default function TransactionForm({ role }) {
             setLoading(false);
         }
     };
-    return (_jsxs("main", { className: "container", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: "/", className: "link-button", children: t("form.back") }) }), _jsx("h1", { children: isEdit ? t("form.editTitle") : t("form.newTitle") }), error ? _jsx("p", { className: "error", children: error }) : null, _jsxs("form", { className: "details-card form-grid", noValidate: true, onSubmit: onSubmit, children: [_jsx("h2", { className: "form-section-title full-row", children: "Parties" }), _jsx(AutocompleteField, { label: t("form.clientName"), value: form.clientName, onChange: (clientName) => setForm({ ...form, clientName }), onSelectSuggestion: (key) => {
+    return (_jsxs("main", { className: "container", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: "/", className: "link-button", children: t("form.back") }) }), _jsx("h1", { children: isEdit ? t("form.editTitle") : t("form.newTitle") }), error ? _jsx("p", { className: "error", children: error }) : null, _jsxs("form", { className: "details-card form-grid", noValidate: true, onSubmit: onSubmit, children: [isEdit && editMeta ? (_jsxs(_Fragment, { children: [_jsx("h2", { className: "form-section-title full-row", children: "Transaction Snapshot (Read-only)" }), editMeta.createdAt ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.createdAt"), ":"] }), " ", new Date(editMeta.createdAt).toLocaleString(numberLocale)] })) : null, editMeta.declarationNumber ? (_jsxs("p", { className: "details-item", children: [_jsx("strong", { children: "Declaration Number:" }), " ", editMeta.declarationNumber] })) : null, editMeta.releaseCode ? (_jsxs("p", { className: "details-item", children: [_jsx("strong", { children: "Release Code:" }), " ", editMeta.releaseCode] })) : null, typeof editMeta.customsDuty === "number" ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.duty"), ":"] }), " ", editMeta.customsDuty.toLocaleString(numberLocale), " ", t("details.currencySuffix")] })) : null, editMeta.clearanceStatus ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.status"), ":"] }), " ", editMeta.clearanceStatus] })) : null] })) : null, _jsx("h2", { className: "form-section-title full-row", children: "Parties" }), _jsx(AutocompleteField, { label: t("form.clientName"), value: form.clientName, onChange: (clientName) => setForm({ ...form, clientName }), onSelectSuggestion: (key) => {
                             const c = clients.find((x) => x.id === key);
                             if (c)
                                 setForm((f) => ({ ...f, clientName: c.companyName }));
@@ -269,5 +289,5 @@ export default function TransactionForm({ role }) {
                             const s = shippingCompanies.find((x) => x.id === key);
                             if (s)
                                 setForm((f) => ({ ...f, shippingCompanyName: s.companyName, shippingCompanyId: s.id }));
-                        }, suggestions: shippingSuggestions, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.shippingCompanyId"), _jsx("input", { value: form.shippingCompanyId ?? "", onChange: (e) => setForm({ ...form, shippingCompanyId: e.target.value }) })] }), _jsx("h2", { className: "form-section-title full-row", children: "Shipment Core" }), _jsxs("label", { children: [t("form.airwayBill"), _jsx("input", { value: form.airwayBill, onChange: (e) => setForm({ ...form, airwayBill: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: [t("form.invoiceValue"), _jsx("input", { type: "number", value: form.invoiceValue, onChange: (e) => setForm({ ...form, invoiceValue: Number(e.target.value) }), min: 1, required: true })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), _jsx("h2", { className: "form-section-title full-row", children: "Cargo & Containers" }), _jsxs("label", { children: [t("form.invoiceToWeightRate"), _jsx("input", { type: "number", min: 0, step: "any", value: form.invoiceToWeightRateAedPerKg, onChange: (e) => setForm({ ...form, invoiceToWeightRateAedPerKg: e.target.value }), placeholder: t("form.invoiceToWeightRateHint") })] }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), placeholder: derivedWeight != null ? `${t("form.derivedWeight")}: ${derivedWeight.toFixed(3)}` : undefined })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerArrivalDate"), _jsx("input", { type: "date", value: form.containerArrivalDate, onChange: (e) => setForm({ ...form, containerArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.documentArrivalDate"), _jsx("input", { type: "date", value: form.documentArrivalDate, onChange: (e) => setForm({ ...form, documentArrivalDate: e.target.value }) })] }), _jsxs("label", { children: ["File Number", _jsx("input", { value: form.fileNumber, onChange: (e) => setForm({ ...form, fileNumber: e.target.value }) })] }), _jsxs("label", { children: ["Container Numbers", _jsx("textarea", { value: form.containerNumbers, onChange: (e) => setForm({ ...form, containerNumbers: e.target.value }), rows: 3, placeholder: "e.g. MSKU1234567, TGHU9876543" })] }), _jsxs("label", { children: ["Number of Units", _jsx("input", { type: "number", min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] }), _jsx("h2", { className: "form-section-title full-row", children: "Workflow" }), _jsxs("label", { children: ["Stop Transaction", _jsxs("select", { value: form.isStopped, onChange: (e) => setForm({ ...form, isStopped: e.target.value }), children: [_jsx("option", { value: "no", children: "No" }), _jsx("option", { value: "yes", children: "Yes" })] })] }), _jsxs("label", { children: ["Hold Reason", _jsx("input", { value: form.holdReason, onChange: (e) => setForm({ ...form, holdReason: e.target.value }) })] }), form.isStopped === "yes" ? (_jsxs("label", { children: ["Stop Reason", _jsx("textarea", { value: form.stopReason, onChange: (e) => setForm({ ...form, stopReason: e.target.value }), rows: 2, required: true })] })) : null, _jsxs("label", { children: [t("form.documentStatus"), _jsxs("select", { value: form.documentStatus, onChange: (e) => setForm({ ...form, documentStatus: e.target.value }), children: [_jsx("option", { value: "copy_received", children: "copy_received" }), _jsx("option", { value: "original_received", children: "original_received" }), _jsx("option", { value: "telex_release", children: "telex_release" })] })] }), _jsxs("label", { children: [t("form.paymentStatus"), _jsxs("select", { value: form.paymentStatus, onChange: (e) => setForm({ ...form, paymentStatus: e.target.value }), disabled: role === "employee", children: [_jsx("option", { value: "pending", children: "pending" }), _jsx("option", { value: "paid", children: "paid" })] })] }), _jsx("h2", { className: "form-section-title full-row", children: "Attachments" }), _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), isEdit && retainedDocs.length > 0 ? (_jsx("ul", { className: "retained-docs", children: retainedDocs.map((d) => (_jsxs("li", { children: [_jsx("span", { children: d.originalName }), _jsx("button", { type: "button", className: "link-button", onClick: () => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path)), children: t("form.removeAttachment") })] }, d.path))) })) : null, _jsx("input", { type: "file", accept: "image/*,application/pdf", multiple: true, onChange: (e) => setNewDocFiles(Array.from(e.target.files ?? [])) }), newDocFiles.length > 0 ? (_jsxs("p", { className: "muted", children: [newDocFiles.length, " ", t("form.filesSelected")] })) : null] }), _jsx("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? t("form.saving") : t("form.save") })] })] }));
+                        }, suggestions: shippingSuggestions, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.shippingCompanyId"), _jsx("input", { value: form.shippingCompanyId ?? "", onChange: (e) => setForm({ ...form, shippingCompanyId: e.target.value }) })] }), _jsx("h2", { className: "form-section-title full-row", children: "Customs Declaration" }), _jsxs("label", { children: ["Declaration Number", _jsx("input", { value: form.declarationNumber, onChange: (e) => setForm({ ...form, declarationNumber: e.target.value }) })] }), _jsxs("label", { children: ["Declaration Date", _jsx("input", { type: "date", value: form.declarationDate, onChange: (e) => setForm({ ...form, declarationDate: e.target.value }) })] }), _jsxs("label", { children: ["Declaration Type", _jsx("input", { value: form.declarationType, onChange: (e) => setForm({ ...form, declarationType: e.target.value }) })] }), _jsxs("label", { children: ["Port Type", _jsx("input", { value: form.portType, onChange: (e) => setForm({ ...form, portType: e.target.value }) })] }), _jsx("h2", { className: "form-section-title full-row", children: "Shipment Core" }), _jsxs("label", { children: [t("form.airwayBill"), _jsx("input", { value: form.airwayBill, onChange: (e) => setForm({ ...form, airwayBill: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: [t("form.invoiceValue"), _jsx("input", { type: "number", value: form.invoiceValue, onChange: (e) => setForm({ ...form, invoiceValue: Number(e.target.value) }), min: 1, required: true })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), _jsx("h2", { className: "form-section-title full-row", children: "Cargo & Containers" }), _jsxs("label", { children: [t("form.invoiceToWeightRate"), _jsx("input", { type: "number", min: 0, step: "any", value: form.invoiceToWeightRateAedPerKg, onChange: (e) => setForm({ ...form, invoiceToWeightRateAedPerKg: e.target.value }), placeholder: t("form.invoiceToWeightRateHint") })] }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), placeholder: derivedWeight != null ? `${t("form.derivedWeight")}: ${derivedWeight.toFixed(3)}` : undefined })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerArrivalDate"), _jsx("input", { type: "date", value: form.containerArrivalDate, onChange: (e) => setForm({ ...form, containerArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.documentArrivalDate"), _jsx("input", { type: "date", value: form.documentArrivalDate, onChange: (e) => setForm({ ...form, documentArrivalDate: e.target.value }) })] }), _jsxs("label", { children: ["File Number", _jsx("input", { value: form.fileNumber, onChange: (e) => setForm({ ...form, fileNumber: e.target.value }) })] }), _jsxs("label", { children: ["Container Numbers", _jsx("textarea", { value: form.containerNumbers, onChange: (e) => setForm({ ...form, containerNumbers: e.target.value }), rows: 3, placeholder: "e.g. MSKU1234567, TGHU9876543" })] }), _jsxs("label", { children: ["Number of Units", _jsx("input", { type: "number", min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] }), _jsx("h2", { className: "form-section-title full-row", children: "Workflow & Status" }), _jsxs("label", { children: ["Stop Transaction", _jsxs("select", { value: form.isStopped, onChange: (e) => setForm({ ...form, isStopped: e.target.value }), children: [_jsx("option", { value: "no", children: "No" }), _jsx("option", { value: "yes", children: "Yes" })] })] }), form.isStopped === "yes" ? (_jsxs("label", { children: ["Stop Reason", _jsx("textarea", { value: form.stopReason, onChange: (e) => setForm({ ...form, stopReason: e.target.value }), rows: 2, required: true })] })) : null, _jsxs("label", { children: [t("form.documentStatus"), _jsxs("select", { value: form.documentStatus, onChange: (e) => setForm({ ...form, documentStatus: e.target.value }), children: [_jsx("option", { value: "copy_received", children: "copy_received" }), _jsx("option", { value: "original_received", children: "original_received" }), _jsx("option", { value: "telex_release", children: "telex_release" })] })] }), _jsxs("label", { children: [t("form.paymentStatus"), _jsxs("select", { value: form.paymentStatus, onChange: (e) => setForm({ ...form, paymentStatus: e.target.value }), disabled: role === "employee", children: [_jsx("option", { value: "pending", children: "pending" }), _jsx("option", { value: "paid", children: "paid" })] })] }), _jsx("h2", { className: "form-section-title full-row", children: "Attachments" }), _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), isEdit && retainedDocs.length > 0 ? (_jsx("ul", { className: "retained-docs", children: retainedDocs.map((d) => (_jsxs("li", { children: [_jsx("span", { children: d.originalName }), _jsx("button", { type: "button", className: "link-button", onClick: () => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path)), children: t("form.removeAttachment") })] }, d.path))) })) : null, _jsx("input", { type: "file", accept: "image/*,application/pdf", multiple: true, onChange: (e) => setNewDocFiles(Array.from(e.target.files ?? [])) }), newDocFiles.length > 0 ? (_jsxs("p", { className: "muted", children: [newDocFiles.length, " ", t("form.filesSelected")] })) : null] }), _jsx("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? t("form.saving") : t("form.save") })] })] }));
 }

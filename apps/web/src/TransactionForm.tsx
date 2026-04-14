@@ -28,6 +28,10 @@ type FormState = {
   clientName: string;
   shippingCompanyId?: string;
   shippingCompanyName: string;
+  declarationNumber: string;
+  declarationDate: string;
+  declarationType: string;
+  portType: string;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -44,7 +48,6 @@ type FormState = {
   containerNumbers: string;
   unitCount: string;
   isStopped: "no" | "yes";
-  holdReason: string;
   stopReason: string;
   goodsQuantity: string;
   goodsUnit: GoodsUnit | "";
@@ -54,6 +57,10 @@ const emptyForm: FormState = {
   clientName: "",
   shippingCompanyId: "",
   shippingCompanyName: "",
+  declarationNumber: "",
+  declarationDate: "",
+  declarationType: "",
+  portType: "",
   airwayBill: "",
   hsCode: "",
   goodsDescription: "",
@@ -70,10 +77,17 @@ const emptyForm: FormState = {
   containerNumbers: "",
   unitCount: "",
   isStopped: "no",
-  holdReason: "",
   stopReason: "",
   goodsQuantity: "",
   goodsUnit: "cbm",
+};
+
+type EditReadOnlyMeta = {
+  declarationNumber?: string;
+  releaseCode?: string;
+  customsDuty?: number;
+  clearanceStatus?: string;
+  createdAt?: string;
 };
 
 function appendOptionalNumber(fd: FormData, key: string, raw: string) {
@@ -100,7 +114,7 @@ async function parseApiErrorMessage(res: Response): Promise<string> {
 }
 
 export default function TransactionForm({ role }: { role: Role }) {
-  const { t } = useI18n();
+  const { t, numberLocale } = useI18n();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
@@ -111,6 +125,7 @@ export default function TransactionForm({ role }: { role: Role }) {
   const [newDocFiles, setNewDocFiles] = useState<File[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [shippingCompanies, setShippingCompanies] = useState<ShippingCompany[]>([]);
+  const [editMeta, setEditMeta] = useState<EditReadOnlyMeta | null>(null);
 
   if (role === "accountant") {
     return (
@@ -143,10 +158,21 @@ export default function TransactionForm({ role }: { role: Role }) {
         return res.json();
       })
       .then((data: Transaction) => {
+        setEditMeta({
+          declarationNumber: data.declarationNumber,
+          releaseCode: data.releaseCode,
+          customsDuty: data.customsDuty,
+          clearanceStatus: data.clearanceStatus,
+          createdAt: data.createdAt,
+        });
         setForm({
           clientName: data.clientName,
           shippingCompanyId: data.shippingCompanyId,
           shippingCompanyName: data.shippingCompanyName,
+          declarationNumber: data.declarationNumber ?? "",
+          declarationDate: isoToDateInput(data.declarationDate),
+          declarationType: data.declarationType ?? "",
+          portType: data.portType ?? "",
           airwayBill: data.airwayBill,
           hsCode: data.hsCode,
           goodsDescription: data.goodsDescription,
@@ -164,7 +190,6 @@ export default function TransactionForm({ role }: { role: Role }) {
           containerNumbers: data.containerNumbers?.join(", ") ?? "",
           unitCount: data.unitCount != null ? String(data.unitCount) : "",
           isStopped: data.isStopped ? "yes" : "no",
-          holdReason: data.holdReason ?? "",
           stopReason: data.stopReason ?? "",
           goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
           goodsUnit: data.goodsUnit ?? "cbm",
@@ -232,6 +257,10 @@ export default function TransactionForm({ role }: { role: Role }) {
       fd.append("clientName", form.clientName);
       fd.append("shippingCompanyName", form.shippingCompanyName);
       if (form.shippingCompanyId?.trim()) fd.append("shippingCompanyId", form.shippingCompanyId.trim());
+      if (form.declarationNumber.trim()) fd.append("declarationNumber", form.declarationNumber.trim());
+      if (form.declarationDate) fd.append("declarationDate", form.declarationDate);
+      if (form.declarationType.trim()) fd.append("declarationType", form.declarationType.trim());
+      if (form.portType.trim()) fd.append("portType", form.portType.trim());
       fd.append("airwayBill", form.airwayBill);
       fd.append("hsCode", form.hsCode);
       fd.append("goodsDescription", form.goodsDescription);
@@ -261,7 +290,6 @@ export default function TransactionForm({ role }: { role: Role }) {
       }
       appendOptionalNumber(fd, "unitCount", form.unitCount);
       fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
-      if (form.holdReason.trim()) fd.append("holdReason", form.holdReason.trim());
       if (form.stopReason.trim()) fd.append("stopReason", form.stopReason.trim());
       appendOptionalNumber(fd, "goodsQuantity", form.goodsQuantity);
       if (form.goodsUnit) fd.append("goodsUnit", form.goodsUnit);
@@ -301,6 +329,36 @@ export default function TransactionForm({ role }: { role: Role }) {
       <h1>{isEdit ? t("form.editTitle") : t("form.newTitle")}</h1>
       {error ? <p className="error">{error}</p> : null}
       <form className="details-card form-grid" noValidate onSubmit={onSubmit}>
+        {isEdit && editMeta ? (
+          <>
+            <h2 className="form-section-title full-row">Transaction Snapshot (Read-only)</h2>
+            {editMeta.createdAt ? (
+              <p className="details-item">
+                <strong>{t("details.createdAt")}:</strong> {new Date(editMeta.createdAt).toLocaleString(numberLocale)}
+              </p>
+            ) : null}
+            {editMeta.declarationNumber ? (
+              <p className="details-item">
+                <strong>Declaration Number:</strong> {editMeta.declarationNumber}
+              </p>
+            ) : null}
+            {editMeta.releaseCode ? (
+              <p className="details-item">
+                <strong>Release Code:</strong> {editMeta.releaseCode}
+              </p>
+            ) : null}
+            {typeof editMeta.customsDuty === "number" ? (
+              <p className="details-item">
+                <strong>{t("details.duty")}:</strong> {editMeta.customsDuty.toLocaleString(numberLocale)} {t("details.currencySuffix")}
+              </p>
+            ) : null}
+            {editMeta.clearanceStatus ? (
+              <p className="details-item">
+                <strong>{t("details.status")}:</strong> {editMeta.clearanceStatus}
+              </p>
+            ) : null}
+          </>
+        ) : null}
         <h2 className="form-section-title full-row">Parties</h2>
         <AutocompleteField
           label={t("form.clientName")}
@@ -329,6 +387,24 @@ export default function TransactionForm({ role }: { role: Role }) {
         <label>
           {t("form.shippingCompanyId")}
           <input value={form.shippingCompanyId ?? ""} onChange={(e) => setForm({ ...form, shippingCompanyId: e.target.value })} />
+        </label>
+
+        <h2 className="form-section-title full-row">Customs Declaration</h2>
+        <label>
+          Declaration Number
+          <input value={form.declarationNumber} onChange={(e) => setForm({ ...form, declarationNumber: e.target.value })} />
+        </label>
+        <label>
+          Declaration Date
+          <input type="date" value={form.declarationDate} onChange={(e) => setForm({ ...form, declarationDate: e.target.value })} />
+        </label>
+        <label>
+          Declaration Type
+          <input value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })} />
+        </label>
+        <label>
+          Port Type
+          <input value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })} />
         </label>
 
         <h2 className="form-section-title full-row">Shipment Core</h2>
@@ -467,20 +543,13 @@ export default function TransactionForm({ role }: { role: Role }) {
           />
         </label>
 
-        <h2 className="form-section-title full-row">Workflow</h2>
+        <h2 className="form-section-title full-row">Workflow & Status</h2>
         <label>
           Stop Transaction
           <select value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
             <option value="no">No</option>
             <option value="yes">Yes</option>
           </select>
-        </label>
-        <label>
-          Hold Reason
-          <input
-            value={form.holdReason}
-            onChange={(e) => setForm({ ...form, holdReason: e.target.value })}
-          />
         </label>
         {form.isStopped === "yes" ? (
           <label>

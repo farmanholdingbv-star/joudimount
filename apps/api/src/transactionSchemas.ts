@@ -8,10 +8,17 @@ export const optionalPositiveNumber = z.preprocess(emptyToUndef, z.coerce.number
 export const optionalNonNegativeNumber = z.preprocess(emptyToUndef, z.coerce.number().nonnegative().optional());
 
 export const optionalNonNegativeInt = z.preprocess(emptyToUndef, z.coerce.number().int().nonnegative().optional());
-export const optionalBoolean = z.preprocess(
-  (v) => (v === "" || v === null || v === undefined ? undefined : v),
-  z.coerce.boolean().optional(),
-);
+export const optionalBoolean = z.preprocess((v) => {
+  if (v === "" || v === null || v === undefined) return undefined;
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v != 0;
+  if (typeof v === "string") {
+    const s = v.trim().toLowerCase();
+    if (s === "true" || s === "1" || s === "yes") return true;
+    if (s === "false" || s === "0" || s === "no") return false;
+  }
+  return v;
+}, z.boolean().optional());
 
 export const optionalDateIso = z.preprocess(emptyToUndef, z.string().optional());
 
@@ -66,6 +73,10 @@ export const createTransactionPayloadSchema = z.object({
   clientId: z.preprocess(emptyToUndef, z.string().optional()),
   shippingCompanyId: z.preprocess(emptyToUndef, z.string().optional()),
   shippingCompanyName: z.string().min(2),
+  declarationNumber: z.preprocess(emptyToUndef, z.string().min(2).optional()),
+  declarationDate: optionalDateIso,
+  declarationType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
+  portType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
   airwayBill: z.string().min(1),
   hsCode: z.string().min(2),
   goodsDescription: z.string().min(2),
@@ -94,6 +105,10 @@ export const updateTransactionPayloadSchema = z
     clientId: z.preprocess(emptyToUndef, z.string().optional()),
     shippingCompanyId: z.preprocess(emptyToUndef, z.string().optional()),
     shippingCompanyName: z.string().min(2).optional(),
+    declarationNumber: z.preprocess(emptyToUndef, z.string().min(2).optional()),
+    declarationDate: optionalDateIso,
+    declarationType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
+    portType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
     airwayBill: z.string().min(1).optional(),
     hsCode: z.string().min(2).optional(),
     goodsDescription: z.string().min(2).optional(),

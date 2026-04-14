@@ -52,6 +52,9 @@ interface TransactionDoc {
   shippingCompanyId?: string;
   shippingCompanyName: string;
   declarationNumber: string;
+  declarationDate?: Date;
+  declarationType?: string;
+  portType?: string;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -105,6 +108,9 @@ const transactionSchema = new Schema<TransactionDoc>(
     shippingCompanyId: { type: String, index: true },
     shippingCompanyName: { type: String, required: true, index: true },
     declarationNumber: { type: String, required: true, unique: true, index: true },
+    declarationDate: { type: Date },
+    declarationType: { type: String },
+    portType: { type: String },
     airwayBill: { type: String, required: true },
     hsCode: { type: String, required: true },
     goodsDescription: { type: String, required: true },

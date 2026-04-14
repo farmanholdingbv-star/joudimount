@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { useI18n } from "./i18n/I18nContext";
 import { Client, Role } from "./types";
@@ -26,6 +26,7 @@ const emptyClient: ClientForm = {
 
 export default function ClientsPage({ role }: { role: Role }) {
   const { t, numberLocale } = useI18n();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [form, setForm] = useState(emptyClient);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -167,7 +168,11 @@ export default function ClientsPage({ role }: { role: Role }) {
           </thead>
           <tbody>
             {clients.map((client) => (
-              <tr key={client.id}>
+              <tr
+                key={client.id}
+                className="clickable-row"
+                onClick={() => navigate(`/clients/${client.id}`)}
+              >
                 <td>{client.companyName}</td>
                 <td>{client.trn}</td>
                 <td>{client.immigrationCode ?? "-"}</td>
@@ -178,7 +183,7 @@ export default function ClientsPage({ role }: { role: Role }) {
                   <span className="status-badge">{client.status}</span>
                 </td>
                 {isManager ? (
-                  <td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <button type="button" className="primary-button" onClick={() => onEdit(client)}>
                       {t("clients.edit")}
                     </button>{" "}

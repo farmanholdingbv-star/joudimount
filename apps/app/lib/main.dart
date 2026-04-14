@@ -3,10 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'api.dart';
+import 'client_detail.dart';
 import 'employees.dart';
 import 'l10n/app_localizations.dart';
+import 'shipping_detail.dart';
 import 'transactions_list.dart';
 
 void main() {
@@ -350,6 +351,11 @@ class _ClientsTabState extends State<ClientsTab> {
         if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
         ..._items.map((c) => Card(
               child: ListTile(
+                onTap: () {
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute(builder: (_) => ClientDetailPage(id: _entityId(c))),
+                  );
+                },
                 title: Text('${c['companyName']}'),
                 subtitle: Text(_clientListSubtitle(c, l10n)),
                 trailing: isManager
@@ -461,8 +467,9 @@ class _ClientFormPageState extends State<ClientFormPage> {
           TextField(controller: _country, decoration: InputDecoration(labelText: l10n.country)),
           TextField(controller: _credit, decoration: InputDecoration(labelText: l10n.creditLimit)),
           DropdownButtonFormField<String>(
+            key: ValueKey('client-status-$_status'),
             decoration: InputDecoration(labelText: l10n.clientStatus),
-            value: _status,
+            initialValue: _status,
             items: [
               DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
               DropdownMenuItem(value: 'suspended', child: Text(l10n.statusSuspended)),
@@ -570,6 +577,11 @@ class _ShippingTabState extends State<ShippingTab> {
         if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
         ..._items.map((s) => Card(
               child: ListTile(
+                onTap: () {
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute(builder: (_) => ShippingCompanyDetailPage(id: _entityId(s))),
+                  );
+                },
                 title: Text('${s['companyName']}'),
                 subtitle: Text(_shippingSubtitle(s)),
                 trailing: isManager
@@ -608,6 +620,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
   late final TextEditingController _contact;
   late final TextEditingController _phone;
   late final TextEditingController _email;
+  late final TextEditingController _dispatchTemplate;
   late final TextEditingController _lat;
   late final TextEditingController _lng;
   String _shipStatus = 'active';
@@ -623,6 +636,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
     _contact = TextEditingController(text: (e?['contactName'] ?? '').toString());
     _phone = TextEditingController(text: (e?['phone'] ?? '').toString());
     _email = TextEditingController(text: (e?['email'] ?? '').toString());
+    _dispatchTemplate = TextEditingController(text: (e?['dispatchFormTemplate'] ?? '').toString());
     _lat = TextEditingController(
       text: e != null && e['latitude'] != null ? '${e['latitude']}' : '',
     );
@@ -633,6 +647,19 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
   }
 
   String get _existingId => (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _code.dispose();
+    _contact.dispose();
+    _phone.dispose();
+    _email.dispose();
+    _dispatchTemplate.dispose();
+    _lat.dispose();
+    _lng.dispose();
+    super.dispose();
+  }
 
   Future<void> _save() async {
     setState(() {
@@ -658,6 +685,12 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
         body['email'] = em;
       } else if (_existingId.isNotEmpty) {
         body['email'] = null;
+      }
+      final tpl = _dispatchTemplate.text.trim();
+      if (tpl.isNotEmpty) {
+        body['dispatchFormTemplate'] = tpl;
+      } else if (_existingId.isNotEmpty) {
+        body['dispatchFormTemplate'] = null;
       }
       if (latStr.isNotEmpty && lngStr.isNotEmpty) {
         final lat = double.tryParse(latStr);
@@ -705,6 +738,12 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
             decoration: InputDecoration(labelText: l10n.shippingEmailOptional),
           ),
           TextField(
+            controller: _dispatchTemplate,
+            minLines: 3,
+            maxLines: 5,
+            decoration: const InputDecoration(labelText: 'Dispatch Template (optional)'),
+          ),
+          TextField(
             controller: _lat,
             keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
             decoration: InputDecoration(labelText: l10n.latitudeOptional),
@@ -715,8 +754,9 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
             decoration: InputDecoration(labelText: l10n.longitudeOptional),
           ),
           DropdownButtonFormField<String>(
+            key: ValueKey('shipping-status-$_shipStatus'),
             decoration: InputDecoration(labelText: l10n.shippingStatus),
-            value: _shipStatus,
+            initialValue: _shipStatus,
             items: [
               DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
               DropdownMenuItem(value: 'inactive', child: Text(l10n.statusInactive)),

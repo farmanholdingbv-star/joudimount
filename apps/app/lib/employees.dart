@@ -24,6 +24,15 @@ class _EmployeesTabState extends State<EmployeesTab> {
   final _password = TextEditingController();
   String _role = 'employee';
 
+  String _employeeErrorMessage(Object error, AppLocalizations l10n) {
+    final raw = error.toString();
+    if (raw.contains('email_taken')) return 'Email already exists.';
+    if (raw.contains('last_manager_role')) return 'At least one manager is required.';
+    if (raw.contains('last_manager_delete')) return 'Cannot delete the last manager.';
+    if (raw.contains('delete_self')) return 'You cannot delete your own account.';
+    return raw;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -97,7 +106,7 @@ class _EmployeesTabState extends State<EmployeesTab> {
       _cancelEdit();
       await _load();
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = _employeeErrorMessage(e, l10n));
     }
   }
 
@@ -108,9 +117,10 @@ class _EmployeesTabState extends State<EmployeesTab> {
     final selfId = selfRaw != null ? (jsonDecode(selfRaw) as Map)['id']?.toString() : null;
     final id = e['id']?.toString() ?? '';
     if (selfId != null && id == selfId) {
-      setState(() => _error = l10n.managerOnlyEmployees);
+      setState(() => _error = 'You cannot delete your own account.');
       return;
     }
+    if (!mounted) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -121,13 +131,13 @@ class _EmployeesTabState extends State<EmployeesTab> {
         ],
       ),
     );
+    if (!mounted) return;
     if (ok != true) return;
-    if (!context.mounted) return;
     try {
       await Api.delete('/api/employees/$id');
       await _load();
     } catch (err) {
-      if (mounted) setState(() => _error = err.toString());
+      if (mounted) setState(() => _error = _employeeErrorMessage(err, l10n));
     }
   }
 
@@ -157,8 +167,9 @@ class _EmployeesTabState extends State<EmployeesTab> {
             ),
           ),
           DropdownButtonFormField<String>(
+            key: ValueKey('employee-role-${_editingId ?? 'new'}-$_role'),
             decoration: InputDecoration(labelText: l10n.employeeRole),
-            value: _role,
+            initialValue: _role,
             items: [
               DropdownMenuItem(value: 'manager', child: Text(l10n.roleManager)),
               DropdownMenuItem(value: 'employee', child: Text(l10n.roleEmployee)),

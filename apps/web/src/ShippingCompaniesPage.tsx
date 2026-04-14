@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import LocationMapPicker from "./LocationMapPicker";
 import { useI18n } from "./i18n/I18nContext";
@@ -31,6 +31,7 @@ const emptyCompany: ShippingCompanyForm = {
 
 export default function ShippingCompaniesPage({ role }: { role: Role }) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [items, setItems] = useState<ShippingCompany[]>([]);
   const [form, setForm] = useState(emptyCompany);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -192,13 +193,17 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id}>
+              <tr
+                key={item.id}
+                className="clickable-row"
+                onClick={() => navigate(`/shipping-companies/${item.id}`)}
+              >
                 <td>{item.companyName}</td>
                 <td>{item.code}</td>
                 <td>{item.contactName ?? "-"}</td>
                 <td>{item.phone ?? "-"}</td>
                 <td>{item.email ?? "-"}</td>
-                <td>
+                <td onClick={(e) => e.stopPropagation()}>
                   {item.latitude != null && item.longitude != null ? (
                     <a
                       href={`https://www.openstreetmap.org/?mlat=${item.latitude}&mlon=${item.longitude}&zoom=14`}
@@ -215,7 +220,7 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
                   <span className="status-badge">{item.status}</span>
                 </td>
                 {isManager ? (
-                  <td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <button type="button" className="primary-button" onClick={() => onEdit(item)}>
                       {t("shipping.edit")}
                     </button>{" "}
