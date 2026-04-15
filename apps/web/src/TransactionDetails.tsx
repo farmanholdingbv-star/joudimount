@@ -6,6 +6,13 @@ import { useI18n } from "./i18n/I18nContext";
 import ShippingPaperModal from "./ShippingPaperModal";
 import { API_BASE, Role, Transaction } from "./types";
 
+const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
+  bill_of_lading: "Bill of Lading",
+  certificate_of_origin: "Certificate of Origin",
+  invoice: "Invoice",
+  packing_list: "Packing List",
+};
+
 export default function TransactionDetails({ role }: { role: Role }) {
   const { t, numberLocale } = useI18n();
   const navigate = useNavigate();
@@ -287,6 +294,9 @@ export default function TransactionDetails({ role }: { role: Role }) {
                       <a href={href} target="_blank" rel="noreferrer">
                         {a.originalName} ({t("details.openAttachment")})
                       </a>
+                      {a.category ? (
+                        <div className="muted">Category: {DOCUMENT_CATEGORY_LABELS[a.category] ?? a.category}</div>
+                      ) : null}
                     </li>
                   );
                 })}

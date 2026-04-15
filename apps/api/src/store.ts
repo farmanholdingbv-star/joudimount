@@ -124,9 +124,10 @@ function mapOptionalDate(value: unknown): string | undefined {
 
 function mapTransaction(doc: any): Transaction {
   const attachments: DocumentAttachment[] | undefined = Array.isArray(doc.documentAttachments)
-    ? doc.documentAttachments.map((a: { path: string; originalName: string }) => ({
+    ? doc.documentAttachments.map((a: { path: string; originalName: string; category?: DocumentAttachment["category"] }) => ({
         path: a.path,
         originalName: a.originalName,
+        category: a.category,
       }))
     : undefined;
 

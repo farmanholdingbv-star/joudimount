@@ -41,6 +41,8 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+const documentCategoryEnum = z.enum(["bill_of_lading", "certificate_of_origin", "invoice", "packing_list"]);
+
 interface AuthRequest extends Request {
   user?: {
     id: string;
@@ -93,15 +95,30 @@ function parseExistingAttachmentsJson(raw: unknown): DocumentAttachment[] {
         typeof item === "object" &&
         item !== null &&
         typeof (item as { path?: unknown }).path === "string" &&
-        typeof (item as { originalName?: unknown }).originalName === "string"
+        typeof (item as { originalName?: unknown }).originalName === "string" &&
+        ((item as { category?: unknown }).category === undefined ||
+          documentCategoryEnum.safeParse((item as { category?: unknown }).category).success)
       ) {
         out.push({
           path: (item as DocumentAttachment).path,
           originalName: (item as DocumentAttachment).originalName,
+          category: (item as DocumentAttachment).category,
         });
       }
     }
     return out;
+  } catch {
+    return [];
+  }
+}
+
+function parseDocumentPhotoCategories(raw: unknown, fileCount: number): string[] {
+  if (fileCount <= 0) return [];
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.slice(0, fileCount).map((x) => (typeof x === "string" ? x : ""));
   } catch {
     return [];
   }
@@ -436,9 +453,19 @@ app.post("/api/transactions", authenticate, maybeUpload, async (req: AuthRequest
       return res.status(400).json({ error: result.error.flatten() });
     }
     const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
-    const documentAttachments: DocumentAttachment[] = files.map((f) => ({
+    const categories = parseDocumentPhotoCategories((req.body as Record<string, unknown>).documentPhotoCategories, files.length);
+    if (files.length > 0 && categories.length !== files.length) {
+      return res.status(400).json({ error: "Each uploaded document must have a category" });
+    }
+    for (const c of categories) {
+      if (!documentCategoryEnum.safeParse(c).success) {
+        return res.status(400).json({ error: "Invalid document category" });
+      }
+    }
+    const documentAttachments: DocumentAttachment[] = files.map((f, idx) => ({
       path: publicPathForUploadedFile(f.filename),
       originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+      category: categories[idx] as DocumentAttachment["category"],
     }));
     const data = {
       ...result.data,
@@ -523,9 +550,19 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
       const prev = await getTransaction(req.params.id);
       if (!prev) return res.status(404).json({ error: "Transaction not found" });
       const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
-      const uploaded: DocumentAttachment[] = files.map((f) => ({
+      const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
+      if (files.length > 0 && categories.length !== files.length) {
+        return res.status(400).json({ error: "Each uploaded document must have a category" });
+      }
+      for (const c of categories) {
+        if (!documentCategoryEnum.safeParse(c).success) {
+          return res.status(400).json({ error: "Invalid document category" });
+        }
+      }
+      const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
         path: publicPathForUploadedFile(f.filename),
         originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+        category: categories[idx] as DocumentAttachment["category"],
       }));
       const retained = parseExistingAttachmentsJson(existingRaw);
       const merged = [...retained, ...uploaded];

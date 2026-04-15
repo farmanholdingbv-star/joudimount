@@ -4,7 +4,17 @@ import AutocompleteField, { type AutocompleteSuggestion } from "./AutocompleteFi
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
-import { Client, DocumentAttachment, GoodsQuality, GoodsUnit, InvoiceCurrency, Role, ShippingCompany, Transaction } from "./types";
+import {
+  Client,
+  DocumentAttachment,
+  DocumentCategory,
+  GoodsQuality,
+  GoodsUnit,
+  InvoiceCurrency,
+  Role,
+  ShippingCompany,
+  Transaction,
+} from "./types";
 
 const UNIT_OPTIONS: { value: GoodsUnit; labelKey: string }[] = [
   { value: "kg", labelKey: "form.unit.kg" },
@@ -27,6 +37,26 @@ const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
 ];
 
 const CURRENCY_OPTIONS: InvoiceCurrency[] = ["AED", "USD", "EUR", "SAR"];
+const DECLARATION_TYPE_OPTIONS = [
+  "Import",
+  "Import to Free Zone",
+  "Import for Re-Export",
+  "Temporary Import",
+  "Export",
+  "Re-Export",
+  "Transfer",
+  "Transit",
+  "Temporary Admission",
+] as const;
+const PORT_TYPE_OPTIONS = ["Seaports", "Free Zones", "Mainland"] as const;
+const DOCUMENT_CATEGORY_OPTIONS: { value: DocumentCategory; label: string }[] = [
+  { value: "bill_of_lading", label: "Bill of Lading" },
+  { value: "certificate_of_origin", label: "Certificate of Origin" },
+  { value: "invoice", label: "Invoice" },
+  { value: "packing_list", label: "Packing List" },
+];
+
+type PendingDocument = { file: File; category: DocumentCategory | "" };
 
 function isoToDateInput(iso?: string): string {
   if (!iso) return "";
@@ -137,7 +167,7 @@ export default function TransactionForm({ role }: { role: Role }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [retainedDocs, setRetainedDocs] = useState<DocumentAttachment[]>([]);
-  const [newDocFiles, setNewDocFiles] = useState<File[]>([]);
+  const [newDocFiles, setNewDocFiles] = useState<PendingDocument[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [shippingCompanies, setShippingCompanies] = useState<ShippingCompany[]>([]);
   const [editMeta, setEditMeta] = useState<EditReadOnlyMeta | null>(null);
@@ -316,8 +346,18 @@ export default function TransactionForm({ role }: { role: Role }) {
       if (isEdit) {
         fd.append("existingAttachments", JSON.stringify(retainedDocs));
       }
-      for (const f of newDocFiles) {
-        fd.append("documentPhotos", f);
+      if (newDocFiles.some((item) => !item.category)) {
+        setError("Please choose a category for each uploaded document.");
+        return;
+      }
+      if (newDocFiles.length) {
+        fd.append(
+          "documentPhotoCategories",
+          JSON.stringify(newDocFiles.map((item) => item.category)),
+        );
+      }
+      for (const item of newDocFiles) {
+        fd.append("documentPhotos", item.file);
       }
 
       const res = await apiFetch(`/api/transactions${isEdit ? `/${id}` : ""}`, {
@@ -419,11 +459,25 @@ export default function TransactionForm({ role }: { role: Role }) {
         </label>
         <label>
           Declaration Type
-          <input value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })} />
+          <select value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
+            <option value="">{t("form.optionalSelect")}</option>
+            {DECLARATION_TYPE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Port Type
-          <input value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })} />
+          <select value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })}>
+            <option value="">{t("form.optionalSelect")}</option>
+            {PORT_TYPE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
 
         <h2 className="form-section-title full-row">Shipment Core</h2>
@@ -639,7 +693,10 @@ export default function TransactionForm({ role }: { role: Role }) {
             <ul className="retained-docs">
               {retainedDocs.map((d) => (
                 <li key={d.path}>
-                  <span>{d.originalName}</span>
+                  <span>
+                    {d.originalName}
+                    {d.category ? ` (${DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === d.category)?.label ?? d.category})` : ""}
+                  </span>
                   <button
                     type="button"
                     className="link-button"
@@ -655,12 +712,46 @@ export default function TransactionForm({ role }: { role: Role }) {
             type="file"
             accept="image/*,application/pdf"
             multiple
-            onChange={(e) => setNewDocFiles(Array.from(e.target.files ?? []))}
+            onChange={(e) =>
+              setNewDocFiles(
+                Array.from(e.target.files ?? []).map((file) => ({
+                  file,
+                  category: "",
+                })),
+              )
+            }
           />
           {newDocFiles.length > 0 ? (
-            <p className="muted">
-              {newDocFiles.length} {t("form.filesSelected")}
-            </p>
+            <>
+              <p className="muted">
+                {newDocFiles.length} {t("form.filesSelected")}
+              </p>
+              <div className="full-row">
+                {newDocFiles.map((item, idx) => (
+                  <label key={`${item.file.name}-${idx}`}>
+                    {item.file.name}
+                    <select
+                      value={item.category}
+                      onChange={(e) =>
+                        setNewDocFiles((prev) =>
+                          prev.map((p, i) =>
+                            i === idx ? { ...p, category: e.target.value as DocumentCategory | "" } : p,
+                          ),
+                        )
+                      }
+                      required
+                    >
+                      <option value="">Select document category</option>
+                      {DOCUMENT_CATEGORY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </>
           ) : null}
         </div>
         <button className="primary-button" type="submit" disabled={loading}>

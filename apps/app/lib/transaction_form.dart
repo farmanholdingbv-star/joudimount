@@ -17,13 +17,32 @@ class TransactionFormPage extends StatefulWidget {
 }
 
 class _TransactionFormPageState extends State<TransactionFormPage> {
+  static const List<String> _documentCategoryOptions = [
+    'bill_of_lading',
+    'certificate_of_origin',
+    'invoice',
+    'packing_list',
+  ];
+  static const List<String> _declarationTypeOptions = [
+    'Import',
+    'Import to Free Zone',
+    'Import for Re-Export',
+    'Temporary Import',
+    'Export',
+    'Re-Export',
+    'Transfer',
+    'Transit',
+    'Temporary Admission',
+  ];
+  static const List<String> _portTypeOptions = ['Seaports', 'Free Zones', 'Mainland'];
+
   final _client = TextEditingController();
   final _shippingName = TextEditingController();
   final _shippingId = TextEditingController();
   final _declarationNumberInput = TextEditingController();
   final _declarationDateInput = TextEditingController();
-  final _declarationTypeInput = TextEditingController();
-  final _portTypeInput = TextEditingController();
+  String _declarationType = '';
+  String _portType = '';
   final _awb = TextEditingController();
   final _hs = TextEditingController();
   final _goods = TextEditingController();
@@ -46,6 +65,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   String _docStatus = 'copy_received';
   String _paymentStatus = 'pending';
   List<PlatformFile> _picked = [];
+  List<String?> _pickedCategories = [];
   List<Map<String, dynamic>> _retainedDocs = [];
   List<Map<String, dynamic>> _clients = [];
   List<Map<String, dynamic>> _shipping = [];
@@ -97,8 +117,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _shippingId.text = (tx['shippingCompanyId'] ?? '').toString();
       _declarationNumberInput.text = (tx['declarationNumber'] ?? '').toString();
       _declarationDateInput.text = _isoToDateInput(tx['declarationDate']);
-      _declarationTypeInput.text = (tx['declarationType'] ?? '').toString();
-      _portTypeInput.text = (tx['portType'] ?? '').toString();
+      final loadedDeclarationType = (tx['declarationType'] ?? '').toString();
+      _declarationType = _declarationTypeOptions.contains(loadedDeclarationType) ? loadedDeclarationType : '';
+      final loadedPortType = (tx['portType'] ?? '').toString();
+      _portType = _portTypeOptions.contains(loadedPortType) ? loadedPortType : '';
       _awb.text = (tx['airwayBill'] ?? '').toString();
       _hs.text = (tx['hsCode'] ?? '').toString();
       _goods.text = (tx['goodsDescription'] ?? '').toString();
@@ -136,6 +158,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       if (att is List) {
         _retainedDocs = att.cast<Map<String, dynamic>>();
       }
+      _picked = [];
+      _pickedCategories = [];
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -149,8 +173,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       'shippingCompanyName': _shippingName.text.trim(),
       'declarationNumber': _declarationNumberInput.text.trim(),
       'declarationDate': _declarationDateInput.text.trim(),
-      'declarationType': _declarationTypeInput.text.trim(),
-      'portType': _portTypeInput.text.trim(),
+      'declarationType': _declarationType.trim(),
+      'portType': _portType.trim(),
       'airwayBill': _awb.text.trim(),
       'hsCode': _hs.text.trim(),
       'goodsDescription': _goods.text.trim(),
@@ -164,8 +188,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     if (sid.isNotEmpty) body['shippingCompanyId'] = sid;
     if (_declarationNumberInput.text.trim().isEmpty) body.remove('declarationNumber');
     if (_declarationDateInput.text.trim().isEmpty) body.remove('declarationDate');
-    if (_declarationTypeInput.text.trim().isEmpty) body.remove('declarationType');
-    if (_portTypeInput.text.trim().isEmpty) body.remove('portType');
+    if (_declarationType.trim().isEmpty) body.remove('declarationType');
+    if (_portType.trim().isEmpty) body.remove('portType');
     void addD(String k, TextEditingController c) {
       final v = double.tryParse(c.text.trim());
       if (v != null) body[k] = v;
@@ -245,7 +269,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       allowedExtensions: const ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
     );
     if (r == null || r.files.isEmpty) return;
-    setState(() => _picked = r.files);
+    setState(() {
+      _picked = r.files;
+      _pickedCategories = List<String?>.filled(_picked.length, null);
+    });
   }
 
   Future<void> _save() async {
@@ -257,12 +284,23 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       if (_isEdit) {
         final fields = _multipartStringFields();
         fields['existingAttachments'] = jsonEncode(_retainedDocs);
+        if (_picked.isNotEmpty) {
+          if (_pickedCategories.any((c) => c == null || c.isEmpty)) {
+            throw Exception('Please select a category for each uploaded document.');
+          }
+          fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
+        }
         await Api.putMultipart('/api/transactions/${widget.transactionId}', fields, _picked);
       } else {
         if (_picked.isEmpty) {
           await Api.post('/api/transactions', _jsonBody());
         } else {
-          await Api.postMultipart('/api/transactions', _multipartStringFields(), _picked);
+          if (_pickedCategories.any((c) => c == null || c.isEmpty)) {
+            throw Exception('Please select a category for each uploaded document.');
+          }
+          final fields = _multipartStringFields();
+          fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
+          await Api.postMultipart('/api/transactions', fields, _picked);
         }
       }
       if (mounted) Navigator.of(context).pop(true);
@@ -280,8 +318,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _shippingId.dispose();
     _declarationNumberInput.dispose();
     _declarationDateInput.dispose();
-    _declarationTypeInput.dispose();
-    _portTypeInput.dispose();
     _awb.dispose();
     _hs.dispose();
     _goods.dispose();
@@ -378,8 +414,30 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           _field(_shippingId, l10n.shippingCompanyIdOptional),
           _field(_declarationNumberInput, 'Declaration Number'),
           _field(_declarationDateInput, 'Declaration Date (YYYY-MM-DD)'),
-          _field(_declarationTypeInput, 'Declaration Type'),
-          _field(_portTypeInput, 'Port Type'),
+          DropdownButtonFormField<String>(
+            key: ValueKey('tx-declaration-type-${_declarationType.isEmpty ? 'none' : _declarationType}'),
+            decoration: const InputDecoration(labelText: 'Declaration Type'),
+            initialValue: _declarationType.isEmpty ? null : _declarationType,
+            items: [
+              DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
+              ..._declarationTypeOptions.map(
+                (type) => DropdownMenuItem<String>(value: type, child: Text(type)),
+              ),
+            ],
+            onChanged: (v) => setState(() => _declarationType = v ?? ''),
+          ),
+          DropdownButtonFormField<String>(
+            key: ValueKey('tx-port-type-${_portType.isEmpty ? 'none' : _portType}'),
+            decoration: const InputDecoration(labelText: 'Port Type'),
+            initialValue: _portType.isEmpty ? null : _portType,
+            items: [
+              DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
+              ..._portTypeOptions.map(
+                (type) => DropdownMenuItem<String>(value: type, child: Text(type)),
+              ),
+            ],
+            onChanged: (v) => setState(() => _portType = v ?? ''),
+          ),
           _field(_awb, l10n.airwayBill),
           _field(_hs, l10n.hsCode),
           _field(_origin, l10n.originCountry),
@@ -483,6 +541,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ..._retainedDocs.map(
               (d) => ListTile(
                 title: Text('${d['originalName']}'),
+                subtitle: (d['category'] ?? '').toString().isNotEmpty ? Text(_docCategoryLabel('${d['category']}')) : null,
                 trailing: IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => setState(() => _retainedDocs.removeWhere((x) => x['path'] == d['path'])),
@@ -490,7 +549,28 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               ),
             ),
           OutlinedButton.icon(onPressed: _pickFiles, icon: const Icon(Icons.attach_file), label: Text(l10n.txPickFiles)),
-          if (_picked.isNotEmpty) Text('${_picked.length} ${l10n.txPickFiles}'),
+          if (_picked.isNotEmpty) ...[
+            Text('${_picked.length} ${l10n.txPickFiles}'),
+            const SizedBox(height: 8),
+            ...List.generate(_picked.length, (idx) {
+              final f = _picked[idx];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: DropdownButtonFormField<String?>(
+                  key: ValueKey('doc-cat-$idx-${_pickedCategories[idx] ?? 'none'}'),
+                  decoration: InputDecoration(labelText: '${f.name} - Category'),
+                  initialValue: _pickedCategories[idx],
+                  items: [
+                    const DropdownMenuItem<String?>(value: null, child: Text('Select category')),
+                    ..._documentCategoryOptions.map(
+                      (c) => DropdownMenuItem<String?>(value: c, child: Text(_docCategoryLabel(c))),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _pickedCategories[idx] = v),
+                ),
+              );
+            }),
+          ],
           if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),
           FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? l10n.saving : l10n.save)),
@@ -519,5 +599,20 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         subtitle: Text(value),
       ),
     );
+  }
+
+  String _docCategoryLabel(String value) {
+    switch (value) {
+      case 'bill_of_lading':
+        return 'Bill of Lading';
+      case 'certificate_of_origin':
+        return 'Certificate of Origin';
+      case 'invoice':
+        return 'Invoice';
+      case 'packing_list':
+        return 'Packing List';
+      default:
+        return value;
+    }
   }
 }

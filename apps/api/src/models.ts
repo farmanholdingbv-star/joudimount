@@ -70,7 +70,11 @@ interface TransactionDoc {
   paymentStatus: PaymentStatus;
   xrayResult: XrayResult;
   releaseCode?: string;
-  documentAttachments?: { path: string; originalName: string }[];
+  documentAttachments?: {
+    path: string;
+    originalName: string;
+    category?: "bill_of_lading" | "certificate_of_origin" | "invoice" | "packing_list";
+  }[];
   containerCount?: number;
   goodsWeightKg?: number;
   invoiceToWeightRateAedPerKg?: number;
@@ -149,6 +153,10 @@ const transactionSchema = new Schema<TransactionDoc>(
       {
         path: { type: String, required: true },
         originalName: { type: String, required: true },
+        category: {
+          type: String,
+          enum: ["bill_of_lading", "certificate_of_origin", "invoice", "packing_list"],
+        },
       },
     ],
     containerCount: { type: Number },

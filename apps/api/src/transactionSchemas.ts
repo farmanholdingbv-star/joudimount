@@ -63,10 +63,24 @@ export const optionalContainerNumbers = z.preprocess(
 export const goodsQualityEnum = z.enum(["new", "like_new", "used", "refurbished", "damaged", "mixed"]);
 
 export const goodsUnitEnum = z.enum(["kg", "ton", "piece", "carton", "pallet", "cbm", "liter", "set"]);
+export const declarationTypeEnum = z.enum([
+  "Import",
+  "Import to Free Zone",
+  "Import for Re-Export",
+  "Temporary Import",
+  "Export",
+  "Re-Export",
+  "Transfer",
+  "Transit",
+  "Temporary Admission",
+]);
+export const portTypeEnum = z.enum(["Seaports", "Free Zones", "Mainland"]);
 
 export const optionalGoodsQuality = z.preprocess(emptyToUndef, goodsQualityEnum.optional());
 
 export const optionalGoodsUnit = z.preprocess(emptyToUndef, goodsUnitEnum.optional());
+export const optionalDeclarationType = z.preprocess(emptyToUndef, declarationTypeEnum.optional());
+export const optionalPortType = z.preprocess(emptyToUndef, portTypeEnum.optional());
 export const optionalInvoiceCurrency = z.preprocess(
   emptyToUndef,
   z.enum(["AED", "USD", "EUR", "SAR"]).optional(),
@@ -79,8 +93,8 @@ export const createTransactionPayloadSchema = z.object({
   shippingCompanyName: z.string().min(2),
   declarationNumber: z.preprocess(emptyToUndef, z.string().min(2).optional()),
   declarationDate: optionalDateIso,
-  declarationType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
-  portType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
+  declarationType: optionalDeclarationType,
+  portType: optionalPortType,
   airwayBill: z.string().min(1),
   hsCode: z.string().min(2),
   goodsDescription: z.string().min(2),
@@ -112,8 +126,8 @@ export const updateTransactionPayloadSchema = z
     shippingCompanyName: z.string().min(2).optional(),
     declarationNumber: z.preprocess(emptyToUndef, z.string().min(2).optional()),
     declarationDate: optionalDateIso,
-    declarationType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
-    portType: z.preprocess(emptyToUndef, z.string().max(120).optional()),
+    declarationType: optionalDeclarationType,
+    portType: optionalPortType,
     airwayBill: z.string().min(1).optional(),
     hsCode: z.string().min(2).optional(),
     goodsDescription: z.string().min(2).optional(),

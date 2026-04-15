@@ -288,10 +288,11 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   Widget _attachmentTile(Map<String, dynamic> a) {
     final path = (a['path'] ?? '').toString();
     final name = (a['originalName'] ?? '').toString();
+    final category = (a['category'] ?? '').toString();
     final isImg = RegExp(r'\.(png|jpe?g|gif|webp)$', caseSensitive: false).hasMatch(name);
     return Card(
       child: ListTile(
-        title: Text(name),
+        title: Text(category.isEmpty ? name : '$name (${_docCategoryLabel(category)})'),
         onTap: () => _openAttachment(path, name),
         subtitle: isImg
             ? SizedBox(
@@ -308,6 +309,21 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
             : const Text('PDF / file (tap to open)'),
       ),
     );
+  }
+
+  String _docCategoryLabel(String value) {
+    switch (value) {
+      case 'bill_of_lading':
+        return 'Bill of Lading';
+      case 'certificate_of_origin':
+        return 'Certificate of Origin';
+      case 'invoice':
+        return 'Invoice';
+      case 'packing_list':
+        return 'Packing List';
+      default:
+        return value;
+    }
   }
 
   String _formatDateTime(String raw, String locale) {

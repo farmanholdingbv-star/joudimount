@@ -25,10 +25,12 @@ export type GoodsQuality = "new" | "like_new" | "used" | "refurbished" | "damage
 
 export type GoodsUnit = "kg" | "ton" | "piece" | "carton" | "pallet" | "cbm" | "liter" | "set";
 export type InvoiceCurrency = "AED" | "USD" | "EUR" | "SAR";
+export type DocumentCategory = "bill_of_lading" | "certificate_of_origin" | "invoice" | "packing_list";
 
 export interface DocumentAttachment {
   path: string;
   originalName: string;
+  category?: DocumentCategory;
 }
 
 export type AppUserRole = "manager" | "employee" | "accountant";
