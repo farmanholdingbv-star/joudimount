@@ -67,6 +67,10 @@ export const goodsUnitEnum = z.enum(["kg", "ton", "piece", "carton", "pallet", "
 export const optionalGoodsQuality = z.preprocess(emptyToUndef, goodsQualityEnum.optional());
 
 export const optionalGoodsUnit = z.preprocess(emptyToUndef, goodsUnitEnum.optional());
+export const optionalInvoiceCurrency = z.preprocess(
+  emptyToUndef,
+  z.enum(["AED", "USD", "EUR", "SAR"]).optional(),
+);
 
 export const createTransactionPayloadSchema = z.object({
   clientName: z.string().min(2),
@@ -81,6 +85,7 @@ export const createTransactionPayloadSchema = z.object({
   hsCode: z.string().min(2),
   goodsDescription: z.string().min(2),
   invoiceValue: z.coerce.number().positive(),
+  invoiceCurrency: optionalInvoiceCurrency,
   originCountry: z.string().length(2),
   containerCount: optionalNonNegativeInt,
   goodsWeightKg: optionalNonNegativeNumber,
@@ -113,6 +118,7 @@ export const updateTransactionPayloadSchema = z
     hsCode: z.string().min(2).optional(),
     goodsDescription: z.string().min(2).optional(),
     invoiceValue: z.coerce.number().positive().optional(),
+    invoiceCurrency: optionalInvoiceCurrency,
     originCountry: z.string().length(2).optional(),
     documentStatus: z.enum(["copy_received", "original_received", "telex_release"]).optional(),
     clearanceStatus: z

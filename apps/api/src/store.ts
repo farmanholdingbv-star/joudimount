@@ -144,6 +144,7 @@ function mapTransaction(doc: any): Transaction {
     hsCode: doc.hsCode,
     goodsDescription: doc.goodsDescription,
     invoiceValue: doc.invoiceValue,
+    invoiceCurrency: doc.invoiceCurrency,
     originCountry: doc.originCountry,
     documentStatus: doc.documentStatus,
     clearanceStatus: doc.clearanceStatus,
@@ -317,6 +318,7 @@ type CreateTransactionFields = Pick<
   | "hsCode"
   | "goodsDescription"
   | "invoiceValue"
+  | "invoiceCurrency"
   | "originCountry"
 > &
   Partial<
@@ -415,6 +417,7 @@ export async function updateTransaction(
       | "hsCode"
       | "goodsDescription"
       | "invoiceValue"
+      | "invoiceCurrency"
       | "originCountry"
       | "documentStatus"
       | "clearanceStatus"

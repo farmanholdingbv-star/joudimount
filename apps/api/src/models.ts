@@ -5,6 +5,7 @@ import type {
   DocumentStatus,
   GoodsQuality,
   GoodsUnit,
+  InvoiceCurrency,
   PaymentStatus,
   RiskLevel,
   XrayResult,
@@ -59,6 +60,7 @@ interface TransactionDoc {
   hsCode: string;
   goodsDescription: string;
   invoiceValue: number;
+  invoiceCurrency?: InvoiceCurrency;
   originCountry: string;
   documentStatus: DocumentStatus;
   clearanceStatus: ClearanceStatus;
@@ -115,6 +117,7 @@ const transactionSchema = new Schema<TransactionDoc>(
     hsCode: { type: String, required: true },
     goodsDescription: { type: String, required: true },
     invoiceValue: { type: Number, required: true },
+    invoiceCurrency: { type: String, enum: ["AED", "USD", "EUR", "SAR"], default: "AED" },
     originCountry: { type: String, required: true },
     documentStatus: { type: String, enum: ["copy_received", "original_received", "telex_release"], default: "copy_received" },
     clearanceStatus: {

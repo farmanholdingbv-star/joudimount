@@ -189,7 +189,8 @@ export default function TransactionDetails({ role }: { role: Role }) {
             <strong>{t("details.origin")}:</strong> {transaction.originCountry}
           </p>
           <p className="details-item">
-            <strong>{t("form.invoiceValue")}:</strong> {transaction.invoiceValue.toLocaleString(numberLocale)} {t("details.currencySuffix")}
+            <strong>{t("form.invoiceValue")}:</strong> {transaction.invoiceValue.toLocaleString(numberLocale)}{" "}
+            {transaction.invoiceCurrency ?? t("details.currencySuffix")}
           </p>
 
           <h2 className="form-section-title full-row">Cargo & Containers</h2>
@@ -255,6 +256,11 @@ export default function TransactionDetails({ role }: { role: Role }) {
           {transaction.goodsQuantity != null ? (
             <p className="details-item">
               <strong>{t("details.goodsQuantity")}:</strong> {transaction.goodsQuantity.toLocaleString(numberLocale)}
+            </p>
+          ) : null}
+          {transaction.goodsQuality ? (
+            <p className="details-item">
+              <strong>{t("details.goodsQuality")}:</strong> {t(`form.quality.${transaction.goodsQuality}` as MessageKey)}
             </p>
           ) : null}
           {transaction.goodsUnit ? (

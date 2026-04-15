@@ -225,7 +225,10 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     _kv(l10n.hsCode, '${tx!['hsCode']}'),
                     _kv(l10n.goods, '${tx!['goodsDescription']}'),
                     _kv(l10n.origin, '${tx!['originCountry']}'),
-                    _kv(l10n.invoiceValue, numberFormat.format(tx!['invoiceValue'] ?? 0)),
+                    _kv(
+                      l10n.invoiceValue,
+                      '${numberFormat.format(tx!['invoiceValue'] ?? 0)} ${tx!['invoiceCurrency'] ?? 'AED'}',
+                    ),
                     _kv(l10n.duty, numberFormat.format(tx!['customsDuty'] ?? 0)),
                     _kv(l10n.document, '${tx!['documentStatus']}'),
                     _kv(l10n.status, '${tx!['clearanceStatus']}'),
@@ -245,6 +248,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     if (tx!['isStopped'] == true && tx!['stopReason'] != null && tx!['stopReason'].toString().isNotEmpty)
                       _kv('Stop Reason', '${tx!['stopReason']}'),
                     if (tx!['goodsQuantity'] != null) _kv(l10n.txGoodsQty, '${tx!['goodsQuantity']}'),
+                    if (tx!['goodsQuality'] != null) _kv(l10n.txGoodsQuality, _qualityLabel('${tx!['goodsQuality']}', l10n)),
                     if (tx!['goodsUnit'] != null) _kv(l10n.txGoodsUnit, _unitLabel('${tx!['goodsUnit']}', l10n)),
                     _kv(l10n.createdAt, _formatDateTime('${tx!['createdAt']}', locale)),
                     const SizedBox(height: 12),
@@ -332,6 +336,25 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         return l10n.txUnitSet;
       default:
         return unit;
+    }
+  }
+
+  String _qualityLabel(String quality, AppLocalizations l10n) {
+    switch (quality) {
+      case 'new':
+        return l10n.txQualityNew;
+      case 'like_new':
+        return l10n.txQualityLikeNew;
+      case 'used':
+        return l10n.txQualityUsed;
+      case 'refurbished':
+        return l10n.txQualityRefurbished;
+      case 'damaged':
+        return l10n.txQualityDamaged;
+      case 'mixed':
+        return l10n.txQualityMixed;
+      default:
+        return quality;
     }
   }
 

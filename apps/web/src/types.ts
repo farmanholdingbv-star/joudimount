@@ -1,6 +1,7 @@
 export type GoodsQuality = "new" | "like_new" | "used" | "refurbished" | "damaged" | "mixed";
 
 export type GoodsUnit = "kg" | "ton" | "piece" | "carton" | "pallet" | "cbm" | "liter" | "set";
+export type InvoiceCurrency = "AED" | "USD" | "EUR" | "SAR";
 
 export interface DocumentAttachment {
   path: string;
@@ -21,6 +22,7 @@ export interface Transaction {
   goodsDescription: string;
   originCountry: string;
   invoiceValue: number;
+  invoiceCurrency?: InvoiceCurrency;
   riskLevel: string;
   channel: string;
   documentStatus: "copy_received" | "original_received" | "telex_release";

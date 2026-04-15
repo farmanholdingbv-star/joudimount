@@ -24,6 +24,7 @@ export type ClearanceStatus =
 export type GoodsQuality = "new" | "like_new" | "used" | "refurbished" | "damaged" | "mixed";
 
 export type GoodsUnit = "kg" | "ton" | "piece" | "carton" | "pallet" | "cbm" | "liter" | "set";
+export type InvoiceCurrency = "AED" | "USD" | "EUR" | "SAR";
 
 export interface DocumentAttachment {
   path: string;
@@ -64,6 +65,7 @@ export interface Transaction {
   hsCode: string;
   goodsDescription: string;
   invoiceValue: number;
+  invoiceCurrency?: InvoiceCurrency;
   originCountry: string;
   documentStatus: DocumentStatus;
   clearanceStatus: ClearanceStatus;

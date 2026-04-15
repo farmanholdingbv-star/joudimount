@@ -29,6 +29,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _goods = TextEditingController();
   final _origin = TextEditingController(text: 'AE');
   final _value = TextEditingController(text: '1000');
+  String _currency = 'AED';
   final _rate = TextEditingController();
   final _weight = TextEditingController();
   final _containers = TextEditingController();
@@ -39,6 +40,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _unitCount = TextEditingController();
   final _stopReason = TextEditingController();
   final _qty = TextEditingController();
+  String? _quality;
   String? _unit = 'cbm';
   bool _isStopped = false;
   String _docStatus = 'copy_received';
@@ -102,6 +104,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _goods.text = (tx['goodsDescription'] ?? '').toString();
       _origin.text = (tx['originCountry'] ?? 'AE').toString();
       _value.text = (tx['invoiceValue'] ?? '').toString();
+      final loadedCurrency = (tx['invoiceCurrency'] ?? 'AED').toString().toUpperCase();
+      _currency = const ['AED', 'USD', 'EUR', 'SAR'].contains(loadedCurrency) ? loadedCurrency : 'AED';
       _docStatus = (tx['documentStatus'] ?? 'copy_received').toString();
       _paymentStatus = (tx['paymentStatus'] ?? 'pending').toString();
       if (tx['invoiceToWeightRateAedPerKg'] != null) {
@@ -120,6 +124,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _isStopped = tx['isStopped'] == true;
       _stopReason.text = (tx['stopReason'] ?? '').toString();
       if (tx['goodsQuantity'] != null) _qty.text = tx['goodsQuantity'].toString();
+      _quality = tx['goodsQuality']?.toString();
+      if (_quality != null && _quality!.isEmpty) _quality = null;
       _unit = tx['goodsUnit']?.toString();
       if (_unit != null && _unit!.isEmpty) _unit = null;
       _releaseCode = tx['releaseCode']?.toString();
@@ -150,6 +156,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       'goodsDescription': _goods.text.trim(),
       'originCountry': _origin.text.trim().toUpperCase(),
       'invoiceValue': double.tryParse(_value.text.trim()) ?? 0,
+      'invoiceCurrency': _currency,
       'documentStatus': _docStatus,
       'paymentStatus': _paymentStatus,
     };
@@ -181,6 +188,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     addD('goodsWeightKg', _weight);
     addI('containerCount', _containers);
     addD('goodsQuantity', _qty);
+    if (_quality != null && _quality!.isNotEmpty) body['goodsQuality'] = _quality;
     if (_unit != null && _unit!.isNotEmpty) body['goodsUnit'] = _unit;
     if (_containerArrival.text.trim().isNotEmpty) body['containerArrivalDate'] = _containerArrival.text.trim();
     if (_documentArrival.text.trim().isNotEmpty) body['documentArrivalDate'] = _documentArrival.text.trim();
@@ -376,6 +384,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           _field(_hs, l10n.hsCode),
           _field(_origin, l10n.originCountry),
           _field(_value, l10n.invoiceValue, keyboard: TextInputType.number),
+          DropdownButtonFormField<String>(
+            key: ValueKey('tx-currency-$_currency'),
+            decoration: const InputDecoration(labelText: 'Currency'),
+            initialValue: _currency,
+            items: const [
+              DropdownMenuItem(value: 'AED', child: Text('AED')),
+              DropdownMenuItem(value: 'USD', child: Text('USD')),
+              DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+              DropdownMenuItem(value: 'SAR', child: Text('SAR')),
+            ],
+            onChanged: (v) => setState(() => _currency = v ?? 'AED'),
+          ),
           _field(_rate, l10n.txRateAedPerKg, keyboard: const TextInputType.numberWithOptions(decimal: true)),
           _field(_weight, l10n.txGoodsWeightKg, keyboard: const TextInputType.numberWithOptions(decimal: true)),
           if (derivedWeight != null && _weight.text.trim().isEmpty)
@@ -401,6 +421,21 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           ),
           if (_isStopped) _field(_stopReason, 'Stop Reason', maxLines: 2),
           _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true)),
+          DropdownButtonFormField<String?>(
+            key: ValueKey('tx-quality-${_quality ?? 'none'}'),
+            decoration: InputDecoration(labelText: l10n.txGoodsQuality),
+            initialValue: _quality,
+            items: [
+              DropdownMenuItem<String?>(value: null, child: Text(l10n.optionalSelect)),
+              DropdownMenuItem(value: 'new', child: Text(l10n.txQualityNew)),
+              DropdownMenuItem(value: 'like_new', child: Text(l10n.txQualityLikeNew)),
+              DropdownMenuItem(value: 'used', child: Text(l10n.txQualityUsed)),
+              DropdownMenuItem(value: 'refurbished', child: Text(l10n.txQualityRefurbished)),
+              DropdownMenuItem(value: 'damaged', child: Text(l10n.txQualityDamaged)),
+              DropdownMenuItem(value: 'mixed', child: Text(l10n.txQualityMixed)),
+            ],
+            onChanged: (v) => setState(() => _quality = v),
+          ),
           DropdownButtonFormField<String?>(
             key: ValueKey('tx-unit-${_unit ?? 'none'}'),
             decoration: InputDecoration(labelText: l10n.txGoodsUnit),

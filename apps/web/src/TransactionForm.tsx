@@ -4,7 +4,7 @@ import AutocompleteField, { type AutocompleteSuggestion } from "./AutocompleteFi
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
-import { Client, DocumentAttachment, GoodsUnit, Role, ShippingCompany, Transaction } from "./types";
+import { Client, DocumentAttachment, GoodsQuality, GoodsUnit, InvoiceCurrency, Role, ShippingCompany, Transaction } from "./types";
 
 const UNIT_OPTIONS: { value: GoodsUnit; labelKey: string }[] = [
   { value: "kg", labelKey: "form.unit.kg" },
@@ -16,6 +16,17 @@ const UNIT_OPTIONS: { value: GoodsUnit; labelKey: string }[] = [
   { value: "liter", labelKey: "form.unit.liter" },
   { value: "set", labelKey: "form.unit.set" },
 ];
+
+const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
+  { value: "new", labelKey: "form.quality.new" },
+  { value: "like_new", labelKey: "form.quality.like_new" },
+  { value: "used", labelKey: "form.quality.used" },
+  { value: "refurbished", labelKey: "form.quality.refurbished" },
+  { value: "damaged", labelKey: "form.quality.damaged" },
+  { value: "mixed", labelKey: "form.quality.mixed" },
+];
+
+const CURRENCY_OPTIONS: InvoiceCurrency[] = ["AED", "USD", "EUR", "SAR"];
 
 function isoToDateInput(iso?: string): string {
   if (!iso) return "";
@@ -37,6 +48,7 @@ type FormState = {
   goodsDescription: string;
   originCountry: string;
   invoiceValue: number;
+  invoiceCurrency: InvoiceCurrency | "";
   documentStatus: "copy_received" | "original_received" | "telex_release";
   paymentStatus: "pending" | "paid";
   containerCount: string;
@@ -50,6 +62,7 @@ type FormState = {
   isStopped: "no" | "yes";
   stopReason: string;
   goodsQuantity: string;
+  goodsQuality: GoodsQuality | "";
   goodsUnit: GoodsUnit | "";
 };
 
@@ -66,6 +79,7 @@ const emptyForm: FormState = {
   goodsDescription: "",
   originCountry: "AE",
   invoiceValue: 1000,
+  invoiceCurrency: "AED",
   documentStatus: "copy_received",
   paymentStatus: "pending",
   containerCount: "",
@@ -79,6 +93,7 @@ const emptyForm: FormState = {
   isStopped: "no",
   stopReason: "",
   goodsQuantity: "",
+  goodsQuality: "",
   goodsUnit: "cbm",
 };
 
@@ -178,6 +193,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           goodsDescription: data.goodsDescription,
           originCountry: data.originCountry,
           invoiceValue: data.invoiceValue,
+          invoiceCurrency: data.invoiceCurrency ?? "AED",
           documentStatus: data.documentStatus,
           paymentStatus: data.paymentStatus,
           containerCount: data.containerCount != null ? String(data.containerCount) : "",
@@ -192,6 +208,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           isStopped: data.isStopped ? "yes" : "no",
           stopReason: data.stopReason ?? "",
           goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
+          goodsQuality: data.goodsQuality ?? "",
           goodsUnit: data.goodsUnit ?? "cbm",
         });
         setRetainedDocs(data.documentAttachments ?? []);
@@ -266,6 +283,7 @@ export default function TransactionForm({ role }: { role: Role }) {
       fd.append("goodsDescription", form.goodsDescription);
       fd.append("originCountry", form.originCountry.toUpperCase());
       fd.append("invoiceValue", String(form.invoiceValue));
+      if (form.invoiceCurrency) fd.append("invoiceCurrency", form.invoiceCurrency);
       fd.append("documentStatus", form.documentStatus);
       if (role !== "employee") fd.append("paymentStatus", form.paymentStatus);
 
@@ -292,6 +310,7 @@ export default function TransactionForm({ role }: { role: Role }) {
       fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
       if (form.stopReason.trim()) fd.append("stopReason", form.stopReason.trim());
       appendOptionalNumber(fd, "goodsQuantity", form.goodsQuantity);
+      if (form.goodsQuality) fd.append("goodsQuality", form.goodsQuality);
       if (form.goodsUnit) fd.append("goodsUnit", form.goodsUnit);
 
       if (isEdit) {
@@ -436,6 +455,19 @@ export default function TransactionForm({ role }: { role: Role }) {
             required
           />
         </label>
+        <label>
+          Currency
+          <select
+            value={form.invoiceCurrency}
+            onChange={(e) => setForm({ ...form, invoiceCurrency: e.target.value as InvoiceCurrency | "" })}
+          >
+            {CURRENCY_OPTIONS.map((currency) => (
+              <option key={currency} value={currency}>
+                {currency}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="full-row">
           {t("form.goodsDescription")}
           <textarea
@@ -496,6 +528,20 @@ export default function TransactionForm({ role }: { role: Role }) {
             value={form.goodsQuantity}
             onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })}
           />
+        </label>
+        <label>
+          {t("form.goodsQuality")}
+          <select
+            value={form.goodsQuality}
+            onChange={(e) => setForm({ ...form, goodsQuality: e.target.value as GoodsQuality | "" })}
+          >
+            <option value="">{t("form.optionalSelect")}</option>
+            {QUALITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {t(o.labelKey as MessageKey)}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           {t("form.goodsUnit")}
