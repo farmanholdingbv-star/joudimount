@@ -5,6 +5,7 @@ import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
 import {
+  API_BASE,
   Client,
   DocumentAttachment,
   DocumentCategory,
@@ -71,6 +72,15 @@ function isoToDateInput(iso?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
+}
+
+function isImageFile(name: string): boolean {
+  return /\.(png|jpe?g|gif|webp)$/i.test(name);
+}
+
+function categoryLabel(category?: DocumentCategory | ""): string {
+  if (!category) return "Uncategorized";
+  return DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category;
 }
 
 type FormState = {
@@ -300,6 +310,17 @@ export default function TransactionForm({ role }: { role: Role }) {
         secondary: s.code,
       }));
   }, [shippingCompanies, form.shippingCompanyName]);
+
+  const groupedRetainedDocs = useMemo(() => {
+    const groups = new Map<string, DocumentAttachment[]>();
+    for (const d of retainedDocs) {
+      const key = categoryLabel(d.category);
+      const arr = groups.get(key) ?? [];
+      arr.push(d);
+      groups.set(key, arr);
+    }
+    return Array.from(groups.entries());
+  }, [retainedDocs]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -781,24 +802,47 @@ export default function TransactionForm({ role }: { role: Role }) {
           <h2 className="doc-upload-heading">{t("form.documentPhotosSection")}</h2>
           <p className="muted">{t("form.documentPhotosHelp")}</p>
           {isEdit && retainedDocs.length > 0 ? (
-            <ul className="retained-docs">
-              {retainedDocs.map((d) => (
-                <li key={d.path}>
-                  <span>
-                    {d.originalName}
-                    {d.category ? ` (${DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === d.category)?.label ?? d.category})` : ""}
-                  </span>
-                  <button
-                    type="button"
-                    className="link-button"
-                    disabled={!prepEditable}
-                    onClick={() => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path))}
-                  >
-                    {t("form.removeAttachment")}
-                  </button>
-                </li>
+            <div className="retained-docs">
+              {groupedRetainedDocs.map(([group, docs]) => (
+                <div key={group} style={{ marginBottom: 10 }}>
+                  <p style={{ margin: "0 0 6px 0", fontWeight: 600 }}>{group}</p>
+                  <ul className="retained-docs">
+                    {docs.map((d) => (
+                      <li key={d.path}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          {isImageFile(d.originalName) ? (
+                            <a href={`${API_BASE}${d.path}`} target="_blank" rel="noreferrer">
+                              <img
+                                src={`${API_BASE}${d.path}`}
+                                alt={d.originalName}
+                                style={{
+                                  width: 56,
+                                  height: 56,
+                                  objectFit: "cover",
+                                  borderRadius: 8,
+                                  border: "1px solid #d1d5db",
+                                }}
+                              />
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: 12, color: "#64748b" }}>PDF</span>
+                          )}
+                          <span>{d.originalName}</span>
+                        </span>
+                        <button
+                          type="button"
+                          className="link-button"
+                          disabled={!prepEditable}
+                          onClick={() => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path))}
+                        >
+                          {t("form.removeAttachment")}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : null}
           <input
             type="file"

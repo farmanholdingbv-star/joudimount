@@ -4,7 +4,7 @@ import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
 import ShippingPaperModal from "./ShippingPaperModal";
-import { API_BASE, Role, Transaction } from "./types";
+import { API_BASE, DocumentAttachment, Role, Transaction } from "./types";
 
 const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
   bill_of_lading: "Bill of Lading",
@@ -12,6 +12,11 @@ const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
   invoice: "Invoice",
   packing_list: "Packing List",
 };
+
+function categoryLabel(category?: string): string {
+  if (!category) return "Uncategorized";
+  return DOCUMENT_CATEGORY_LABELS[category] ?? category;
+}
 
 function stageLabel(stage?: string): string {
   switch (stage) {
@@ -39,6 +44,15 @@ export default function TransactionDetails({ role }: { role: Role }) {
   const [deleting, setDeleting] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [shippingPaperOpen, setShippingPaperOpen] = useState(false);
+  const groupedAttachments = (transaction?.documentAttachments ?? []).reduce<Record<string, DocumentAttachment[]>>(
+    (acc, item) => {
+      const key = categoryLabel(item.category);
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    },
+    {},
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -300,27 +314,29 @@ export default function TransactionDetails({ role }: { role: Role }) {
               <p>
                 <strong>{t("details.documentPhotos")}</strong>
               </p>
-              <ul className="attachment-grid">
-                {transaction.documentAttachments.map((a) => {
-                  const href = `${API_BASE}${a.path}`;
-                  const isImg = /\.(png|jpe?g|gif|webp)$/i.test(a.originalName);
-                  return (
-                    <li key={a.path} className="attachment-tile">
-                      {isImg ? (
-                        <a href={href} target="_blank" rel="noreferrer">
-                          <img src={href} alt="" className="attachment-thumb" />
-                        </a>
-                      ) : null}
-                      <a href={href} target="_blank" rel="noreferrer">
-                        {a.originalName} ({t("details.openAttachment")})
-                      </a>
-                      {a.category ? (
-                        <div className="muted">Category: {DOCUMENT_CATEGORY_LABELS[a.category] ?? a.category}</div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
+              {Object.entries(groupedAttachments).map(([group, items]) => (
+                <div key={group} style={{ marginBottom: 12 }}>
+                  <p style={{ margin: "0 0 6px 0", fontWeight: 600 }}>{group}</p>
+                  <ul className="attachment-grid">
+                    {items.map((a) => {
+                      const href = `${API_BASE}${a.path}`;
+                      const isImg = /\.(png|jpe?g|gif|webp)$/i.test(a.originalName);
+                      return (
+                        <li key={a.path} className="attachment-tile">
+                          {isImg ? (
+                            <a href={href} target="_blank" rel="noreferrer">
+                              <img src={href} alt="" className="attachment-thumb" />
+                            </a>
+                          ) : null}
+                          <a href={href} target="_blank" rel="noreferrer">
+                            {a.originalName} ({t("details.openAttachment")})
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
             </div>
           ) : null}
           </div>
