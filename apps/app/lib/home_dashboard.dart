@@ -1,0 +1,541 @@
+import 'package:flutter/material.dart';
+
+import 'api.dart';
+import 'app_lang.dart';
+import 'l10n/app_localizations.dart';
+import 'transaction_detail.dart';
+import 'transaction_form.dart';
+
+/// Home dashboard layout inspired by modern RTL mobile dashboards (banner, search, grid, recent list).
+class DashboardHome extends StatefulWidget {
+  final Map<String, dynamic> user;
+  final String role;
+  final ValueChanged<int> onSwitchTab;
+  final VoidCallback onOpenProfile;
+
+  const DashboardHome({
+    super.key,
+    required this.user,
+    required this.role,
+    required this.onSwitchTab,
+    required this.onOpenProfile,
+  });
+
+  @override
+  State<DashboardHome> createState() => _DashboardHomeState();
+}
+
+class _DashboardHomeState extends State<DashboardHome> {
+  final _searchCtrl = TextEditingController();
+  List<Map<String, dynamic>> _recent = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecent();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadRecent() async {
+    setState(() => _loading = true);
+    try {
+      final data = await Api.get('/api/transactions') as List<dynamic>;
+      final list = data.cast<Map<String, dynamic>>();
+      list.sort((a, b) {
+        final da = DateTime.tryParse('${a['createdAt']}') ?? DateTime(1970);
+        final db = DateTime.tryParse('${b['createdAt']}') ?? DateTime(1970);
+        return db.compareTo(da);
+      });
+      if (mounted) setState(() => _recent = list.take(8).toList());
+    } catch (_) {
+      if (mounted) setState(() => _recent = []);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _openNewTransaction() async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => TransactionFormPage(role: widget.role)),
+    );
+    if (ok == true && mounted) _loadRecent();
+  }
+
+  String _userName() {
+    final n = widget.user['name'];
+    if (n is String && n.trim().isNotEmpty) return n.trim();
+    final e = widget.user['email'];
+    if (e is String && e.contains('@')) return e.split('@').first;
+    return '—';
+  }
+
+  String _avatarLetter() {
+    final n = _userName();
+    if (n.isEmpty || n == '—') return '?';
+    final first = n.runes.first;
+    return String.fromCharCode(first).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final locale = Localizations.localeOf(context).languageCode;
+    final welcomePrefix = locale == 'ar' ? 'مرحباً، ' : 'Hello, ';
+    final searchHint = locale == 'ar'
+        ? 'ابحث عن المعاملات والعملاء والإقرارات'
+        : 'Search transactions, clients, declarations…';
+    final sectionTitle =
+        locale == 'ar' ? 'آخر المعاملات' : 'Recent transactions';
+    final viewAll = locale == 'ar' ? 'عرض الكل' : 'View all';
+
+    final gridItems = <_GridItem>[
+      _GridItem(
+        label: l10n.newTransaction,
+        icon: Icons.add_circle_outline,
+        color: const Color(0xFFE8B339),
+        onTap: _openNewTransaction,
+      ),
+      _GridItem(
+        label: l10n.clients,
+        icon: Icons.groups_outlined,
+        color: const Color(0xFF3B82F6),
+        onTap: () => widget.onSwitchTab(2),
+      ),
+      _GridItem(
+        label: l10n.shipping,
+        icon: Icons.local_shipping_outlined,
+        color: const Color(0xFF8B5CF6),
+        onTap: () => widget.onSwitchTab(3),
+      ),
+      _GridItem(
+        label: l10n.transactions,
+        icon: Icons.receipt_long_outlined,
+        color: const Color(0xFFF97316),
+        onTap: () => widget.onSwitchTab(1),
+      ),
+      _GridItem(
+        label: locale == 'ar' ? 'متابعة المعاملات' : 'Track transactions',
+        icon: Icons.track_changes_outlined,
+        color: const Color(0xFF14B8A6),
+        onTap: () => widget.onSwitchTab(1),
+      ),
+      _GridItem(
+        label: locale == 'ar' ? 'إضافة عميل' : 'Add client',
+        icon: Icons.person_add_alt_1_outlined,
+        color: const Color(0xFFEC4899),
+        onTap: () => widget.onSwitchTab(2),
+      ),
+      _GridItem(
+        label: locale == 'ar' ? 'شركة شحن' : 'Shipping co.',
+        icon: Icons.add_business_outlined,
+        color: const Color(0xFF64748B),
+        onTap: () => widget.onSwitchTab(3),
+      ),
+      _GridItem(
+        label: locale == 'ar' ? 'الدعم والمساعدة' : 'Help & support',
+        icon: Icons.support_agent_outlined,
+        color: const Color(0xFFFB923C),
+        onTap: widget.onOpenProfile,
+      ),
+    ];
+
+    return RefreshIndicator(
+      onRefresh: _loadRecent,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.tracker,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1e3a8a),
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PopupMenuButton<String>(
+                            tooltip: l10n.language,
+                            icon: const Icon(Icons.language,
+                                color: Color(0xFF1e3a8a)),
+                            onSelected: Lang.setLocale,
+                            itemBuilder: (_) => const [
+                              PopupMenuItem(
+                                  value: 'ar', child: Text('العربية')),
+                              PopupMenuItem(
+                                  value: 'en', child: Text('English')),
+                            ],
+                          ),
+                          IconButton(
+                            tooltip: l10n.profile,
+                            icon: const Icon(Icons.person_outline,
+                                color: Color(0xFF1e3a8a)),
+                            onPressed: widget.onOpenProfile,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.local_offer_outlined,
+                                color: Color(0xFF1e3a8a)),
+                            onPressed: () => widget.onSwitchTab(1),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chat_bubble_outline,
+                                color: Color(0xFF1e3a8a)),
+                            onPressed: () =>
+                                ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(locale == 'ar'
+                                      ? 'الرسائل قريباً'
+                                      : 'Messages coming soon')),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _WelcomeBanner(
+                    rtl: isRtl,
+                    welcomeText: '$welcomePrefix${_userName()}!',
+                    avatarLetter: _avatarLetter(),
+                    onBell: () => ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(locale == 'ar'
+                              ? 'لا إشعارات جديدة'
+                              : 'No new notifications')),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchCtrl,
+                          onSubmitted: (_) => widget.onSwitchTab(1),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: searchHint,
+                            prefixIcon: const Icon(Icons.search,
+                                color: Color(0xFF64748B)),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.tune,
+                                  size: 22, color: Color(0xFF94a3b8)),
+                              onPressed: () => widget.onSwitchTab(1),
+                            ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(28),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(28),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Material(
+                        color: const Color(0xFF1e3a8a),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () => widget.onSwitchTab(1),
+                          borderRadius: BorderRadius.circular(12),
+                          child: const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(Icons.bookmark_outline,
+                                color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 0.72,
+                      ),
+                      itemCount: gridItems.length,
+                      itemBuilder: (context, i) {
+                        final item = gridItems[i];
+                        return InkWell(
+                          onTap: item.onTap,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: item.color.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(item.icon,
+                                    color: item.color, size: 26),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                item.label,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    height: 1.15,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        sectionTitle,
+                        style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0f172a)),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => widget.onSwitchTab(1),
+                        icon: Icon(
+                            isRtl ? Icons.chevron_left : Icons.chevron_right,
+                            size: 18),
+                        label: Text(viewAll),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+          if (_loading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator())),
+            )
+          else if (_recent.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Center(
+                  child: Text(
+                    locale == 'ar'
+                        ? 'لا معاملات بعد. أنشئ معاملة من الشبكة أعلاه.'
+                        : 'No transactions yet. Create one from the grid above.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 132,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _recent.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, i) {
+                    final tx = _recent[i];
+                    final id = '${tx['id'] ?? tx['_id'] ?? ''}';
+                    final dec = (tx['declarationNumber'] ?? '—').toString();
+                    final client = (tx['clientName'] ?? '').toString();
+                    return SizedBox(
+                      width: 160,
+                      child: Material(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: id.isEmpty
+                              ? null
+                              : () {
+                                  Navigator.of(context).push<void>(
+                                    MaterialPageRoute(
+                                        builder: (_) => TransactionDetailsPage(
+                                            id: id, role: widget.role)),
+                                  );
+                                },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  dec,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  client,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  (tx['clearanceStatus'] ?? '').toString(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Color(0xFF1e3a8a)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+        ],
+      ),
+    );
+  }
+}
+
+class _GridItem {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  _GridItem(
+      {required this.label,
+      required this.icon,
+      required this.color,
+      required this.onTap});
+}
+
+class _WelcomeBanner extends StatelessWidget {
+  final bool rtl;
+  final String welcomeText;
+  final String avatarLetter;
+  final VoidCallback onBell;
+
+  const _WelcomeBanner({
+    required this.rtl,
+    required this.welcomeText,
+    required this.avatarLetter,
+    required this.onBell,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1e3a8a).withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Material(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              onTap: onBell,
+              borderRadius: BorderRadius.circular(10),
+              child: const SizedBox(
+                width: 44,
+                height: 44,
+                child:
+                    Icon(Icons.notifications_none_rounded, color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              welcomeText,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600),
+              textAlign: rtl ? TextAlign.right : TextAlign.left,
+            ),
+          ),
+          const SizedBox(width: 12),
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: Colors.white.withOpacity(0.25),
+            child: Text(
+              avatarLetter,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -126,20 +126,10 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     try {
       await Printing.layoutPdf(onLayout: (format) async => bytes);
     } on MissingPluginException catch (_) {
-      // Linux desktop / some embeds: no native printing plugin — share PDF instead.
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [
-            XFile.fromData(
-              bytes,
-              name: 'shipping_paper_${widget.id}.pdf',
-              mimeType: 'application/pdf',
-            ),
-          ],
-          subject: l10n.shippingPaperHeading,
-          title: l10n.shippingPaperHeading,
-        ),
-      );
+      // Desktop Linux embeds can miss native print/share plugins.
+      _showUnsupportedShareMessage();
+    } on UnimplementedError {
+      _showUnsupportedShareMessage();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -164,6 +154,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final numberFormat = intl.NumberFormat.decimalPattern(locale);
     final canEdit = widget.role != 'accountant';
@@ -207,10 +198,53 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error.isNotEmpty
-              ? Center(child: Text(error))
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Card(
+                      color: cs.errorContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(error,
+                            style: TextStyle(color: cs.onErrorContainer)),
+                      ),
+                    ),
+                  ),
+                )
               : ListView(
                   padding: const EdgeInsets.all(12),
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            backgroundColor: Color(0x33FFFFFF),
+                            child: Icon(Icons.receipt_long_outlined,
+                                color: Colors.white),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '${tx!['declarationNumber'] ?? l10n.details}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     _kv(l10n.client, '${tx!['clientName']}'),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
                     _kv(l10n.declaration, '${tx!['declarationNumber']}'),
@@ -386,10 +420,23 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           subject: name,
         ),
       );
+    } on UnimplementedError {
+      _showUnsupportedShareMessage();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
+  }
+
+  void _showUnsupportedShareMessage() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Sharing files is not supported on this Linux build yet.',
+        ),
+      ),
+    );
   }
 
   Widget _kv(String k, String v) => Card(

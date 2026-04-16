@@ -24,6 +24,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tracker => 'المتتبع';
 
   @override
+  String get dashboardTab => 'لوحة التحكم';
+
+  @override
   String get transactions => 'المعاملات';
 
   @override

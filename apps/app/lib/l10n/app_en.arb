@@ -5,6 +5,7 @@
   "password": "Password",
   "signingIn": "Signing in...",
   "tracker": "Tracker",
+  "dashboardTab": "Dashboard",
   "transactions": "Transactions",
   "clients": "Clients",
   "shipping": "Shipping",

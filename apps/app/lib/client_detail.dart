@@ -40,17 +40,61 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.clients)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error.isNotEmpty
-              ? Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(_error, style: const TextStyle(color: Colors.red))))
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Card(
+                      color: cs.errorContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(_error,
+                            style: TextStyle(color: cs.onErrorContainer)),
+                      ),
+                    ),
+                  ),
+                )
               : _client == null
                   ? const SizedBox.shrink()
                   : ListView(
                       padding: const EdgeInsets.all(12),
                       children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              const CircleAvatar(
+                                backgroundColor: Color(0x33FFFFFF),
+                                child: Icon(Icons.groups_outlined,
+                                    color: Colors.white),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _client!['companyName'].toString(),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         _kv(l10n.companyName, '${_client!['companyName']}'),
                         _kv(l10n.trn, '${_client!['trn']}'),
                         _kv(l10n.immigrationCode, '${_client!['immigrationCode'] ?? '—'}'),

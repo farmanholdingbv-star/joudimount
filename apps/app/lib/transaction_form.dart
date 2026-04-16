@@ -339,6 +339,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     if (_loadingTx) {
       return Scaffold(
         appBar: AppBar(title: Text(_isEdit ? l10n.editTransaction : l10n.newTransaction)),
@@ -363,6 +364,36 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: Color(0x33FFFFFF),
+                  child: Icon(Icons.edit_note_outlined, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _isEdit ? l10n.editTransaction : l10n.newTransaction,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           if (_isEdit) ...[
             Text('Read-only Transaction Fields', style: Theme.of(context).textTheme.titleMedium),
             if ((_releaseCode ?? '').isNotEmpty) _readonlyField(l10n.releaseCode, _releaseCode!),
@@ -571,7 +602,14 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               );
             }),
           ],
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
+          if (_error.isNotEmpty)
+            Card(
+              color: cs.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+              ),
+            ),
           const SizedBox(height: 8),
           FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? l10n.saving : l10n.save)),
         ],

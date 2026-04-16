@@ -39,11 +39,11 @@ class Api {
       return t.endsWith('/') ? t.substring(0, t.length - 1) : t;
     }
     const port = 4000;
-    if (kIsWeb) return 'http://192.168.1.104:$port';
+    if (kIsWeb) return 'http://localhost:$port';
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.104:$port';
+      return 'http://localhost:$port';
     }
-    return 'http://192.168.1.104:$port';
+    return 'http://localhost:$port';
   }
 
   static Future<Map<String, String>> _authHeaders({bool jsonBody = true}) async {

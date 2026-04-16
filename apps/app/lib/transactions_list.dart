@@ -44,6 +44,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     final statuses = _items.map((e) => (e['clearanceStatus'] ?? '').toString()).where((e) => e.isNotEmpty).toSet().toList();
     final filtered = _items.where((tx) {
       final q = _query.toLowerCase();
@@ -61,6 +62,37 @@ class _TransactionsTabState extends State<TransactionsTab> {
       child: ListView(
         padding: const EdgeInsets.all(12),
         children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: Color(0x33FFFFFF),
+                  child: Icon(Icons.receipt_long_outlined, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.transactions,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -94,7 +126,14 @@ class _TransactionsTabState extends State<TransactionsTab> {
           ),
           const SizedBox(height: 8),
           if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
+          if (_error.isNotEmpty)
+            Card(
+              color: cs.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+              ),
+            ),
           ...filtered.map(
             (tx) => Card(
               child: ListTile(
@@ -111,7 +150,13 @@ class _TransactionsTabState extends State<TransactionsTab> {
               ),
             ),
           ),
-          if (!_loading && filtered.isEmpty) Padding(padding: const EdgeInsets.all(16), child: Text(l10n.noMatch)),
+          if (!_loading && filtered.isEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(l10n.noMatch, style: TextStyle(color: Colors.grey.shade700)),
+              ),
+            ),
         ],
       ),
     );

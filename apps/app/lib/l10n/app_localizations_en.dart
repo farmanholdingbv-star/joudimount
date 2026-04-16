@@ -24,6 +24,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tracker => 'Tracker';
 
   @override
+  String get dashboardTab => 'Dashboard';
+
+  @override
   String get transactions => 'Transactions';
 
   @override

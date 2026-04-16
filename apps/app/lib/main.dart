@@ -4,30 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
+import 'app_lang.dart';
 import 'client_detail.dart';
 import 'employees.dart';
+import 'home_dashboard.dart';
 import 'l10n/app_localizations.dart';
 import 'shipping_detail.dart';
 import 'transactions_list.dart';
 
 void main() {
   runApp(const TrackerMobileApp());
-}
-
-class Lang {
-  static final ValueNotifier<String> locale = ValueNotifier<String>('ar');
-
-  static Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final value = prefs.getString('locale') ?? 'ar';
-    locale.value = (value == 'en') ? 'en' : 'ar';
-  }
-
-  static Future<void> setLocale(String value) async {
-    locale.value = value == 'en' ? 'en' : 'ar';
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('locale', locale.value);
-  }
 }
 
 class TrackerMobileApp extends StatefulWidget {
@@ -51,14 +37,78 @@ class _TrackerMobileAppState extends State<TrackerMobileApp> {
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
-      return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
+      return const MaterialApp(
+          home: Scaffold(body: Center(child: CircularProgressIndicator())));
     }
     return ValueListenableBuilder<String>(
       valueListenable: Lang.locale,
       builder: (context, value, _) => MaterialApp(
         title: 'Transaction Tracker Mobile',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF1e3a8a),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: Color(0xFF1e3a8a),
+            centerTitle: false,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+          ),
+          cardTheme: CardThemeData(
+            color: Colors.white,
+            elevation: 0,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+          ),
+          listTileTheme: const ListTileThemeData(
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+              borderSide: BorderSide(color: Color(0xFF2563EB), width: 1.2),
+            ),
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1e3a8a),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1e3a8a),
+              side: const BorderSide(color: Color(0xFF2563EB)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
         locale: Locale(value),
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
@@ -152,26 +202,75 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                Text(l10n.login, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                TextField(controller: _emailCtrl, decoration: InputDecoration(labelText: l10n.email)),
-                const SizedBox(height: 10),
-                TextField(controller: _passCtrl, decoration: InputDecoration(labelText: l10n.password), obscureText: true),
-                const SizedBox(height: 16),
-                if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _loading ? null : _submit,
-                  child: Text(_loading ? l10n.signingIn : l10n.login),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.track_changes_outlined,
+                          color: Colors.white, size: 26),
+                      const SizedBox(height: 8),
+                      Text(
+                        locale == 'ar'
+                            ? 'تتبع شحناتك بسهولة'
+                            : 'Track shipments with confidence',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(l10n.login,
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 14),
+                        TextField(
+                            controller: _emailCtrl,
+                            decoration: InputDecoration(labelText: l10n.email)),
+                        const SizedBox(height: 10),
+                        TextField(
+                            controller: _passCtrl,
+                            decoration:
+                                InputDecoration(labelText: l10n.password),
+                            obscureText: true),
+                        const SizedBox(height: 14),
+                        if (_error.isNotEmpty)
+                          Text(_error, style: const TextStyle(color: Colors.red)),
+                        FilledButton(
+                          onPressed: _loading ? null : _submit,
+                          child: Text(_loading ? l10n.signingIn : l10n.login),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -204,11 +303,34 @@ class _HomePageState extends State<HomePage> {
     widget.onLogout();
   }
 
+  String _appBarTitle(AppLocalizations l10n) {
+    switch (_index) {
+      case 1:
+        return l10n.transactions;
+      case 2:
+        return l10n.clients;
+      case 3:
+        return l10n.shipping;
+      case 4:
+        return l10n.employees;
+      case 5:
+        return l10n.profile;
+      default:
+        return l10n.tracker;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final role = widget.user['role'] as String? ?? 'employee';
     final pages = [
+      DashboardHome(
+        user: widget.user,
+        role: role,
+        onSwitchTab: (i) => setState(() => _index = i),
+        onOpenProfile: () => setState(() => _index = 5),
+      ),
       TransactionsTab(role: role),
       ClientsTab(role: role),
       ShippingTab(role: role),
@@ -217,40 +339,51 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${l10n.tracker} (${widget.user['role']})'),
-        actions: [
-          Row(
-            children: [
-              Text(l10n.language),
-              const SizedBox(width: 8),
-              DropdownButton<String>(
-                value: Lang.locale.value,
-                items: const [
-                  DropdownMenuItem(value: 'ar', child: Text('العربية')),
-                  DropdownMenuItem(value: 'en', child: Text('English')),
-                ],
-                onChanged: (v) {
-                  if (v != null) {
-                    Lang.setLocale(v);
-                  }
-                },
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-        ],
-      ),
+      appBar: _index == 0
+          ? null
+          : AppBar(
+              title: Text(_appBarTitle(l10n)),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: Lang.locale.value,
+                      items: const [
+                        DropdownMenuItem(value: 'ar', child: Text('العربية')),
+                        DropdownMenuItem(value: 'en', child: Text('English')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) Lang.setLocale(v);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
       body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (v) => setState(() => _index = v),
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.receipt_long), label: l10n.transactions),
-          NavigationDestination(icon: const Icon(Icons.groups), label: l10n.clients),
-          NavigationDestination(icon: const Icon(Icons.local_shipping), label: l10n.shipping),
-          NavigationDestination(icon: const Icon(Icons.badge_outlined), label: l10n.employees),
-          NavigationDestination(icon: const Icon(Icons.person), label: l10n.profile),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _index,
+        onTap: (v) => setState(() => _index = v),
+        selectedItemColor: const Color(0xFFF97316),
+        unselectedItemColor: const Color(0xFF2563EB),
+        items: [
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.dashboard_outlined),
+              label: l10n.dashboardTab),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: l10n.transactions),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.groups_outlined), label: l10n.clients),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.local_shipping_outlined),
+              label: l10n.shipping),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.badge_outlined), label: l10n.employees),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.person_outline), label: l10n.profile),
         ],
       ),
     );
@@ -292,12 +425,14 @@ class _ClientsTabState extends State<ClientsTab> {
   }
 
   Future<void> _createClient() async {
-    final created = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const ClientFormPage()));
+    final created = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const ClientFormPage()));
     if (created == true) _load();
   }
 
   Future<void> _editClient(Map<String, dynamic> client) async {
-    final updated = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => ClientFormPage(existing: client)));
+    final updated = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => ClientFormPage(existing: client)));
     if (updated == true) _load();
   }
 
@@ -308,8 +443,12 @@ class _ClientsTabState extends State<ClientsTab> {
       builder: (context) => AlertDialog(
         content: Text(l10n.confirmDelete),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.delete)),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -318,7 +457,9 @@ class _ClientsTabState extends State<ClientsTab> {
       await Api.delete('/api/clients/$id');
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -342,18 +483,78 @@ class _ClientsTabState extends State<ClientsTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isManager = widget.role == 'manager';
+    final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        if (isManager) FilledButton.icon(onPressed: _createClient, icon: const Icon(Icons.add), label: Text(l10n.addClient)),
-        if (!isManager) Text(l10n.managerOnlyClients, style: const TextStyle(color: Colors.grey)),
-        if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-        if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0x33FFFFFF),
+                child: Icon(Icons.groups_outlined, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.clients,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (isManager)
+          FilledButton.icon(
+              onPressed: _createClient,
+              icon: const Icon(Icons.add),
+              label: Text(l10n.addClient)),
+        if (!isManager)
+          Text(l10n.managerOnlyClients,
+              style: const TextStyle(color: Colors.grey)),
+        if (_loading)
+          const Center(
+              child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator())),
+        if (_error.isNotEmpty)
+          Card(
+            color: cs.errorContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+            ),
+          ),
+        if (!_loading && _error.isEmpty && _items.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.noMatch,
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+            ),
+          ),
         ..._items.map((c) => Card(
               child: ListTile(
                 onTap: () {
                   Navigator.of(context).push<void>(
-                    MaterialPageRoute(builder: (_) => ClientDetailPage(id: _entityId(c))),
+                    MaterialPageRoute(
+                        builder: (_) => ClientDetailPage(id: _entityId(c))),
                   );
                 },
                 title: Text('${c['companyName']}'),
@@ -369,7 +570,8 @@ class _ClientsTabState extends State<ClientsTab> {
                         },
                         itemBuilder: (_) => [
                           PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
-                          PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
+                          PopupMenuItem(
+                              value: 'delete', child: Text(l10n.delete)),
                         ],
                       )
                     : null,
@@ -405,14 +607,16 @@ class _ClientFormPageState extends State<ClientFormPage> {
     final e = widget.existing;
     _name = TextEditingController(text: (e?['companyName'] ?? '').toString());
     _trn = TextEditingController(text: (e?['trn'] ?? '').toString());
-    _imm = TextEditingController(text: (e?['immigrationCode'] ?? '').toString());
+    _imm =
+        TextEditingController(text: (e?['immigrationCode'] ?? '').toString());
     _email = TextEditingController(text: (e?['email'] ?? '').toString());
     _country = TextEditingController(text: (e?['country'] ?? '').toString());
     _credit = TextEditingController(text: (e?['creditLimit'] ?? 0).toString());
     _status = (e?['status'] ?? 'active').toString();
   }
 
-  String get _existingId => (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
+  String get _existingId =>
+      (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
 
   Future<void> _save() async {
     setState(() {
@@ -452,33 +656,45 @@ class _ClientFormPageState extends State<ClientFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          TextField(controller: _name, decoration: InputDecoration(labelText: l10n.companyName)),
+          TextField(
+              controller: _name,
+              decoration: InputDecoration(labelText: l10n.companyName)),
           TextField(
             controller: _trn,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(labelText: l10n.trn),
           ),
-          TextField(controller: _imm, decoration: InputDecoration(labelText: l10n.immigrationCode)),
+          TextField(
+              controller: _imm,
+              decoration: InputDecoration(labelText: l10n.immigrationCode)),
           TextField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(labelText: l10n.clientEmail),
           ),
-          TextField(controller: _country, decoration: InputDecoration(labelText: l10n.country)),
-          TextField(controller: _credit, decoration: InputDecoration(labelText: l10n.creditLimit)),
+          TextField(
+              controller: _country,
+              decoration: InputDecoration(labelText: l10n.country)),
+          TextField(
+              controller: _credit,
+              decoration: InputDecoration(labelText: l10n.creditLimit)),
           DropdownButtonFormField<String>(
             key: ValueKey('client-status-$_status'),
             decoration: InputDecoration(labelText: l10n.clientStatus),
             initialValue: _status,
             items: [
               DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
-              DropdownMenuItem(value: 'suspended', child: Text(l10n.statusSuspended)),
+              DropdownMenuItem(
+                  value: 'suspended', child: Text(l10n.statusSuspended)),
             ],
             onChanged: (v) => setState(() => _status = v ?? 'active'),
           ),
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
+          if (_error.isNotEmpty)
+            Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),
-          FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? l10n.saving : l10n.save)),
+          FilledButton(
+              onPressed: _saving ? null : _save,
+              child: Text(_saving ? l10n.saving : l10n.save)),
         ],
       ),
     );
@@ -520,12 +736,14 @@ class _ShippingTabState extends State<ShippingTab> {
   }
 
   Future<void> _createShipping() async {
-    final created = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const ShippingFormPage()));
+    final created = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const ShippingFormPage()));
     if (created == true) _load();
   }
 
   Future<void> _editShipping(Map<String, dynamic> shipping) async {
-    final updated = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => ShippingFormPage(existing: shipping)));
+    final updated = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) => ShippingFormPage(existing: shipping)));
     if (updated == true) _load();
   }
 
@@ -536,8 +754,12 @@ class _ShippingTabState extends State<ShippingTab> {
       builder: (context) => AlertDialog(
         content: Text(l10n.confirmDelete),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.delete)),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -546,7 +768,9 @@ class _ShippingTabState extends State<ShippingTab> {
       await Api.delete('/api/shipping-companies/$id');
       _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -567,19 +791,79 @@ class _ShippingTabState extends State<ShippingTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isManager = widget.role == 'manager';
+    final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0x33FFFFFF),
+                child: Icon(Icons.local_shipping_outlined, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.shipping,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
         if (isManager)
-          FilledButton.icon(onPressed: _createShipping, icon: const Icon(Icons.add), label: Text(l10n.addShipping)),
-        if (!isManager) Text(l10n.managerOnlyShipping, style: const TextStyle(color: Colors.grey)),
-        if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-        if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
+          FilledButton.icon(
+              onPressed: _createShipping,
+              icon: const Icon(Icons.add),
+              label: Text(l10n.addShipping)),
+        if (!isManager)
+          Text(l10n.managerOnlyShipping,
+              style: const TextStyle(color: Colors.grey)),
+        if (_loading)
+          const Center(
+              child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator())),
+        if (_error.isNotEmpty)
+          Card(
+            color: cs.errorContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+            ),
+          ),
+        if (!_loading && _error.isEmpty && _items.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.noMatch,
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+            ),
+          ),
         ..._items.map((s) => Card(
               child: ListTile(
                 onTap: () {
                   Navigator.of(context).push<void>(
-                    MaterialPageRoute(builder: (_) => ShippingCompanyDetailPage(id: _entityId(s))),
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            ShippingCompanyDetailPage(id: _entityId(s))),
                   );
                 },
                 title: Text('${s['companyName']}'),
@@ -595,7 +879,8 @@ class _ShippingTabState extends State<ShippingTab> {
                         },
                         itemBuilder: (_) => [
                           PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
-                          PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
+                          PopupMenuItem(
+                              value: 'delete', child: Text(l10n.delete)),
                         ],
                       )
                     : null,
@@ -633,10 +918,12 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
     final e = widget.existing;
     _name = TextEditingController(text: (e?['companyName'] ?? '').toString());
     _code = TextEditingController(text: (e?['code'] ?? '').toString());
-    _contact = TextEditingController(text: (e?['contactName'] ?? '').toString());
+    _contact =
+        TextEditingController(text: (e?['contactName'] ?? '').toString());
     _phone = TextEditingController(text: (e?['phone'] ?? '').toString());
     _email = TextEditingController(text: (e?['email'] ?? '').toString());
-    _dispatchTemplate = TextEditingController(text: (e?['dispatchFormTemplate'] ?? '').toString());
+    _dispatchTemplate = TextEditingController(
+        text: (e?['dispatchFormTemplate'] ?? '').toString());
     _lat = TextEditingController(
       text: e != null && e['latitude'] != null ? '${e['latitude']}' : '',
     );
@@ -646,7 +933,8 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
     _shipStatus = (e?['status'] ?? 'active').toString();
   }
 
-  String get _existingId => (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
+  String get _existingId =>
+      (widget.existing?['id'] ?? widget.existing?['_id'] ?? '').toString();
 
   @override
   void dispose() {
@@ -670,7 +958,8 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
       final latStr = _lat.text.trim();
       final lngStr = _lng.text.trim();
       if (latStr.isEmpty != lngStr.isEmpty) {
-        setState(() => _error = 'Enter both latitude and longitude, or leave both empty.');
+        setState(() =>
+            _error = 'Enter both latitude and longitude, or leave both empty.');
         return;
       }
       final body = <String, dynamic>{
@@ -728,10 +1017,18 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          TextField(controller: _name, decoration: InputDecoration(labelText: l10n.companyName)),
-          TextField(controller: _code, decoration: InputDecoration(labelText: l10n.code)),
-          TextField(controller: _contact, decoration: InputDecoration(labelText: l10n.contactName)),
-          TextField(controller: _phone, decoration: InputDecoration(labelText: l10n.phone)),
+          TextField(
+              controller: _name,
+              decoration: InputDecoration(labelText: l10n.companyName)),
+          TextField(
+              controller: _code,
+              decoration: InputDecoration(labelText: l10n.code)),
+          TextField(
+              controller: _contact,
+              decoration: InputDecoration(labelText: l10n.contactName)),
+          TextField(
+              controller: _phone,
+              decoration: InputDecoration(labelText: l10n.phone)),
           TextField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
@@ -741,16 +1038,19 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
             controller: _dispatchTemplate,
             minLines: 3,
             maxLines: 5,
-            decoration: const InputDecoration(labelText: 'Dispatch Template (optional)'),
+            decoration: const InputDecoration(
+                labelText: 'Dispatch Template (optional)'),
           ),
           TextField(
             controller: _lat,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+            keyboardType: const TextInputType.numberWithOptions(
+                decimal: true, signed: true),
             decoration: InputDecoration(labelText: l10n.latitudeOptional),
           ),
           TextField(
             controller: _lng,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+            keyboardType: const TextInputType.numberWithOptions(
+                decimal: true, signed: true),
             decoration: InputDecoration(labelText: l10n.longitudeOptional),
           ),
           DropdownButtonFormField<String>(
@@ -759,13 +1059,17 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
             initialValue: _shipStatus,
             items: [
               DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
-              DropdownMenuItem(value: 'inactive', child: Text(l10n.statusInactive)),
+              DropdownMenuItem(
+                  value: 'inactive', child: Text(l10n.statusInactive)),
             ],
             onChanged: (v) => setState(() => _shipStatus = v ?? 'active'),
           ),
-          if (_error.isNotEmpty) Text(_error, style: const TextStyle(color: Colors.red)),
+          if (_error.isNotEmpty)
+            Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),
-          FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? l10n.saving : l10n.save)),
+          FilledButton(
+              onPressed: _saving ? null : _save,
+              child: Text(_saving ? l10n.saving : l10n.save)),
         ],
       ),
     );
@@ -783,6 +1087,37 @@ class ProfileTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0x33FFFFFF),
+                child: Icon(Icons.person_outline, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.profile,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
         Card(
           child: ListTile(
             title: Text('${user['name']}'),

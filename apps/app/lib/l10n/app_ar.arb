@@ -5,6 +5,7 @@
   "password": "كلمة المرور",
   "signingIn": "جاري تسجيل الدخول...",
   "tracker": "المتتبع",
+  "dashboardTab": "لوحة التحكم",
   "transactions": "المعاملات",
   "clients": "العملاء",
   "shipping": "شركات الشحن",

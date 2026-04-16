@@ -125,6 +125,12 @@ abstract class AppLocalizations {
   /// **'Tracker'**
   String get tracker;
 
+  /// No description provided for @dashboardTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboardTab;
+
   /// No description provided for @transactions.
   ///
   /// In en, this message translates to:

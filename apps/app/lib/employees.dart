@@ -145,50 +145,113 @@ class _EmployeesTabState extends State<EmployeesTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isManager = widget.role == 'manager';
+    final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        Text(l10n.employeesTitle, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
-        Text(l10n.roleFromAccount),
-        const SizedBox(height: 8),
-        Text('${l10n.currentRole}: ${widget.role}', style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0x33FFFFFF),
+                child: Icon(Icons.badge_outlined, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.employeesTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text('${l10n.currentRole}: ${widget.role}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(height: 10),
         if (!isManager) Text(l10n.managerOnlyEmployees, style: const TextStyle(color: Colors.grey)),
         if (isManager) ...[
-          TextField(controller: _name, decoration: InputDecoration(labelText: l10n.employeeName)),
-          TextField(controller: _email, decoration: InputDecoration(labelText: l10n.employeeEmail)),
-          TextField(
-            controller: _password,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: l10n.employeePassword,
-              hintText: _editingId != null ? l10n.passwordHintEdit : null,
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(controller: _name, decoration: InputDecoration(labelText: l10n.employeeName)),
+                  const SizedBox(height: 8),
+                  TextField(controller: _email, decoration: InputDecoration(labelText: l10n.employeeEmail)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _password,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.employeePassword,
+                      hintText: _editingId != null ? l10n.passwordHintEdit : null,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('employee-role-${_editingId ?? 'new'}-$_role'),
+                    decoration: InputDecoration(labelText: l10n.employeeRole),
+                    initialValue: _role,
+                    items: [
+                      DropdownMenuItem(value: 'manager', child: Text(l10n.roleManager)),
+                      DropdownMenuItem(value: 'employee', child: Text(l10n.roleEmployee)),
+                      DropdownMenuItem(value: 'accountant', child: Text(l10n.roleAccountant)),
+                    ],
+                    onChanged: (v) => setState(() => _role = v ?? 'employee'),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      FilledButton(onPressed: _save, child: Text(l10n.save)),
+                      const SizedBox(width: 12),
+                      if (_editingId != null) OutlinedButton(onPressed: _cancelEdit, child: Text(l10n.cancelEdit)),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          DropdownButtonFormField<String>(
-            key: ValueKey('employee-role-${_editingId ?? 'new'}-$_role'),
-            decoration: InputDecoration(labelText: l10n.employeeRole),
-            initialValue: _role,
-            items: [
-              DropdownMenuItem(value: 'manager', child: Text(l10n.roleManager)),
-              DropdownMenuItem(value: 'employee', child: Text(l10n.roleEmployee)),
-              DropdownMenuItem(value: 'accountant', child: Text(l10n.roleAccountant)),
-            ],
-            onChanged: (v) => setState(() => _role = v ?? 'employee'),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              FilledButton(onPressed: _save, child: Text(l10n.save)),
-              const SizedBox(width: 12),
-              if (_editingId != null) OutlinedButton(onPressed: _cancelEdit, child: Text(l10n.cancelEdit)),
-            ],
-          ),
         ],
-        if (_error.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error, style: const TextStyle(color: Colors.red))),
+        if (_error.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Card(
+              color: cs.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+              ),
+            ),
+          ),
         const SizedBox(height: 16),
         if (_loading) const Center(child: CircularProgressIndicator()),
+        if (!_loading && _error.isEmpty && _items.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(l10n.noMatch, style: TextStyle(color: Colors.grey.shade700)),
+            ),
+          ),
         ..._items.map(
           (e) => Card(
             child: ListTile(
