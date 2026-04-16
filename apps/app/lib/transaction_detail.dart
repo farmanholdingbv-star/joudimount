@@ -30,6 +30,16 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     load();
   }
 
+  Map<String, List<Map<String, dynamic>>> _groupAttachments(List<Map<String, dynamic>> attachments) {
+    final out = <String, List<Map<String, dynamic>>>{};
+    for (final a in attachments) {
+      final category = (a['category'] ?? '').toString();
+      final key = category.isEmpty ? 'Uncategorized' : _docCategoryLabel(category);
+      out.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(a);
+    }
+    return out;
+  }
+
   Future<void> load() async {
     setState(() {
       loading = true;
@@ -290,7 +300,20 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     if ((tx!['documentAttachments'] as List?)?.isNotEmpty ?? false) ...[
                       Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
                       const SizedBox(height: 8),
-                      ...((tx!['documentAttachments'] as List).cast<Map<String, dynamic>>().map(_attachmentTile)),
+                      ..._groupAttachments((tx!['documentAttachments'] as List).cast<Map<String, dynamic>>())
+                          .entries
+                          .expand(
+                            (entry) => [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6, bottom: 2),
+                                child: Text(
+                                  entry.key,
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              ...entry.value.map(_attachmentTile),
+                            ],
+                          ),
                     ],
                     const SizedBox(height: 12),
                     if (widget.role == 'manager' || widget.role == 'employee')

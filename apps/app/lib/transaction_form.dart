@@ -272,6 +272,16 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         .toList();
   }
 
+  Map<String, List<Map<String, dynamic>>> _groupRetainedDocs() {
+    final out = <String, List<Map<String, dynamic>>>{};
+    for (final d in _retainedDocs) {
+      final raw = (d['category'] ?? '').toString();
+      final key = raw.isEmpty ? 'Uncategorized' : _docCategoryLabel(raw);
+      out.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(d);
+    }
+    return out;
+  }
+
   Future<void> _pickFiles() async {
     final r = await FilePicker.pickFiles(
       allowMultiple: true,
@@ -383,6 +393,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final customsEditable = !_isEdit || _stage == 'CUSTOMS_CLEARANCE';
     final storageEditable = !_isEdit || _stage == 'STORAGE';
     final fullyLocked = _isEdit && (_stage == 'INTERNAL_DELIVERY' || _stage == 'EXTERNAL_TRANSFER');
+    final groupedRetained = _groupRetainedDocs();
 
     return Scaffold(
       appBar: AppBar(title: Text(_isEdit ? l10n.editTransaction : l10n.newTransaction)),
@@ -616,16 +627,54 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
           Text(l10n.txAttachDocs, style: Theme.of(context).textTheme.bodySmall),
           if (_isEdit && _retainedDocs.isNotEmpty)
-            ..._retainedDocs.map(
-              (d) => ListTile(
-                title: Text('${d['originalName']}'),
-                subtitle: (d['category'] ?? '').toString().isNotEmpty ? Text(_docCategoryLabel('${d['category']}')) : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: prepEditable
-                      ? () => setState(() => _retainedDocs.removeWhere((x) => x['path'] == d['path']))
-                      : null,
-                ),
+            ...groupedRetained.entries.map(
+              (entry) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Text(
+                      entry.key,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  ...entry.value.map(
+                    (d) {
+                      final path = (d['path'] ?? '').toString();
+                      final name = (d['originalName'] ?? '').toString();
+                      final isImg = RegExp(r'\.(png|jpe?g|gif|webp)$', caseSensitive: false).hasMatch(name);
+                      return Card(
+                        child: ListTile(
+                          leading: isImg
+                              ? SizedBox(
+                                  width: 48,
+                                  height: 48,
+                                  child: FutureBuilder(
+                                    future: Api.getBytes(path),
+                                    builder: (context, snap) {
+                                      if (snap.hasData) {
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.memory(snap.data!, fit: BoxFit.cover),
+                                        );
+                                      }
+                                      return const Icon(Icons.image_outlined);
+                                    },
+                                  ),
+                                )
+                              : const Icon(Icons.picture_as_pdf_outlined),
+                          title: Text(name),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: prepEditable
+                                ? () => setState(() => _retainedDocs.removeWhere((x) => x['path'] == d['path']))
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           OutlinedButton.icon(onPressed: prepEditable ? _pickFiles : null, icon: const Icon(Icons.attach_file), label: Text(l10n.txPickFiles)),
