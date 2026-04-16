@@ -43,6 +43,35 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 const documentCategoryEnum = z.enum(["bill_of_lading", "certificate_of_origin", "invoice", "packing_list"]);
+const stage1EmployeeFields = new Set([
+  "clientName",
+  "clientId",
+  "shippingCompanyId",
+  "shippingCompanyName",
+  "declarationNumber",
+  "declarationDate",
+  "declarationType",
+  "portType",
+  "airwayBill",
+  "hsCode",
+  "goodsDescription",
+  "invoiceValue",
+  "invoiceCurrency",
+  "originCountry",
+  "containerCount",
+  "goodsWeightKg",
+  "invoiceToWeightRateAedPerKg",
+  "goodsQuantity",
+  "goodsQuality",
+  "goodsUnit",
+]);
+const stage2EmployeeFields = new Set([
+  "containerArrivalDate",
+  "documentArrivalDate",
+  "fileNumber",
+  "documentStatus",
+  "clearanceStatus",
+]);
 
 interface AuthRequest extends Request {
   user?: {
@@ -207,7 +236,7 @@ app.post("/api/employees", authenticate, async (req: AuthRequest, res) => {
     name: z.string().min(2),
     email: z.string().email(),
     password: z.string().min(4),
-    role: z.enum(["manager", "employee", "accountant"]),
+    role: z.enum(["manager", "employee", "employee2", "accountant"]),
   });
   const result = schema.safeParse(req.body);
   if (!result.success) {
@@ -232,7 +261,7 @@ app.put("/api/employees/:id", authenticate, async (req: AuthRequest, res) => {
       name: z.string().min(2).optional(),
       email: z.string().email().optional(),
       password: optionalEmployeePassword,
-      role: z.enum(["manager", "employee", "accountant"]).optional(),
+      role: z.enum(["manager", "employee", "employee2", "accountant"]).optional(),
     })
     .refine((value) => Object.keys(value).length > 0, "At least one field is required");
 
@@ -439,7 +468,7 @@ app.delete("/api/shipping-companies/:id", authenticate, async (req: AuthRequest,
 });
 
 app.get("/api/transactions", authenticate, async (req: AuthRequest, res) => {
-  const denied = ensureRole(req, res, ["manager", "employee", "accountant"]);
+  const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
   if (!denied) return;
   const clientId = typeof req.query.clientId === "string" ? req.query.clientId : undefined;
   res.json(await listTransactions(clientId));
@@ -482,7 +511,7 @@ app.post("/api/transactions", authenticate, maybeUpload, async (req: AuthRequest
 });
 
 app.get("/api/transactions/:id", authenticate, async (req: AuthRequest, res) => {
-  const denied = ensureRole(req, res, ["manager", "employee", "accountant"]);
+  const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
   if (!denied) return;
   const tx = await getTransaction(req.params.id);
   if (!tx) return res.status(404).json({ error: "Transaction not found" });
@@ -515,7 +544,7 @@ app.post("/api/transactions/:id/release", authenticate, async (req: AuthRequest,
 });
 
 app.post("/api/transactions/:id/stage", authenticate, async (req: AuthRequest, res) => {
-  const denied = ensureRole(req, res, ["manager", "employee"]);
+  const denied = ensureRole(req, res, ["manager", "employee2"]);
   if (!denied) return;
   const schema = z.object({
     stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "STORAGE", "INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"]),
@@ -546,6 +575,22 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
     if (role === "employee" && result.data.paymentStatus !== undefined) {
       return res.status(403).json({ error: "Employee cannot manage accounting fields" });
     }
+    if (role === "employee2" && result.data.paymentStatus !== undefined) {
+      return res.status(403).json({ error: "Employee2 cannot manage accounting fields" });
+    }
+
+    if (role === "employee") {
+      const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
+      if (invalidFields.length > 0) {
+        return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+      }
+    }
+    if (role === "employee2") {
+      const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
+      if (invalidFields.length > 0) {
+        return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+      }
+    }
 
     if (role === "accountant") {
       const nonAccountingFieldProvided = Object.keys(result.data).some((key) => key !== "paymentStatus");
@@ -555,6 +600,9 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
     }
 
     const hasMultipart = (req.headers["content-type"] || "").includes("multipart/form-data");
+    if (role === "employee2" && hasMultipart) {
+      return res.status(403).json({ error: "Employee2 cannot upload attachments" });
+    }
 
     let payload: Parameters<typeof updateTransaction>[1] = {
       ...result.data,
@@ -625,6 +673,7 @@ connectDb()
       { name: "Main Manager", email: "manager@tracker.local", password: "123456", role: "manager" as const },
       { name: "Operations Employee", email: "employee@tracker.local", password: "123456", role: "employee" as const },
       { name: "Finance Accountant", email: "accountant@tracker.local", password: "123456", role: "accountant" as const },
+      { name: "employee2", email: "employee2@tracker.local", password: "123456", role: "employee2" as const },
     ];
     for (const item of defaults) {
       await EmployeeModel.updateOne({ email: item.email }, { $setOnInsert: item }, { upsert: true });

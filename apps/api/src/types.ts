@@ -39,7 +39,7 @@ export interface DocumentAttachment {
   category?: DocumentCategory;
 }
 
-export type AppUserRole = "manager" | "employee" | "accountant";
+export type AppUserRole = "manager" | "employee" | "employee2" | "accountant";
 
 export interface Employee {
   id: string;

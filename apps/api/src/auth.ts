@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export type UserRole = "manager" | "employee" | "accountant";
+export type UserRole = "manager" | "employee" | "employee2" | "accountant";
 
 export interface AuthPayload {
   id: string;

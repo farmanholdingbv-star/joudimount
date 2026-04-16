@@ -60,7 +60,7 @@ export interface Transaction {
 
 export const API_BASE = "http://localhost:4000";
 
-export type Role = "manager" | "employee" | "accountant";
+export type Role = "manager" | "employee" | "employee2" | "accountant";
 
 export interface AuthUser {
   id: string;

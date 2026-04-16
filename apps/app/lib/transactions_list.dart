@@ -102,7 +102,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 ),
               ),
               const SizedBox(width: 8),
-              if (widget.role != 'accountant')
+              if (widget.role == 'manager' || widget.role == 'employee')
                 FilledButton.icon(
                   onPressed: () async {
                     final created = await Navigator.of(context).push<bool>(

@@ -215,6 +215,7 @@ class _EmployeesTabState extends State<EmployeesTab> {
                     items: [
                       DropdownMenuItem(value: 'manager', child: Text(l10n.roleManager)),
                       DropdownMenuItem(value: 'employee', child: Text(l10n.roleEmployee)),
+                      const DropdownMenuItem(value: 'employee2', child: Text('Employee 2')),
                       DropdownMenuItem(value: 'accountant', child: Text(l10n.roleAccountant)),
                     ],
                     onChanged: (v) => setState(() => _role = v ?? 'employee'),

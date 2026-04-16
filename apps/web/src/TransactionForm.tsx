@@ -182,7 +182,7 @@ export default function TransactionForm({ role }: { role: Role }) {
   const [editMeta, setEditMeta] = useState<EditReadOnlyMeta | null>(null);
   const [stage, setStage] = useState<TransactionStage>("PREPARATION");
 
-  if (role === "accountant") {
+  if ((role === "accountant" || role === "employee2") && !isEdit) {
     return (
       <main className="container">
         <h1>{t("form.accessLimitedTitle")}</h1>
@@ -769,7 +769,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           <select
             value={form.paymentStatus}
             onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as "pending" | "paid" })}
-            disabled={!customsEditable || role === "employee"}
+            disabled={!customsEditable || role === "employee" || role === "employee2"}
           >
             <option value="pending">pending</option>
             <option value="paid">paid</option>

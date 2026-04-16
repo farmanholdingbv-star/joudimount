@@ -85,6 +85,8 @@ class _DashboardHomeState extends State<DashboardHome> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final canCreateTransaction =
+        widget.role == 'manager' || widget.role == 'employee';
     final isRtl = Directionality.of(context) == TextDirection.rtl;
     final locale = Localizations.localeOf(context).languageCode;
     final welcomePrefix = locale == 'ar' ? 'مرحباً، ' : 'Hello, ';
@@ -97,10 +99,14 @@ class _DashboardHomeState extends State<DashboardHome> {
 
     final gridItems = <_GridItem>[
       _GridItem(
-        label: l10n.newTransaction,
+        label: canCreateTransaction
+            ? l10n.newTransaction
+            : (locale == 'ar' ? 'المعاملات' : 'Transactions'),
         icon: Icons.add_circle_outline,
         color: const Color(0xFFE8B339),
-        onTap: _openNewTransaction,
+        onTap: canCreateTransaction
+            ? _openNewTransaction
+            : () => widget.onSwitchTab(1),
       ),
       _GridItem(
         label: l10n.clients,

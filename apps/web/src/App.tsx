@@ -16,6 +16,7 @@ import { AuthUser, Role, Transaction } from "./types";
 function roleLabel(role: Role, t: (key: "role.manager" | "role.employee" | "role.accountant") => string) {
   if (role === "manager") return t("role.manager");
   if (role === "employee") return t("role.employee");
+  if (role === "employee2") return "Employee 2";
   return t("role.accountant");
 }
 
@@ -76,7 +77,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
             <Link to="/shipping-companies" className="link-button">
               {t("nav.shippingCompanies")}
             </Link>
-            {role !== "accountant" ? (
+            {role === "manager" || role === "employee" ? (
               <Link to="/transactions/new" className="primary-button">
                 {t("nav.addTransaction")}
               </Link>

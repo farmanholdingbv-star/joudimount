@@ -31,7 +31,7 @@ interface EmployeeDoc {
   name: string;
   email: string;
   password: string;
-  role: "manager" | "employee" | "accountant";
+  role: "manager" | "employee" | "employee2" | "accountant";
 }
 
 interface ShippingCompanyDoc {
@@ -196,7 +196,7 @@ const employeeSchema = new Schema<EmployeeDoc>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, index: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["manager", "employee", "accountant"], required: true },
+    role: { type: String, enum: ["manager", "employee", "employee2", "accountant"], required: true },
   },
   { timestamps: true },
 );

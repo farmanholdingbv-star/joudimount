@@ -367,7 +367,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    if (widget.role == 'accountant') {
+    if ((widget.role == 'accountant' || widget.role == 'employee2') && !_isEdit) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.newTransaction)),
         body: Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(l10n.accountantNoTransactionForm, textAlign: TextAlign.center))),
@@ -604,7 +604,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               DropdownMenuItem(value: 'pending', child: Text(l10n.txPaymentPending)),
               DropdownMenuItem(value: 'paid', child: Text(l10n.txPaymentPaid)),
             ],
-            onChanged: (!customsEditable || widget.role == 'employee')
+            onChanged: (!customsEditable ||
+                    widget.role == 'employee' ||
+                    widget.role == 'employee2')
                 ? null
                 : (v) => setState(() => _paymentStatus = v ?? 'pending'),
           ),
