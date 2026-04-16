@@ -5,3 +5,4 @@ dist
 apps/app/.dart_tool
 apps/app/build
 apps/api/uploads
+apps/api/dev.log
