@@ -28,6 +28,7 @@ import {
   listTransactions,
   markOriginalBl,
   markPaid,
+  setTransactionStage,
   updateEmployee,
   updateShippingCompany,
   updateClient,
@@ -511,6 +512,20 @@ app.post("/api/transactions/:id/release", authenticate, async (req: AuthRequest,
   if (result === null) return res.status(404).json({ error: "Transaction not found" });
   if (result === false) return res.status(400).json({ error: "Payment and Original BL/Telex are required before release" });
   return res.json(result);
+});
+
+app.post("/api/transactions/:id/stage", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee"]);
+  if (!denied) return;
+  const schema = z.object({
+    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "STORAGE", "INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"]),
+  });
+  const result = schema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+  const updated = await setTransactionStage(req.params.id, result.data.stage);
+  if (updated === null) return res.status(404).json({ error: "Transaction not found" });
+  if (updated === false) return res.status(400).json({ error: "Invalid stage transition" });
+  return res.json(updated);
 });
 
 app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequest, res) => {

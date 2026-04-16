@@ -5,6 +5,12 @@ export type RiskLevel = "low" | "medium" | "high";
 export type Channel = "green" | "yellow" | "red";
 export type PaymentStatus = "pending" | "paid";
 export type XrayResult = "not_required" | "passed" | "manual_inspection";
+export type TransactionStage =
+  | "PREPARATION"
+  | "CUSTOMS_CLEARANCE"
+  | "STORAGE"
+  | "INTERNAL_DELIVERY"
+  | "EXTERNAL_TRANSFER";
 
 export type ClearanceStatus =
   | "DRAFT"
@@ -93,6 +99,7 @@ export interface Transaction {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  transactionStage: TransactionStage;
   createdAt: string;
   updatedAt: string;
 }

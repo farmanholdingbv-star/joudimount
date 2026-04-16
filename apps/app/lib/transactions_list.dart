@@ -138,7 +138,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
             (tx) => Card(
               child: ListTile(
                 title: Text('${tx['clientName']}'),
-                subtitle: Text('${tx['shippingCompanyName']} • ${tx['clearanceStatus']}'),
+                subtitle: Text('${tx['shippingCompanyName']} • ${tx['transactionStage'] ?? 'PREPARATION'} • ${tx['clearanceStatus']}'),
                 onTap: () async {
                   await Navigator.of(context).push<bool>(
                     MaterialPageRoute(

@@ -246,6 +246,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     ),
                     const SizedBox(height: 10),
                     _kv(l10n.client, '${tx!['clientName']}'),
+                    _kv('Stage', _stageLabel('${tx!['transactionStage'] ?? 'PREPARATION'}')),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
                     _kv(l10n.declaration, '${tx!['declarationNumber']}'),
                     if (tx!['declarationDate'] != null)
@@ -408,6 +409,23 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     }
   }
 
+  String _stageLabel(String stage) {
+    switch (stage) {
+      case 'PREPARATION':
+        return 'Preparation';
+      case 'CUSTOMS_CLEARANCE':
+        return 'Customs clearance';
+      case 'STORAGE':
+        return 'Storage';
+      case 'INTERNAL_DELIVERY':
+        return 'Internal delivery';
+      case 'EXTERNAL_TRANSFER':
+        return 'External transfer';
+      default:
+        return stage;
+    }
+  }
+
   Future<void> _openAttachment(String path, String name) async {
     try {
       final bytes = await Api.getBytes(path);
@@ -431,7 +449,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   void _showUnsupportedShareMessage() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text(
           'Sharing files is not supported on this Linux build yet.',
         ),

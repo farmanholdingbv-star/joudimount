@@ -13,6 +13,23 @@ const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
   packing_list: "Packing List",
 };
 
+function stageLabel(stage?: string): string {
+  switch (stage) {
+    case "PREPARATION":
+      return "Preparation";
+    case "CUSTOMS_CLEARANCE":
+      return "Customs clearance";
+    case "STORAGE":
+      return "Storage";
+    case "INTERNAL_DELIVERY":
+      return "Internal delivery";
+    case "EXTERNAL_TRANSFER":
+      return "External transfer";
+    default:
+      return stage || "Preparation";
+  }
+}
+
 export default function TransactionDetails({ role }: { role: Role }) {
   const { t, numberLocale } = useI18n();
   const navigate = useNavigate();
@@ -142,6 +159,9 @@ export default function TransactionDetails({ role }: { role: Role }) {
           </p>
           <p className="details-item">
             <strong>{t("details.status")}:</strong> {transaction.clearanceStatus}
+          </p>
+          <p className="details-item">
+            <strong>Stage:</strong> {stageLabel(transaction.transactionStage)}
           </p>
           {transaction.releaseCode ? (
             <p className="details-item full-row">

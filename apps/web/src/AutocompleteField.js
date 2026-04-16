@@ -1,12 +1,12 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useId, useRef, useState } from "react";
-export default function AutocompleteField({ label, value, onChange, onSelectSuggestion, suggestions, required, hint, minChars = 1, }) {
+export default function AutocompleteField({ label, value, onChange, onSelectSuggestion, suggestions, required, hint, minChars = 1, disabled = false, }) {
     const id = useId();
     const wrapRef = useRef(null);
     const [open, setOpen] = useState(false);
     const [highlight, setHighlight] = useState(0);
     const q = value.trim();
-    const showList = open && onSelectSuggestion && q.length >= minChars && suggestions.length > 0;
+    const showList = !disabled && open && onSelectSuggestion && q.length >= minChars && suggestions.length > 0;
     useEffect(() => {
         setHighlight(0);
     }, [suggestions.length, value]);
@@ -22,7 +22,10 @@ export default function AutocompleteField({ label, value, onChange, onSelectSugg
         onSelectSuggestion?.(key);
         setOpen(false);
     };
-    return (_jsxs("label", { ref: wrapRef, className: "autocomplete-field", children: [label, _jsx("input", { id: id, value: value, required: required, autoComplete: "off", onChange: (e) => onChange(e.target.value), onFocus: () => setOpen(true), onBlur: () => {
+    return (_jsxs("label", { ref: wrapRef, className: "autocomplete-field", children: [label, _jsx("input", { id: id, value: value, disabled: disabled, required: required, autoComplete: "off", onChange: (e) => onChange(e.target.value), onFocus: () => {
+                    if (!disabled)
+                        setOpen(true);
+                }, onBlur: () => {
                     window.setTimeout(() => setOpen(false), 180);
                 }, onKeyDown: (e) => {
                     if (!showList)

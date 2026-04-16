@@ -15,6 +15,7 @@ type Props = {
   required?: boolean;
   hint?: string;
   minChars?: number;
+  disabled?: boolean;
 };
 
 export default function AutocompleteField({
@@ -26,6 +27,7 @@ export default function AutocompleteField({
   required,
   hint,
   minChars = 1,
+  disabled = false,
 }: Props) {
   const id = useId();
   const wrapRef = useRef<HTMLLabelElement>(null);
@@ -34,7 +36,7 @@ export default function AutocompleteField({
 
   const q = value.trim();
   const showList =
-    open && onSelectSuggestion && q.length >= minChars && suggestions.length > 0;
+    !disabled && open && onSelectSuggestion && q.length >= minChars && suggestions.length > 0;
 
   useEffect(() => {
     setHighlight(0);
@@ -59,10 +61,13 @@ export default function AutocompleteField({
       <input
         id={id}
         value={value}
+        disabled={disabled}
         required={required}
         autoComplete="off"
         onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (!disabled) setOpen(true);
+        }}
         onBlur={() => {
           window.setTimeout(() => setOpen(false), 180);
         }}

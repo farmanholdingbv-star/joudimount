@@ -122,7 +122,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
                 <td>{tx.clientName}</td>
                 <td>{tx.shippingCompanyName}</td>
                 <td>
-                  <span className="status-badge">{tx.clearanceStatus}</span>
+                  <span className="status-badge">{tx.transactionStage ?? "PREPARATION"} • {tx.clearanceStatus}</span>
                 </td>
                 <td>{new Date(tx.createdAt).toLocaleString(numberLocale)}</td>
               </tr>

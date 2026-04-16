@@ -3,6 +3,12 @@ export type GoodsQuality = "new" | "like_new" | "used" | "refurbished" | "damage
 export type GoodsUnit = "kg" | "ton" | "piece" | "carton" | "pallet" | "cbm" | "liter" | "set";
 export type InvoiceCurrency = "AED" | "USD" | "EUR" | "SAR";
 export type DocumentCategory = "bill_of_lading" | "certificate_of_origin" | "invoice" | "packing_list";
+export type TransactionStage =
+  | "PREPARATION"
+  | "CUSTOMS_CLEARANCE"
+  | "STORAGE"
+  | "INTERNAL_DELIVERY"
+  | "EXTERNAL_TRANSFER";
 
 export interface DocumentAttachment {
   path: string;
@@ -47,6 +53,7 @@ export interface Transaction {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  transactionStage: TransactionStage;
   createdAt: string;
   updatedAt: string;
 }

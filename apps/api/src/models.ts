@@ -90,6 +90,7 @@ interface TransactionDoc {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  transactionStage: "PREPARATION" | "CUSTOMS_CLEARANCE" | "STORAGE" | "INTERNAL_DELIVERY" | "EXTERNAL_TRANSFER";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -179,6 +180,12 @@ const transactionSchema = new Schema<TransactionDoc>(
     goodsUnit: {
       type: String,
       enum: ["kg", "ton", "piece", "carton", "pallet", "cbm", "liter", "set"],
+    },
+    transactionStage: {
+      type: String,
+      enum: ["PREPARATION", "CUSTOMS_CLEARANCE", "STORAGE", "INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"],
+      default: "PREPARATION",
+      index: true,
     },
   },
   { timestamps: true },

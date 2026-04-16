@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import { assessRisk, calculateDuty } from "./risk.js";
 import type { UserRole } from "./auth.js";
-import type { Client, ClearanceStatus, DocumentAttachment, Employee, Transaction } from "./types.js";
+import type { Client, ClearanceStatus, DocumentAttachment, Employee, Transaction, TransactionStage } from "./types.js";
 import { ClientModel, CounterModel, EmployeeModel, ShippingCompanyModel, TransactionModel } from "./models.js";
 import { absolutePathFromPublicPath } from "./uploads.js";
 
@@ -171,9 +171,74 @@ function mapTransaction(doc: any): Transaction {
     goodsQuantity: doc.goodsQuantity,
     goodsQuality: doc.goodsQuality,
     goodsUnit: doc.goodsUnit,
+    transactionStage: doc.transactionStage ?? "PREPARATION",
     createdAt: new Date(doc.createdAt).toISOString(),
     updatedAt: new Date(doc.updatedAt).toISOString(),
   };
+}
+
+const stageOrder: TransactionStage[] = [
+  "PREPARATION",
+  "CUSTOMS_CLEARANCE",
+  "STORAGE",
+  "INTERNAL_DELIVERY",
+  "EXTERNAL_TRANSFER",
+];
+
+const preparationFields = new Set<keyof Transaction>([
+  "clientName",
+  "clientId",
+  "shippingCompanyId",
+  "shippingCompanyName",
+  "declarationNumber",
+  "declarationDate",
+  "declarationType",
+  "portType",
+  "airwayBill",
+  "hsCode",
+  "goodsDescription",
+  "invoiceValue",
+  "invoiceCurrency",
+  "originCountry",
+  "goodsWeightKg",
+  "invoiceToWeightRateAedPerKg",
+  "containerCount",
+  "goodsQuantity",
+  "goodsQuality",
+  "goodsUnit",
+  "documentAttachments",
+]);
+
+const customsFields = new Set<keyof Transaction>([
+  "documentArrivalDate",
+  "containerArrivalDate",
+  "documentStatus",
+  "paymentStatus",
+  "clearanceStatus",
+  "fileNumber",
+  "documentPostalNumber",
+]);
+
+const storageFields = new Set<keyof Transaction>([
+  "containerNumbers",
+  "unitCount",
+  "isStopped",
+  "holdReason",
+  "stopReason",
+]);
+
+function getLockedFieldsForStage(stage: TransactionStage): Set<keyof Transaction> {
+  if (stage === "PREPARATION") return new Set();
+  if (stage === "CUSTOMS_CLEARANCE") return new Set(preparationFields);
+  if (stage === "STORAGE") return new Set([...preparationFields, ...customsFields]);
+  return new Set([...preparationFields, ...customsFields, ...storageFields]);
+}
+
+function nextStageOnArrival(current: TransactionStage, documentArrivalDate?: string): TransactionStage {
+  if (current === "PREPARATION" && documentArrivalDate && documentArrivalDate.trim().length > 0) {
+    return "CUSTOMS_CLEARANCE";
+  }
+  return current;
 }
 
 export async function listClients() {
@@ -365,8 +430,29 @@ export async function createTransaction(input: CreateTransactionFields) {
     declarationDate: declarationDate ? new Date(declarationDate) : undefined,
     containerArrivalDate: containerArrivalDate ? new Date(containerArrivalDate) : undefined,
     documentArrivalDate: documentArrivalDate ? new Date(documentArrivalDate) : undefined,
+    transactionStage: documentArrivalDate ? "CUSTOMS_CLEARANCE" : "PREPARATION",
   });
   return mapTransaction(created.toObject());
+}
+
+export async function setTransactionStage(id: string, stage: TransactionStage) {
+  const current = (await TransactionModel.findById(id).lean()) as { transactionStage?: TransactionStage } | null;
+  if (!current) return null;
+  const currentStage = current.transactionStage ?? "PREPARATION";
+  if (currentStage === stage) return getTransaction(id);
+
+  const fromIdx = stageOrder.indexOf(currentStage);
+  const toIdx = stageOrder.indexOf(stage);
+  if (fromIdx < 0 || toIdx < 0 || toIdx < fromIdx) return false;
+  if (currentStage === "STORAGE" && !["INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"].includes(stage)) return false;
+  if ((currentStage === "INTERNAL_DELIVERY" || currentStage === "EXTERNAL_TRANSFER") && currentStage !== stage) return false;
+
+  const updated = await TransactionModel.findByIdAndUpdate(
+    id,
+    { transactionStage: stage },
+    { new: true },
+  ).lean();
+  return updated ? mapTransaction(updated) : null;
 }
 
 export async function markOriginalBl(id: string) {
@@ -439,13 +525,22 @@ export async function updateTransaction(
       | "goodsQuantity"
       | "goodsQuality"
       | "goodsUnit"
+      | "transactionStage"
     >
   >,
 ) {
   const current = (await TransactionModel.findById(id).lean()) as
-    | { invoiceValue: number; hsCode: string; originCountry: string }
+    | { invoiceValue: number; hsCode: string; originCountry: string; transactionStage?: TransactionStage }
     | null;
   if (!current) return null;
+
+  const currentStage = current.transactionStage ?? "PREPARATION";
+  const targetStage = nextStageOnArrival(currentStage, input.documentArrivalDate);
+  const lockedFields = getLockedFieldsForStage(targetStage);
+  const attemptedLocked = Object.keys(input).filter((key) => lockedFields.has(key as keyof Transaction));
+  if (attemptedLocked.length > 0) {
+    throw new Error(`Fields are locked for stage ${targetStage}: ${attemptedLocked.join(", ")}`);
+  }
 
   const invoiceValue = input.invoiceValue ?? current.invoiceValue;
   const hsCode = input.hsCode ?? current.hsCode;
@@ -474,6 +569,7 @@ export async function updateTransaction(
       channel: risk.channel,
       customsDuty: calculateDuty(invoiceValue),
       clearanceStatus: input.clearanceStatus ?? suggestedStatus,
+      transactionStage: targetStage,
     },
     { new: true },
   ).lean();
