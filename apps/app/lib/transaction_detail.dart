@@ -91,20 +91,25 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final l10n = AppLocalizations.of(context)!;
     final t = tx!;
     final isRtl = Directionality.of(context) == TextDirection.rtl;
-    // Default PDF fonts (Helvetica) have no Arabic glyphs — embed Noto Sans Arabic (OFL).
-    final pw.Font pdfFont;
+    final forceLatinTemplate = Localizations.localeOf(context).languageCode == 'ar';
+    final heading = forceLatinTemplate ? 'Shipping Paper' : l10n.shippingPaperHeading;
+    final subheading = forceLatinTemplate
+        ? 'Please process and release this shipment as soon as possible.'
+        : l10n.shippingPaperSub;
+    // Embed Unicode fonts to keep Arabic/English text readable on all viewers.
+    final pw.Font arabicFont;
     try {
-      pdfFont = pw.Font.ttf(await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf'));
+      arabicFont = pw.Font.ttf(await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf'));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not load PDF font: $e')));
       return;
     }
     final pdfTheme = pw.ThemeData.withFont(
-      base: pdfFont,
-      bold: pdfFont,
-      italic: pdfFont,
-      boldItalic: pdfFont,
+      base: arabicFont,
+      bold: arabicFont,
+      italic: arabicFont,
+      boldItalic: arabicFont,
     );
     final pdf = pw.Document();
     pdf.addPage(
@@ -113,22 +118,43 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         theme: pdfTheme,
         textDirection: isRtl ? pw.TextDirection.rtl : pw.TextDirection.ltr,
         build: (ctx) => [
-          pw.Header(level: 0, child: pw.Text(l10n.shippingPaperHeading, style: pw.TextStyle(font: pdfFont))),
-          pw.Paragraph(text: l10n.shippingPaperSub, style: pw.TextStyle(font: pdfFont)),
+          pw.Text(
+            heading,
+            style: pw.TextStyle(
+              font: arabicFont,
+              fontSize: 20,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            subheading,
+            style: pw.TextStyle(font: arabicFont, fontSize: 12),
+          ),
           pw.SizedBox(height: 12),
-          _pdfRow(l10n.toShippingCompany, '${t['shippingCompanyName']}', pdfFont),
-          _pdfRow(l10n.fromClient, '${t['clientName']}', pdfFont),
-          _pdfRow(l10n.declaration, '${t['declarationNumber']}', pdfFont),
-          _pdfRow(l10n.airwayBillShort, '${t['airwayBill']}', pdfFont),
-          _pdfRow(l10n.hsCode, '${t['hsCode']}', pdfFont),
-          _pdfRow(l10n.origin, '${t['originCountry']}', pdfFont),
-          _pdfRow(l10n.valueAed, '${t['invoiceValue']}', pdfFont),
-          _pdfRow(l10n.releaseCode, '${t['releaseCode'] ?? l10n.notIssued}', pdfFont),
-          if (t['goodsWeightKg'] != null) _pdfRow(l10n.weightKg, '${t['goodsWeightKg']}', pdfFont),
-          if (t['goodsQuantity'] != null) _pdfRow(l10n.quantity, '${t['goodsQuantity']}', pdfFont),
+          _pdfRow(forceLatinTemplate ? 'To shipping company' : l10n.toShippingCompany, '${t['shippingCompanyName']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'From client' : l10n.fromClient, '${t['clientName']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Declaration' : l10n.declaration, '${t['declarationNumber']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Airway bill' : l10n.airwayBillShort, '${t['airwayBill']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'HS code' : l10n.hsCode, '${t['hsCode']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Origin' : l10n.origin, '${t['originCountry']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Value (AED)' : l10n.valueAed, '${t['invoiceValue']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Release code' : l10n.releaseCode, '${t['releaseCode'] ?? (forceLatinTemplate ? 'Not issued' : l10n.notIssued)}', arabicFont),
+          if (t['goodsWeightKg'] != null) _pdfRow(forceLatinTemplate ? 'Weight (kg)' : l10n.weightKg, '${t['goodsWeightKg']}', arabicFont),
+          if (t['goodsQuantity'] != null) _pdfRow(forceLatinTemplate ? 'Quantity' : l10n.quantity, '${t['goodsQuantity']}', arabicFont),
           pw.SizedBox(height: 8),
-          pw.Text(l10n.goods, style: pw.TextStyle(font: pdfFont, fontWeight: pw.FontWeight.bold)),
-          pw.Paragraph(style: pw.TextStyle(font: pdfFont), text: '${t['goodsDescription']}'),
+          pw.Text(
+            forceLatinTemplate ? 'Goods' : l10n.goods,
+            style: pw.TextStyle(
+              font: arabicFont,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            '${t['goodsDescription']}',
+            style: pw.TextStyle(font: arabicFont),
+          ),
         ],
       ),
     );
@@ -154,9 +180,20 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           children: [
             pw.SizedBox(
               width: 140,
-              child: pw.Text('$k:', style: pw.TextStyle(font: font, fontWeight: pw.FontWeight.bold)),
+              child: pw.Text(
+                '$k:',
+                style: pw.TextStyle(
+                  font: font,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
             ),
-            pw.Expanded(child: pw.Text(v, style: pw.TextStyle(font: font))),
+            pw.Expanded(
+              child: pw.Text(
+                v,
+                style: pw.TextStyle(font: font),
+              ),
+            ),
           ],
         ),
       );

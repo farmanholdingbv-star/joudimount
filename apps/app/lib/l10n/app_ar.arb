@@ -136,5 +136,6 @@
   "roleEmployee": "موظف",
   "roleAccountant": "محاسب",
   "optionalSelect": "— اختر —",
+  "rememberMe": "تذكرني",
   "accountantNoTransactionForm": "دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا."
 }

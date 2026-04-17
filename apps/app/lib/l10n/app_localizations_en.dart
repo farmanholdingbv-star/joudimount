@@ -417,5 +417,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionalSelect => '— select —';
 
   @override
+  String get rememberMe => 'Remember me';
+
+  @override
   String get accountantNoTransactionForm => 'Accountant role cannot create or edit transactions in this form.';
 }

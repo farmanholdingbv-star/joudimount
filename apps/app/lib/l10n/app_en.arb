@@ -136,5 +136,6 @@
   "roleEmployee": "employee",
   "roleAccountant": "accountant",
   "optionalSelect": "— select —",
+  "rememberMe": "Remember me",
   "accountantNoTransactionForm": "Accountant role cannot create or edit transactions in this form."
 }

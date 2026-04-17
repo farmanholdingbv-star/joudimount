@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.customs_broker_mobile"
+    namespace = "com.example.judi_mount"
     compileSdk = flutter.compileSdkVersion
     // Use installed NDK; Flutter's default (28.2.x) may fail to download or unzip on some setups.
     ndkVersion = "30.0.14904198"
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.customs_broker_mobile"
+        applicationId = "com.example.judi_mount"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

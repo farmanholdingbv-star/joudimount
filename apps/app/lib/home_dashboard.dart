@@ -307,7 +307,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                                 width: 52,
                                 height: 52,
                                 decoration: BoxDecoration(
-                                  color: item.color.withOpacity(0.15),
+                                  color: item.color.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(item.icon,
@@ -495,7 +495,7 @@ class _WelcomeBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1e3a8a).withOpacity(0.35),
+            color: const Color(0xFF1e3a8a).withValues(alpha: 0.35),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -504,7 +504,7 @@ class _WelcomeBanner extends StatelessWidget {
       child: Row(
         children: [
           Material(
-            color: Colors.white.withOpacity(0.12),
+            color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
             child: InkWell(
               onTap: onBell,
@@ -531,7 +531,7 @@ class _WelcomeBanner extends StatelessWidget {
           const SizedBox(width: 12),
           CircleAvatar(
             radius: 26,
-            backgroundColor: Colors.white.withOpacity(0.25),
+            backgroundColor: Colors.white.withValues(alpha: 0.25),
             child: Text(
               avatarLetter,
               style: const TextStyle(

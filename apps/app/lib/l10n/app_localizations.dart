@@ -911,6 +911,12 @@ abstract class AppLocalizations {
   /// **'— select —'**
   String get optionalSelect;
 
+  /// No description provided for @rememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember me'**
+  String get rememberMe;
+
   /// No description provided for @accountantNoTransactionForm.
   ///
   /// In en, this message translates to:

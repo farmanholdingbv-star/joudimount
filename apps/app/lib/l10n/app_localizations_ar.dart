@@ -417,5 +417,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get optionalSelect => '— اختر —';
 
   @override
+  String get rememberMe => 'تذكرني';
+
+  @override
   String get accountantNoTransactionForm => 'دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا.';
 }

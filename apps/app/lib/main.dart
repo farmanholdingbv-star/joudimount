@@ -42,73 +42,77 @@ class _TrackerMobileAppState extends State<TrackerMobileApp> {
     }
     return ValueListenableBuilder<String>(
       valueListenable: Lang.locale,
-      builder: (context, value, _) => MaterialApp(
-        title: 'Transaction Tracker Mobile',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF1e3a8a),
-            brightness: Brightness.light,
-          ),
-          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            foregroundColor: Color(0xFF1e3a8a),
-            centerTitle: false,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-          ),
-          cardTheme: CardThemeData(
-            color: Colors.white,
-            elevation: 0,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200),
+      builder: (context, value, _) {
+        final isArabic = value.toLowerCase().startsWith('ar');
+        return MaterialApp(
+          title: 'Transaction Tracker Mobile',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            fontFamily: isArabic ? 'NotoSansArabic' : null,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF1e3a8a),
+              brightness: Brightness.light,
             ),
-          ),
-          listTileTheme: const ListTileThemeData(
-            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+            scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Color(0xFF1e3a8a),
+              centerTitle: false,
+              elevation: 0,
+              scrolledUnderElevation: 0,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(14)),
-              borderSide: BorderSide(color: Color(0xFF2563EB), width: 1.2),
-            ),
-          ),
-          filledButtonTheme: FilledButtonThemeData(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1e3a8a),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            cardTheme: CardThemeData(
+              color: Colors.white,
+              elevation: 0,
+              margin: const EdgeInsets.symmetric(vertical: 6),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+            ),
+            listTileTheme: const ListTileThemeData(
+              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderSide: BorderSide(color: Color(0xFF2563EB), width: 1.2),
+              ),
+            ),
+            filledButtonTheme: FilledButtonThemeData(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1e3a8a),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1e3a8a),
+                side: const BorderSide(color: Color(0xFF2563EB)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1e3a8a),
-              side: const BorderSide(color: Color(0xFF2563EB)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
         locale: Locale(value),
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
@@ -118,7 +122,8 @@ class _TrackerMobileAppState extends State<TrackerMobileApp> {
           GlobalCupertinoLocalizations.delegate,
         ],
         home: const AuthGate(),
-      ),
+        );
+      },
     );
   }
 }
@@ -142,9 +147,15 @@ class _AuthGateState extends State<AuthGate> {
 
   Future<void> _bootstrap() async {
     final prefs = await SharedPreferences.getInstance();
-    final userRaw = prefs.getString('user');
-    if (userRaw != null) {
-      _user = jsonDecode(userRaw) as Map<String, dynamic>;
+    final rememberMe = prefs.getBool('remember_me') ?? true;
+    if (rememberMe) {
+      final userRaw = prefs.getString('user');
+      if (userRaw != null) {
+        _user = jsonDecode(userRaw) as Map<String, dynamic>;
+      }
+    } else {
+      await prefs.remove('token');
+      await prefs.remove('user');
     }
     setState(() => _loading = false);
   }
@@ -173,10 +184,35 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailCtrl = TextEditingController(text: 'manager@tracker.local');
-  final _passCtrl = TextEditingController(text: '123456');
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
   bool _loading = false;
+  bool _rememberMe = true;
   String _error = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMe();
+  }
+
+  Future<void> _loadRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    final remember = prefs.getBool('remember_me') ?? true;
+    final savedEmail = prefs.getString('remembered_email') ?? '';
+    if (!mounted) return;
+    setState(() {
+      _rememberMe = remember;
+      if (savedEmail.isNotEmpty) {
+        _emailCtrl.text = savedEmail;
+      } else {
+        _emailCtrl.text = 'manager@tracker.local';
+      }
+      if (_passCtrl.text.isEmpty) {
+        _passCtrl.text = '123456';
+      }
+    });
+  }
 
   Future<void> _submit() async {
     setState(() {
@@ -191,12 +227,25 @@ class _LoginPageState extends State<LoginPage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', data['token'] as String);
       await prefs.setString('user', jsonEncode(data['user']));
+      await prefs.setBool('remember_me', _rememberMe);
+      if (_rememberMe) {
+        await prefs.setString('remembered_email', _emailCtrl.text.trim());
+      } else {
+        await prefs.remove('remembered_email');
+      }
       widget.onLogin(data['user'] as Map<String, dynamic>);
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -261,6 +310,17 @@ class _LoginPageState extends State<LoginPage> {
                             decoration:
                                 InputDecoration(labelText: l10n.password),
                             obscureText: true),
+                        const SizedBox(height: 6),
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          value: _rememberMe,
+                          onChanged: _loading
+                              ? null
+                              : (v) => setState(() => _rememberMe = v ?? true),
+                          title: Text(l10n.rememberMe),
+                        ),
                         const SizedBox(height: 14),
                         if (_error.isNotEmpty)
                           Text(_error, style: const TextStyle(color: Colors.red)),
@@ -457,9 +517,10 @@ class _ClientsTabState extends State<ClientsTab> {
       await Api.delete('/api/clients/$id');
       _load();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     }
   }
 
@@ -768,9 +829,10 @@ class _ShippingTabState extends State<ShippingTab> {
       await Api.delete('/api/shipping-companies/$id');
       _load();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     }
   }
 

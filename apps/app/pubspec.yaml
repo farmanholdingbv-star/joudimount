@@ -1,4 +1,4 @@
-name: customs_broker_mobile
+name: judi_mount
 description: Mobile client portal for customs transactions.
 publish_to: "none"
 version: 0.1.0+1
@@ -30,3 +30,7 @@ flutter:
   generate: true
   assets:
     - assets/fonts/NotoSansArabic-Regular.ttf
+  fonts:
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic-Regular.ttf
