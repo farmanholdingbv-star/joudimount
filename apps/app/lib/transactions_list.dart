@@ -52,6 +52,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
           (tx['clientName'] ?? '').toString().toLowerCase().contains(q) ||
           (tx['shippingCompanyName'] ?? '').toString().toLowerCase().contains(q) ||
           (tx['declarationNumber'] ?? '').toString().toLowerCase().contains(q) ||
+          (tx['declarationNumber2'] ?? '').toString().toLowerCase().contains(q) ||
           (tx['airwayBill'] ?? '').toString().toLowerCase().contains(q);
       final matchesS = _status == 'all' || (tx['clearanceStatus'] ?? '') == _status;
       return matchesQ && matchesS;

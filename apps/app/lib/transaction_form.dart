@@ -47,8 +47,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _shippingName = TextEditingController();
   final _shippingId = TextEditingController();
   final _declarationNumberInput = TextEditingController();
+  final _declarationNumberInput2 = TextEditingController();
   final _declarationDateInput = TextEditingController();
   String _declarationType = '';
+  String _declarationType2 = '';
   String _portType = '';
   final _awb = TextEditingController();
   final _hs = TextEditingController();
@@ -124,9 +126,12 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _shippingName.text = (tx['shippingCompanyName'] ?? '').toString();
       _shippingId.text = (tx['shippingCompanyId'] ?? '').toString();
       _declarationNumberInput.text = (tx['declarationNumber'] ?? '').toString();
+      _declarationNumberInput2.text = (tx['declarationNumber2'] ?? '').toString();
       _declarationDateInput.text = _isoToDateInput(tx['declarationDate']);
       final loadedDeclarationType = (tx['declarationType'] ?? '').toString();
       _declarationType = _declarationTypeOptions.contains(loadedDeclarationType) ? loadedDeclarationType : '';
+      final loadedDeclarationType2 = (tx['declarationType2'] ?? '').toString();
+      _declarationType2 = _declarationTypeOptions.contains(loadedDeclarationType2) ? loadedDeclarationType2 : '';
       final loadedPortType = (tx['portType'] ?? '').toString();
       _portType = _portTypeOptions.contains(loadedPortType) ? loadedPortType : '';
       _awb.text = (tx['airwayBill'] ?? '').toString();
@@ -182,8 +187,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       'clientName': _client.text.trim(),
       'shippingCompanyName': _shippingName.text.trim(),
       'declarationNumber': _declarationNumberInput.text.trim(),
+      'declarationNumber2': _declarationNumberInput2.text.trim(),
       'declarationDate': _declarationDateInput.text.trim(),
       'declarationType': _declarationType.trim(),
+      'declarationType2': _declarationType2.trim(),
       'portType': _portType.trim(),
       'airwayBill': _awb.text.trim(),
       'hsCode': _hs.text.trim(),
@@ -197,8 +204,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final sid = _shippingId.text.trim();
     if (sid.isNotEmpty) body['shippingCompanyId'] = sid;
     if (_declarationNumberInput.text.trim().isEmpty) body.remove('declarationNumber');
+    if (_declarationNumberInput2.text.trim().isEmpty) body.remove('declarationNumber2');
     if (_declarationDateInput.text.trim().isEmpty) body.remove('declarationDate');
     if (_declarationType.trim().isEmpty) body.remove('declarationType');
+    if (_declarationType2.trim().isEmpty) body.remove('declarationType2');
     if (_portType.trim().isEmpty) body.remove('portType');
     void addD(String k, TextEditingController c) {
       final v = double.tryParse(c.text.trim());
@@ -348,6 +357,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _shippingName.dispose();
     _shippingId.dispose();
     _declarationNumberInput.dispose();
+    _declarationNumberInput2.dispose();
     _declarationDateInput.dispose();
     _awb.dispose();
     _hs.dispose();
@@ -497,11 +507,12 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               ),
             ),
           _field(_shippingId, l10n.shippingCompanyIdOptional, enabled: prepEditable),
-          _field(_declarationNumberInput, 'Declaration Number', enabled: prepEditable),
+          _field(_declarationNumberInput, 'Declaration Number (1)',
+              enabled: prepEditable, maxLength: 120),
           _field(_declarationDateInput, 'Declaration Date (YYYY-MM-DD)', enabled: prepEditable),
           DropdownButtonFormField<String>(
             key: ValueKey('tx-declaration-type-${_declarationType.isEmpty ? 'none' : _declarationType}'),
-            decoration: const InputDecoration(labelText: 'Declaration Type'),
+            decoration: const InputDecoration(labelText: 'Declaration Type (1)'),
             initialValue: _declarationType.isEmpty ? null : _declarationType,
             items: [
               DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
@@ -510,6 +521,20 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               ),
             ],
             onChanged: prepEditable ? (v) => setState(() => _declarationType = v ?? '') : null,
+          ),
+          _field(_declarationNumberInput2, 'Declaration Number (2)',
+              enabled: prepEditable, maxLength: 120),
+          DropdownButtonFormField<String>(
+            key: ValueKey('tx-declaration-type2-${_declarationType2.isEmpty ? 'none' : _declarationType2}'),
+            decoration: const InputDecoration(labelText: 'Declaration Type (2)'),
+            initialValue: _declarationType2.isEmpty ? null : _declarationType2,
+            items: [
+              DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
+              ..._declarationTypeOptions.map(
+                (type) => DropdownMenuItem<String>(value: type, child: Text(type)),
+              ),
+            ],
+            onChanged: prepEditable ? (v) => setState(() => _declarationType2 = v ?? '') : null,
           ),
           DropdownButtonFormField<String>(
             key: ValueKey('tx-port-type-${_portType.isEmpty ? 'none' : _portType}'),
@@ -738,6 +763,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   Widget _field(TextEditingController c, String label,
       {TextInputType keyboard = TextInputType.text,
       int maxLines = 1,
+      int? maxLength,
       bool enabled = true,
       void Function(String)? onChanged}) {
     return Padding(
@@ -747,8 +773,12 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         enabled: enabled,
         keyboardType: keyboard,
         maxLines: maxLines,
+        maxLength: maxLength,
         onChanged: onChanged,
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(
+          labelText: label,
+          counterText: maxLength != null ? '' : null,
+        ),
       ),
     );
   }

@@ -54,6 +54,15 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     }
   }
 
+  String _declarationHeaderTitle(Map<String, dynamic> t, AppLocalizations l10n) {
+    final d1 = (t['declarationNumber'] ?? '').toString().trim();
+    final d2 = (t['declarationNumber2'] ?? '').toString().trim();
+    if (d1.isEmpty && d2.isEmpty) return l10n.details;
+    if (d2.isEmpty) return d1;
+    if (d1.isEmpty) return d2;
+    return '$d1 · $d2';
+  }
+
   Future<void> _action(String name) async {
     try {
       await Api.post('/api/transactions/${widget.id}/$name', {});
@@ -135,6 +144,16 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           _pdfRow(forceLatinTemplate ? 'To shipping company' : l10n.toShippingCompany, '${t['shippingCompanyName']}', arabicFont),
           _pdfRow(forceLatinTemplate ? 'From client' : l10n.fromClient, '${t['clientName']}', arabicFont),
           _pdfRow(forceLatinTemplate ? 'Declaration' : l10n.declaration, '${t['declarationNumber']}', arabicFont),
+          if ((t['declarationNumber2'] ?? '').toString().trim().isNotEmpty)
+            _pdfRow(
+              forceLatinTemplate ? 'Declaration (2)' : '${l10n.declaration} (2)',
+              '${t['declarationNumber2']}',
+              arabicFont,
+            ),
+          if ((t['declarationType'] ?? '').toString().trim().isNotEmpty)
+            _pdfRow('Declaration type (1)', '${t['declarationType']}', arabicFont),
+          if ((t['declarationType2'] ?? '').toString().trim().isNotEmpty)
+            _pdfRow('Declaration type (2)', '${t['declarationType2']}', arabicFont),
           _pdfRow(forceLatinTemplate ? 'Airway bill' : l10n.airwayBillShort, '${t['airwayBill']}', arabicFont),
           _pdfRow(forceLatinTemplate ? 'HS code' : l10n.hsCode, '${t['hsCode']}', arabicFont),
           _pdfRow(forceLatinTemplate ? 'Origin' : l10n.origin, '${t['originCountry']}', arabicFont),
@@ -281,7 +300,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              '${tx!['declarationNumber'] ?? l10n.details}',
+                              _declarationHeaderTitle(tx!, l10n),
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -295,11 +314,16 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     _kv(l10n.client, '${tx!['clientName']}'),
                     _kv('Stage', _stageLabel('${tx!['transactionStage'] ?? 'PREPARATION'}')),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
-                    _kv(l10n.declaration, '${tx!['declarationNumber']}'),
+                    _kv('${l10n.declaration} (1)', '${tx!['declarationNumber']}'),
+                    if (tx!['declarationNumber2'] != null &&
+                        tx!['declarationNumber2'].toString().trim().isNotEmpty)
+                      _kv('${l10n.declaration} (2)', '${tx!['declarationNumber2']}'),
                     if (tx!['declarationDate'] != null)
                       _kv('Declaration Date', _formatDateTime('${tx!['declarationDate']}', locale)),
                     if (tx!['declarationType'] != null && tx!['declarationType'].toString().isNotEmpty)
-                      _kv('Declaration Type', '${tx!['declarationType']}'),
+                      _kv('Declaration Type (1)', '${tx!['declarationType']}'),
+                    if (tx!['declarationType2'] != null && tx!['declarationType2'].toString().isNotEmpty)
+                      _kv('Declaration Type (2)', '${tx!['declarationType2']}'),
                     if (tx!['portType'] != null && tx!['portType'].toString().isNotEmpty) _kv('Port Type', '${tx!['portType']}'),
                     if (tx!['shippingCompanyId'] != null && tx!['shippingCompanyId'].toString().isNotEmpty)
                       _kv(l10n.shippingCompanyIdOptional, '${tx!['shippingCompanyId']}'),

@@ -138,8 +138,10 @@ function mapTransaction(doc: any): Transaction {
     shippingCompanyId: doc.shippingCompanyId,
     shippingCompanyName: doc.shippingCompanyName ?? "Unknown Shipping Company",
     declarationNumber: doc.declarationNumber,
+    declarationNumber2: doc.declarationNumber2,
     declarationDate: mapOptionalDate(doc.declarationDate),
     declarationType: doc.declarationType,
+    declarationType2: doc.declarationType2,
     portType: doc.portType,
     airwayBill: doc.airwayBill,
     hsCode: doc.hsCode,
@@ -191,8 +193,10 @@ const preparationFields = new Set<keyof Transaction>([
   "shippingCompanyId",
   "shippingCompanyName",
   "declarationNumber",
+  "declarationNumber2",
   "declarationDate",
   "declarationType",
+  "declarationType2",
   "portType",
   "airwayBill",
   "hsCode",
@@ -391,8 +395,10 @@ type CreateTransactionFields = Pick<
     Pick<
       Transaction,
       | "declarationNumber"
+      | "declarationNumber2"
       | "declarationDate"
       | "declarationType"
+      | "declarationType2"
       | "portType"
       | "documentAttachments"
       | "containerCount"
@@ -497,8 +503,10 @@ export async function updateTransaction(
       | "shippingCompanyId"
       | "shippingCompanyName"
       | "declarationNumber"
+      | "declarationNumber2"
       | "declarationDate"
       | "declarationType"
+      | "declarationType2"
       | "portType"
       | "airwayBill"
       | "hsCode"

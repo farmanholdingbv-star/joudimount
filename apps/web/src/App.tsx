@@ -44,6 +44,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
       tx.clientName.toLowerCase().includes(q) ||
       tx.shippingCompanyName.toLowerCase().includes(q) ||
       tx.declarationNumber.toLowerCase().includes(q) ||
+      (tx.declarationNumber2 ?? "").toLowerCase().includes(q) ||
       tx.airwayBill.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || tx.clearanceStatus === statusFilter;
     return matchesQuery && matchesStatus;

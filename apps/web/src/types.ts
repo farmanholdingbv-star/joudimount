@@ -22,8 +22,10 @@ export interface Transaction {
   shippingCompanyId?: string;
   shippingCompanyName: string;
   declarationNumber: string;
+  declarationNumber2?: string;
   declarationDate?: string;
   declarationType?: string;
+  declarationType2?: string;
   portType?: string;
   airwayBill: string;
   hsCode: string;

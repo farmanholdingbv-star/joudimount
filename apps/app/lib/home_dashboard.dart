@@ -391,7 +391,15 @@ class _DashboardHomeState extends State<DashboardHome> {
                   itemBuilder: (context, i) {
                     final tx = _recent[i];
                     final id = '${tx['id'] ?? tx['_id'] ?? ''}';
-                    final dec = (tx['declarationNumber'] ?? '—').toString();
+                    final d1 = (tx['declarationNumber'] ?? '').toString().trim();
+                    final d2 = (tx['declarationNumber2'] ?? '').toString().trim();
+                    final dec = d1.isEmpty && d2.isEmpty
+                        ? '—'
+                        : d2.isEmpty
+                            ? d1
+                            : d1.isEmpty
+                                ? d2
+                                : '$d1 · $d2';
                     final client = (tx['clientName'] ?? '').toString();
                     return SizedBox(
                       width: 160,

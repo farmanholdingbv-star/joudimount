@@ -166,8 +166,13 @@ export default function TransactionDetails({ role }: { role: Role }) {
             <strong>{t("details.createdAt")}:</strong> {new Date(transaction.createdAt).toLocaleString(numberLocale)}
           </p>
           <p className="details-item">
-            <strong>Declaration Number:</strong> {transaction.declarationNumber}
+            <strong>Declaration Number (1):</strong> {transaction.declarationNumber}
           </p>
+          {transaction.declarationNumber2 ? (
+            <p className="details-item">
+              <strong>Declaration Number (2):</strong> {transaction.declarationNumber2}
+            </p>
+          ) : null}
           <p className="details-item">
             <strong>{t("details.duty")}:</strong> {transaction.customsDuty.toLocaleString(numberLocale)} {t("details.currencySuffix")}
           </p>
@@ -198,8 +203,13 @@ export default function TransactionDetails({ role }: { role: Role }) {
 
           <h2 className="form-section-title full-row">Customs Declaration</h2>
           <p className="details-item">
-            <strong>Declaration Number:</strong> {transaction.declarationNumber}
+            <strong>Declaration Number (1):</strong> {transaction.declarationNumber}
           </p>
+          {transaction.declarationNumber2 ? (
+            <p className="details-item">
+              <strong>Declaration Number (2):</strong> {transaction.declarationNumber2}
+            </p>
+          ) : null}
           {transaction.declarationDate ? (
             <p className="details-item">
               <strong>Declaration Date:</strong> {new Date(transaction.declarationDate).toLocaleString(numberLocale)}
@@ -207,7 +217,12 @@ export default function TransactionDetails({ role }: { role: Role }) {
           ) : null}
           {transaction.declarationType ? (
             <p className="details-item">
-              <strong>Declaration Type:</strong> {transaction.declarationType}
+              <strong>Declaration Type (1):</strong> {transaction.declarationType}
+            </p>
+          ) : null}
+          {transaction.declarationType2 ? (
+            <p className="details-item">
+              <strong>Declaration Type (2):</strong> {transaction.declarationType2}
             </p>
           ) : null}
           {transaction.portType ? (

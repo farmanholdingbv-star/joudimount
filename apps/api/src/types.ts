@@ -66,8 +66,12 @@ export interface Transaction {
   shippingCompanyId?: string;
   shippingCompanyName: string;
   declarationNumber: string;
+  /** Second DEC NO (e.g. transit / FZ paired declarations). */
+  declarationNumber2?: string;
   declarationDate?: string;
   declarationType?: string;
+  /** Second DEC TYPE when two declaration types apply. */
+  declarationType2?: string;
   portType?: string;
   airwayBill: string;
   hsCode: string;

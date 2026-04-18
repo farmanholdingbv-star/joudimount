@@ -88,8 +88,10 @@ type FormState = {
   shippingCompanyId?: string;
   shippingCompanyName: string;
   declarationNumber: string;
+  declarationNumber2: string;
   declarationDate: string;
   declarationType: string;
+  declarationType2: string;
   portType: string;
   airwayBill: string;
   hsCode: string;
@@ -119,8 +121,10 @@ const emptyForm: FormState = {
   shippingCompanyId: "",
   shippingCompanyName: "",
   declarationNumber: "",
+  declarationNumber2: "",
   declarationDate: "",
   declarationType: "",
+  declarationType2: "",
   portType: "",
   airwayBill: "",
   hsCode: "",
@@ -147,6 +151,7 @@ const emptyForm: FormState = {
 
 type EditReadOnlyMeta = {
   declarationNumber?: string;
+  declarationNumber2?: string;
   releaseCode?: string;
   customsDuty?: number;
   clearanceStatus?: string;
@@ -225,6 +230,7 @@ export default function TransactionForm({ role }: { role: Role }) {
       .then((data: Transaction) => {
         setEditMeta({
           declarationNumber: data.declarationNumber,
+          declarationNumber2: data.declarationNumber2,
           releaseCode: data.releaseCode,
           customsDuty: data.customsDuty,
           clearanceStatus: data.clearanceStatus,
@@ -237,8 +243,10 @@ export default function TransactionForm({ role }: { role: Role }) {
           shippingCompanyId: data.shippingCompanyId,
           shippingCompanyName: data.shippingCompanyName,
           declarationNumber: data.declarationNumber ?? "",
+          declarationNumber2: data.declarationNumber2 ?? "",
           declarationDate: isoToDateInput(data.declarationDate),
           declarationType: data.declarationType ?? "",
+          declarationType2: data.declarationType2 ?? "",
           portType: data.portType ?? "",
           airwayBill: data.airwayBill,
           hsCode: data.hsCode,
@@ -338,8 +346,10 @@ export default function TransactionForm({ role }: { role: Role }) {
       fd.append("shippingCompanyName", form.shippingCompanyName);
       if (form.shippingCompanyId?.trim()) fd.append("shippingCompanyId", form.shippingCompanyId.trim());
       if (form.declarationNumber.trim()) fd.append("declarationNumber", form.declarationNumber.trim());
+      if (form.declarationNumber2.trim()) fd.append("declarationNumber2", form.declarationNumber2.trim());
       if (form.declarationDate) fd.append("declarationDate", form.declarationDate);
       if (form.declarationType.trim()) fd.append("declarationType", form.declarationType.trim());
+      if (form.declarationType2.trim()) fd.append("declarationType2", form.declarationType2.trim());
       if (form.portType.trim()) fd.append("portType", form.portType.trim());
       fd.append("airwayBill", form.airwayBill);
       fd.append("hsCode", form.hsCode);
@@ -485,7 +495,12 @@ export default function TransactionForm({ role }: { role: Role }) {
             ) : null}
             {editMeta.declarationNumber ? (
               <p className="details-item">
-                <strong>Declaration Number:</strong> {editMeta.declarationNumber}
+                <strong>Declaration Number (1):</strong> {editMeta.declarationNumber}
+              </p>
+            ) : null}
+            {editMeta.declarationNumber2 ? (
+              <p className="details-item">
+                <strong>Declaration Number (2):</strong> {editMeta.declarationNumber2}
               </p>
             ) : null}
             {editMeta.releaseCode ? (
@@ -546,16 +561,41 @@ export default function TransactionForm({ role }: { role: Role }) {
 
         <h2 className="form-section-title full-row">Customs Declaration</h2>
         <label>
-          Declaration Number
-          <input disabled={!prepEditable} value={form.declarationNumber} onChange={(e) => setForm({ ...form, declarationNumber: e.target.value })} />
+          Declaration Number (1)
+          <input
+            disabled={!prepEditable}
+            maxLength={120}
+            value={form.declarationNumber}
+            onChange={(e) => setForm({ ...form, declarationNumber: e.target.value })}
+          />
         </label>
         <label>
           Declaration Date
           <input disabled={!prepEditable} type="date" value={form.declarationDate} onChange={(e) => setForm({ ...form, declarationDate: e.target.value })} />
         </label>
         <label>
-          Declaration Type
+          Declaration Type (1)
           <select disabled={!prepEditable} value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
+            <option value="">{t("form.optionalSelect")}</option>
+            {DECLARATION_TYPE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Declaration Number (2)
+          <input
+            disabled={!prepEditable}
+            maxLength={120}
+            value={form.declarationNumber2}
+            onChange={(e) => setForm({ ...form, declarationNumber2: e.target.value })}
+          />
+        </label>
+        <label>
+          Declaration Type (2)
+          <select disabled={!prepEditable} value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
             <option value="">{t("form.optionalSelect")}</option>
             {DECLARATION_TYPE_OPTIONS.map((option) => (
               <option key={option} value={option}>
