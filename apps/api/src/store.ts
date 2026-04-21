@@ -233,7 +233,7 @@ const storageFields = new Set<keyof Transaction>([
 
 function getLockedFieldsForStage(stage: TransactionStage): Set<keyof Transaction> {
   if (stage === "PREPARATION") return new Set();
-  if (stage === "CUSTOMS_CLEARANCE") return new Set(preparationFields);
+  if (stage === "CUSTOMS_CLEARANCE") return new Set();
   if (stage === "STORAGE") return new Set([...preparationFields, ...customsFields]);
   return new Set([...preparationFields, ...customsFields, ...storageFields]);
 }

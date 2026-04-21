@@ -34,7 +34,7 @@ import {
   updateClient,
   updateTransaction,
 } from "./store.js";
-import type { DocumentAttachment } from "./types.js";
+import type { DocumentAttachment, Transaction } from "./types.js";
 import { absolutePathFromPublicPath, publicPathForUploadedFile, transactionDocsUpload } from "./uploads.js";
 
 const app = express();
@@ -160,6 +160,42 @@ function attachmentDisplayNameFromStoredFilename(filename: string): string {
   const ext = path.extname(filename) || ".bin";
   const id = path.basename(filename, ext).replace(/-/g, "").slice(0, 12);
   return `doc_${id}${ext.toLowerCase()}`;
+}
+
+function isBlankString(value: unknown): boolean {
+  return typeof value !== "string" || value.trim().length === 0;
+}
+
+function getMissingFieldsBeforeCustomsClearance(tx: Transaction): string[] {
+  const missing: string[] = [];
+  const requiredStringFields: Array<[keyof Transaction, string]> = [
+    ["clientName", "clientName"],
+    ["shippingCompanyName", "shippingCompanyName"],
+    ["airwayBill", "airwayBill"],
+    ["hsCode", "hsCode"],
+    ["goodsDescription", "goodsDescription"],
+    ["originCountry", "originCountry"],
+    ["invoiceCurrency", "invoiceCurrency"],
+  ];
+
+  for (const [key, label] of requiredStringFields) {
+    if (isBlankString(tx[key])) missing.push(label);
+  }
+  if (!Number.isFinite(tx.invoiceValue) || tx.invoiceValue <= 0) missing.push("invoiceValue");
+  if (tx.containerCount === undefined || tx.containerCount < 0) missing.push("containerCount");
+  if (tx.goodsWeightKg === undefined || tx.goodsWeightKg < 0) missing.push("goodsWeightKg");
+  if (tx.invoiceToWeightRateAedPerKg === undefined || tx.invoiceToWeightRateAedPerKg <= 0) {
+    missing.push("invoiceToWeightRateAedPerKg");
+  }
+  if (tx.goodsQuantity === undefined || tx.goodsQuantity < 0) missing.push("goodsQuantity");
+  if (isBlankString(tx.goodsQuality)) missing.push("goodsQuality");
+  if (isBlankString(tx.goodsUnit)) missing.push("goodsUnit");
+  if (tx.unitCount === undefined || tx.unitCount < 0) missing.push("unitCount");
+  if (tx.isStopped === true && isBlankString(tx.stopReason)) {
+    missing.push("stopReason");
+  }
+
+  return missing;
 }
 
 async function removeOrphanFiles(previous: DocumentAttachment[] | undefined, merged: DocumentAttachment[]) {
@@ -553,6 +589,19 @@ app.post("/api/transactions/:id/stage", authenticate, async (req: AuthRequest, r
   });
   const result = schema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+  if (result.data.stage === "CUSTOMS_CLEARANCE") {
+    const tx = await getTransaction(req.params.id);
+    if (!tx) return res.status(404).json({ error: "Transaction not found" });
+    const currentStage = tx.transactionStage ?? "PREPARATION";
+    if (currentStage === "PREPARATION") {
+      const missing = getMissingFieldsBeforeCustomsClearance(tx);
+      if (missing.length > 0) {
+        return res.status(400).json({
+          error: `Fill all required preparation fields before Customs clearance: ${missing.join(", ")}`,
+        });
+      }
+    }
+  }
   const updated = await setTransactionStage(req.params.id, result.data.stage);
   if (updated === null) return res.status(404).json({ error: "Transaction not found" });
   if (updated === false) return res.status(400).json({ error: "Invalid stage transition" });

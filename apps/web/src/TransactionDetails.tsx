@@ -53,6 +53,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
     },
     {},
   );
+  const showCustomsDeclarationSection = transaction?.transactionStage !== "PREPARATION";
 
   useEffect(() => {
     if (!id) return;
@@ -201,34 +202,38 @@ export default function TransactionDetails({ role }: { role: Role }) {
             </p>
           ) : null}
 
-          <h2 className="form-section-title full-row">Customs Declaration</h2>
-          <p className="details-item">
-            <strong>Declaration Number (1):</strong> {transaction.declarationNumber}
-          </p>
-          {transaction.declarationNumber2 ? (
-            <p className="details-item">
-              <strong>Declaration Number (2):</strong> {transaction.declarationNumber2}
-            </p>
-          ) : null}
-          {transaction.declarationDate ? (
-            <p className="details-item">
-              <strong>Declaration Date:</strong> {new Date(transaction.declarationDate).toLocaleString(numberLocale)}
-            </p>
-          ) : null}
-          {transaction.declarationType ? (
-            <p className="details-item">
-              <strong>Declaration Type (1):</strong> {transaction.declarationType}
-            </p>
-          ) : null}
-          {transaction.declarationType2 ? (
-            <p className="details-item">
-              <strong>Declaration Type (2):</strong> {transaction.declarationType2}
-            </p>
-          ) : null}
-          {transaction.portType ? (
-            <p className="details-item">
-              <strong>Port Type:</strong> {transaction.portType}
-            </p>
+          {showCustomsDeclarationSection ? (
+            <>
+              <h2 className="form-section-title full-row">Customs Declaration</h2>
+              <p className="details-item">
+                <strong>Declaration Number (1):</strong> {transaction.declarationNumber}
+              </p>
+              {transaction.declarationNumber2 ? (
+                <p className="details-item">
+                  <strong>Declaration Number (2):</strong> {transaction.declarationNumber2}
+                </p>
+              ) : null}
+              {transaction.declarationDate ? (
+                <p className="details-item">
+                  <strong>Declaration Date:</strong> {new Date(transaction.declarationDate).toLocaleString(numberLocale)}
+                </p>
+              ) : null}
+              {transaction.declarationType ? (
+                <p className="details-item">
+                  <strong>Declaration Type (1):</strong> {transaction.declarationType}
+                </p>
+              ) : null}
+              {transaction.declarationType2 ? (
+                <p className="details-item">
+                  <strong>Declaration Type (2):</strong> {transaction.declarationType2}
+                </p>
+              ) : null}
+              {transaction.portType ? (
+                <p className="details-item">
+                  <strong>Port Type:</strong> {transaction.portType}
+                </p>
+              ) : null}
+            </>
           ) : null}
 
           <h2 className="form-section-title full-row">Shipment Core</h2>
@@ -278,7 +283,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
               {new Date(transaction.documentArrivalDate).toLocaleString(numberLocale)}
             </p>
           ) : null}
-          {transaction.fileNumber ? (
+          {showCustomsDeclarationSection && transaction.fileNumber ? (
             <p className="details-item">
               <strong>File Number:</strong> {transaction.fileNumber}
             </p>

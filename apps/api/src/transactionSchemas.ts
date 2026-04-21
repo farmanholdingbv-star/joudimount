@@ -20,6 +20,17 @@ export const optionalBoolean = z.preprocess((v) => {
   return v;
 }, z.boolean().optional());
 
+export const requiredBoolean = z.preprocess((v) => {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v !== 0;
+  if (typeof v === "string") {
+    const s = v.trim().toLowerCase();
+    if (s === "true" || s === "1" || s === "yes") return true;
+    if (s === "false" || s === "0" || s === "no") return false;
+  }
+  return v;
+}, z.boolean());
+
 export const optionalDateIso = z.preprocess(emptyToUndef, z.string().optional());
 
 export const optionalPostal = z.preprocess(emptyToUndef, z.string().max(120).optional());
@@ -111,7 +122,7 @@ export const createTransactionPayloadSchema = z.object({
   fileNumber: optionalFileNumber,
   containerNumbers: optionalContainerNumbers,
   unitCount: optionalNonNegativeInt,
-  isStopped: optionalBoolean,
+  isStopped: requiredBoolean,
   holdReason: optionalHoldReason,
   stopReason: optionalStopReason,
   documentPostalNumber: optionalPostal,
@@ -165,7 +176,7 @@ export const updateTransactionPayloadSchema = z
     fileNumber: optionalFileNumber,
     containerNumbers: optionalContainerNumbers,
     unitCount: optionalNonNegativeInt,
-    isStopped: optionalBoolean,
+    isStopped: requiredBoolean,
     holdReason: optionalHoldReason,
     stopReason: optionalStopReason,
     documentPostalNumber: optionalPostal,

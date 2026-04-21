@@ -314,17 +314,20 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     _kv(l10n.client, '${tx!['clientName']}'),
                     _kv('Stage', _stageLabel('${tx!['transactionStage'] ?? 'PREPARATION'}')),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
-                    _kv('${l10n.declaration} (1)', '${tx!['declarationNumber']}'),
-                    if (tx!['declarationNumber2'] != null &&
-                        tx!['declarationNumber2'].toString().trim().isNotEmpty)
-                      _kv('${l10n.declaration} (2)', '${tx!['declarationNumber2']}'),
-                    if (tx!['declarationDate'] != null)
-                      _kv('Declaration Date', _formatDateTime('${tx!['declarationDate']}', locale)),
-                    if (tx!['declarationType'] != null && tx!['declarationType'].toString().isNotEmpty)
-                      _kv('Declaration Type (1)', '${tx!['declarationType']}'),
-                    if (tx!['declarationType2'] != null && tx!['declarationType2'].toString().isNotEmpty)
-                      _kv('Declaration Type (2)', '${tx!['declarationType2']}'),
-                    if (tx!['portType'] != null && tx!['portType'].toString().isNotEmpty) _kv('Port Type', '${tx!['portType']}'),
+                    if ('${tx!['transactionStage'] ?? 'PREPARATION'}' != 'PREPARATION') ...[
+                      _kv('${l10n.declaration} (1)', '${tx!['declarationNumber']}'),
+                      if (tx!['declarationNumber2'] != null &&
+                          tx!['declarationNumber2'].toString().trim().isNotEmpty)
+                        _kv('${l10n.declaration} (2)', '${tx!['declarationNumber2']}'),
+                      if (tx!['declarationDate'] != null)
+                        _kv('Declaration Date', _formatDateTime('${tx!['declarationDate']}', locale)),
+                      if (tx!['declarationType'] != null && tx!['declarationType'].toString().isNotEmpty)
+                        _kv('Declaration Type (1)', '${tx!['declarationType']}'),
+                      if (tx!['declarationType2'] != null && tx!['declarationType2'].toString().isNotEmpty)
+                        _kv('Declaration Type (2)', '${tx!['declarationType2']}'),
+                      if (tx!['portType'] != null && tx!['portType'].toString().isNotEmpty)
+                        _kv('Port Type', '${tx!['portType']}'),
+                    ],
                     if (tx!['shippingCompanyId'] != null && tx!['shippingCompanyId'].toString().isNotEmpty)
                       _kv(l10n.shippingCompanyIdOptional, '${tx!['shippingCompanyId']}'),
                     _kv(l10n.airwayBill, '${tx!['airwayBill']}'),
@@ -345,7 +348,9 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                       _kv(l10n.txRateAedPerKg, '${tx!['invoiceToWeightRateAedPerKg']}'),
                     if (tx!['containerArrivalDate'] != null) _kv(l10n.txContainerArrival, '${tx!['containerArrivalDate']}'),
                     if (tx!['documentArrivalDate'] != null) _kv(l10n.txDocumentArrival, '${tx!['documentArrivalDate']}'),
-                    if (tx!['fileNumber'] != null && tx!['fileNumber'].toString().isNotEmpty)
+                    if ('${tx!['transactionStage'] ?? 'PREPARATION'}' != 'PREPARATION' &&
+                        tx!['fileNumber'] != null &&
+                        tx!['fileNumber'].toString().isNotEmpty)
                       _kv('File Number', '${tx!['fileNumber']}'),
                     if (tx!['containerNumbers'] is List && (tx!['containerNumbers'] as List).isNotEmpty)
                       _kv('Container Numbers', (tx!['containerNumbers'] as List).map((e) => '$e').join(', ')),

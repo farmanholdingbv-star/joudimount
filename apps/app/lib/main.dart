@@ -398,12 +398,26 @@ class _HomePageState extends State<HomePage> {
       ProfileTab(user: widget.user, onLogout: _logout),
     ];
 
+    final userName = (widget.user['name'] ?? '').toString().trim();
+
     return Scaffold(
       appBar: _index == 0
           ? null
           : AppBar(
               title: Text(_appBarTitle(l10n)),
               actions: [
+                if (userName.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Center(
+                      child: Text(
+                        userName,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: DropdownButtonHideUnderline(

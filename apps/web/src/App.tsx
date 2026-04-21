@@ -183,6 +183,9 @@ export default function App() {
   return (
     <>
       <header className="app-header">
+        <div className="app-header-user-wrap">
+          {user ? <span className="app-header-user">{user.name}</span> : null}
+        </div>
         <LanguageSwitcher />
       </header>
       {!user ? (

@@ -1,6 +1,6 @@
 # Project Specification: Transaction Tracker (UAE Customs Context)
 
-This document describes **the codebase as implemented** in this repository. It supersedes earlier drafts that referenced Next.js, Prisma, and PostgreSQL.
+This document describes the codebase as currently implemented in this repository.
 
 ---
 
@@ -9,10 +9,10 @@ This document describes **the codebase as implemented** in this repository. It s
 **Name:** Transaction Tracker (monorepo; evolved from a broader “Customs Broker Portal” idea)
 
 **Objective:**  
-Provide an internal tool to **create, list, view, fully edit, and delete** customs-style **transactions**, with **risk and duty simulation**, **document status** (copy / original BL / telex), **payment** and **e-release** actions, backed by **MongoDB**, with **JWT login** and **role-based access** for staff.
+Provide an internal tool to create, list, view, edit, and delete customs-style transactions, with risk and duty simulation, staged workflow, document handling, payment/release actions, JWT login, and role-based access.
 
 **Not in scope (current code):**  
-Full client-facing portal, file uploads, timeline UI stepper, reports/export, real Mirsal 2 integration, Next.js stack.
+Full client-facing portal, reports/export, real Mirsal 2 integration.
 
 ---
 
@@ -22,7 +22,7 @@ Full client-facing portal, file uploads, timeline UI stepper, reports/export, re
 |------|---------|
 | `apps/api` | Node.js **Express** + TypeScript REST API, Mongoose + MongoDB |
 | `apps/web` | **React 18** + **Vite** + TypeScript SPA (login, improved UI, transaction CRUD UI) |
-| `apps/app` | Flutter starter listing transactions (must send auth + correct host for device/emulator) |
+| `apps/app` | Flutter transaction app (list/details/form + auth + API host fallback) |
 | `seed-test-data.sh` | Seeds MongoDB directly via `mongosh` (bulk test clients/transactions) |
 | `seed-shipping-linked-data.sh` | Seeds shipping companies and transactions linked to them |
 | `package.json` (root) | npm workspaces for `apps/api` and `apps/web` |
@@ -51,12 +51,13 @@ Full client-facing portal, file uploads, timeline UI stepper, reports/export, re
 
 ### 4.1 Employee (`employees` collection)
 
-Used for login. Fields include: `name`, `email` (unique), `password` (plain in MVP — improve with hashing in production), `role`: `manager` | `employee` | `accountant`.
+Used for login. Fields include: `name`, `email` (unique), `password` (plain in MVP), `role`: `manager` | `employee` | `employee2` | `accountant`.
 
 **Seeded on API startup** (if missing):
 
 - `manager@tracker.local` / `123456` — manager  
 - `employee@tracker.local` / `123456` — employee  
+- `employee2@tracker.local` / `123456` — employee2  
 - `accountant@tracker.local` / `123456` — accountant  
 
 ### 4.2 Transaction (`transactions` collection)
@@ -77,6 +78,8 @@ Used for login. Fields include: `name`, `email` (unique), `password` (plain in M
 | `paymentStatus` | `pending` \| `paid` |
 | `xrayResult` | `not_required` \| `passed` \| `manual_inspection` |
 | `releaseCode` | Optional; set when release is issued |
+| `transactionStage` | `PREPARATION` \| `CUSTOMS_CLEARANCE` \| `STORAGE` \| `INTERNAL_DELIVERY` \| `EXTERNAL_TRANSFER` |
+| `documentAttachments` | Optional uploaded files with category + public path |
 | `createdAt`, `updatedAt` | Timestamps |
 
 ### 4.3 Client (`clients` collection)
@@ -118,6 +121,12 @@ Used by:
 - **Create** runs risk assessment and sets initial channel/status/duty.
 - **Update (`PUT`)** recalculates risk/channel/duty from submitted `invoiceValue` / `hsCode` / `originCountry`; clearance status defaults to the channel-derived status unless the client sends fields as implemented in `store.ts`.
 
+### 5.5 Stage workflow
+
+- Stage update endpoint: `POST /api/transactions/:id/stage`
+- Stage transition is forward-only and guarded by business rules
+- Transition from `PREPARATION` to `CUSTOMS_CLEARANCE` is blocked until required preparation fields are completed
+
 ---
 
 ## 6. Authentication & Authorization
@@ -144,6 +153,7 @@ Authorization: Bearer <jwt>
 |------|-------------------------|
 | **manager** | Full: CRUD transactions, pay, release, all edits |
 | **employee** | Create/read/update/delete transactions, mark original BL; **cannot** pay, release, or set `paymentStatus` via update |
+| **employee2** | Read transactions, update stage-2 operational fields, move transaction stage, no accounting updates |
 | **accountant** | Read transactions; **pay** and **release**; `PUT` may **only** change `paymentStatus` |
 
 Manager-only sections:
@@ -169,6 +179,7 @@ Manager-only sections:
 | GET | `/api/transactions/:id` | Detail |
 | PUT | `/api/transactions/:id` | Partial/full field update per role rules |
 | DELETE | `/api/transactions/:id` | Manager, employee |
+| POST | `/api/transactions/:id/stage` | Manager, employee2 |
 | POST | `/api/transactions/:id/original-bl` | Manager, employee |
 | POST | `/api/transactions/:id/pay` | Manager, accountant |
 | POST | `/api/transactions/:id/release` | Manager, accountant |
@@ -197,11 +208,13 @@ Manager-only sections:
 
 **Session:** JWT + user stored in `localStorage`; `apiFetch` attaches `Authorization`. Logout clears storage and calls logout endpoint.
 
+**Attachments:** Transaction create/edit supports multipart uploads and category tagging for document files.
+
 ---
 
 ## 9. Mobile (`apps/app`)
 
-Starter app that lists `/api/transactions`. For a real build, use the same Bearer token (or device login flow) and replace `localhost` with host reachable from the device (e.g. `10.0.2.2` on Android emulator).
+Flutter app supports list/details/form workflows with auth. Use reachable API host for device/emulator (e.g. `10.0.2.2` for Android emulator or `--dart-define=API_BASE=...`).
 
 ---
 
@@ -223,6 +236,6 @@ npm run dev:web
 
 ---
 
-## 12. Historical Notes (Original Broader Spec)
+## 12. Summary
 
-The original discussion included: Next.js, Prisma, PostgreSQL, full admin/client portals, document uploads, timeline UI, and mock Mirsal endpoints. **This repository implements a narrower Transaction Tracker MVP** on Express + MongoDB + React as above. Items in section 12 can be reintroduced as future work.
+This repository implements a Transaction Tracker monorepo on Express + MongoDB + React + Flutter, with role-based access, stage transitions, and attachment-aware transaction operations.

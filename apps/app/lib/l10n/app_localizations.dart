@@ -485,6 +485,18 @@ abstract class AppLocalizations {
   /// **'Unit of measurement'**
   String get txGoodsUnit;
 
+  /// No description provided for @txUnitsType.
+  ///
+  /// In en, this message translates to:
+  /// **'Units type'**
+  String get txUnitsType;
+
+  /// No description provided for @txNumberOfUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of units'**
+  String get txNumberOfUnits;
+
   /// No description provided for @txAttachDocs.
   ///
   /// In en, this message translates to:
@@ -922,6 +934,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accountant role cannot create or edit transactions in this form.'**
   String get accountantNoTransactionForm;
+
+  /// No description provided for @saveDisabledLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Save is disabled for Internal delivery and External transfer stages.'**
+  String get saveDisabledLocked;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

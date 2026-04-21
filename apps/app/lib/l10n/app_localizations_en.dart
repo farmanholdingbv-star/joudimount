@@ -204,6 +204,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txGoodsUnit => 'Unit of measurement';
 
   @override
+  String get txUnitsType => 'Units type';
+
+  @override
+  String get txNumberOfUnits => 'Number of units';
+
+  @override
   String get txAttachDocs => 'Document photos (optional)';
 
   @override
@@ -421,4 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountantNoTransactionForm => 'Accountant role cannot create or edit transactions in this form.';
+
+  @override
+  String get saveDisabledLocked => 'Save is disabled for Internal delivery and External transfer stages.';
 }

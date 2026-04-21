@@ -204,6 +204,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get txGoodsUnit => 'وحدة القياس';
 
   @override
+  String get txUnitsType => 'نوع الوحدات';
+
+  @override
+  String get txNumberOfUnits => 'عدد الوحدات';
+
+  @override
   String get txAttachDocs => 'صور المستندات (اختياري)';
 
   @override
@@ -421,4 +427,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get accountantNoTransactionForm => 'دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا.';
+
+  @override
+  String get saveDisabledLocked => 'الحفظ معطل في مراحل التسليم الداخلي أو الخارجي.';
 }

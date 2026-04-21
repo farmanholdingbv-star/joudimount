@@ -65,6 +65,8 @@
   "txGoodsQty": "Quantity of goods (optional)",
   "txGoodsQuality": "Quality",
   "txGoodsUnit": "Unit of measurement",
+  "txUnitsType": "Units type",
+  "txNumberOfUnits": "Number of units",
   "txAttachDocs": "Document photos (optional)",
   "txPickFiles": "Choose files",
   "txQualityNew": "New",
@@ -137,5 +139,6 @@
   "roleAccountant": "accountant",
   "optionalSelect": "— select —",
   "rememberMe": "Remember me",
-  "accountantNoTransactionForm": "Accountant role cannot create or edit transactions in this form."
+  "accountantNoTransactionForm": "Accountant role cannot create or edit transactions in this form.",
+  "saveDisabledLocked": "Save is disabled for Internal delivery and External transfer stages."
 }

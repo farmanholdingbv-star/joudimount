@@ -65,6 +65,8 @@
   "txGoodsQty": "كمية البضائع (اختياري)",
   "txGoodsQuality": "الجودة",
   "txGoodsUnit": "وحدة القياس",
+  "txUnitsType": "نوع الوحدات",
+  "txNumberOfUnits": "عدد الوحدات",
   "txAttachDocs": "صور المستندات (اختياري)",
   "txPickFiles": "اختيار ملفات",
   "txQualityNew": "جديد",
@@ -137,5 +139,6 @@
   "roleAccountant": "محاسب",
   "optionalSelect": "— اختر —",
   "rememberMe": "تذكرني",
-  "accountantNoTransactionForm": "دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا."
+  "accountantNoTransactionForm": "دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا.",
+  "saveDisabledLocked": "الحفظ معطل في مراحل التسليم الداخلي أو الخارجي."
 }

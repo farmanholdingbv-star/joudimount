@@ -77,6 +77,8 @@ export type MessageKey =
   | "form.accessLimitedBody"
   | "form.loadError"
   | "form.saveError"
+  | "form.validationError"
+  | "form.saveLockedHint"
   | "form.clientName"
   | "form.shippingCompanyName"
   | "form.shippingCompanyId"
@@ -100,6 +102,8 @@ export type MessageKey =
   | "form.goodsQuantity"
   | "form.goodsQuality"
   | "form.goodsUnit"
+  | "form.unitsType"
+  | "form.numberOfUnits"
   | "form.optionalSelect"
   | "form.quality.new"
   | "form.quality.like_new"
@@ -304,6 +308,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.accessLimitedBody": "دور المحاسب مقصور على عمليات المحاسبة والفوترة من صفحة تفاصيل المعاملة.",
     "form.loadError": "تعذر تحميل المعاملة",
     "form.saveError": "تعذر حفظ المعاملة",
+    "form.validationError": "يرجى إكمال جميع الحقول المطلوبة. ستُظهر المتصفح الحقول غير الصالحة.",
+    "form.saveLockedHint": "الحفظ معطل في مراحل التسليم الداخلي أو الخارجي.",
     "form.clientName": "اسم العميل",
     "form.shippingCompanyName": "اسم شركة الشحن",
     "form.shippingCompanyId": "معرف شركة الشحن",
@@ -327,6 +333,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.goodsQuantity": "كمية البضائع",
     "form.goodsQuality": "جودة البضائع",
     "form.goodsUnit": "وحدة القياس",
+    "form.unitsType": "نوع الوحدات",
+    "form.numberOfUnits": "عدد الوحدات",
     "form.optionalSelect": "— اختر —",
     "form.quality.new": "جديد",
     "form.quality.like_new": "شبه جديد",
@@ -532,6 +540,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
       "Accountant role is limited to accounting and billing operations in transaction details.",
     "form.loadError": "Unable to load transaction",
     "form.saveError": "Could not save transaction",
+    "form.validationError": "Please complete all required fields. The browser will highlight invalid fields.",
+    "form.saveLockedHint": "Save is disabled at Internal delivery and External transfer stages.",
     "form.clientName": "Client Name",
     "form.shippingCompanyName": "Shipping Company Name",
     "form.shippingCompanyId": "Shipping Company ID",
@@ -555,6 +565,8 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.goodsQuantity": "Quantity of goods",
     "form.goodsQuality": "Quality of goods",
     "form.goodsUnit": "Unit of measurement",
+    "form.unitsType": "Units type",
+    "form.numberOfUnits": "Number of units",
     "form.optionalSelect": "— Select —",
     "form.quality.new": "New",
     "form.quality.like_new": "Like new",
