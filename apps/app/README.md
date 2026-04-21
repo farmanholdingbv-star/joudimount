@@ -2,13 +2,16 @@
 
 Flutter client for the Transaction Tracker monorepo.
 
+**Package name:** `judi_mount` (see `pubspec.yaml`).
+
 ## What this app includes
 
-- Login with JWT-backed API session
+- Login with JWT-backed API session (token in `SharedPreferences`)
 - Transactions list and details
-- Create/edit transaction form
-- Transaction stage visibility behavior aligned with backend rules
-- Document attachments viewing
+- Create/edit transaction form (multipart uploads where supported)
+- Transaction stage controls and visibility aligned with backend rules
+- Document attachments viewing (grouped by category)
+- Staff/employees screen (manager: CRUD; others: per API rules)
 - Arabic/English localization support
 
 ## API configuration

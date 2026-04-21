@@ -122,6 +122,27 @@ function mapOptionalDate(value: unknown): string | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
+function normalizeDateOnly(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  if (typeof value === "string" && value.trim().length === 0) return undefined;
+  const d = new Date(value as string | number | Date);
+  if (Number.isNaN(d.getTime())) return typeof value === "string" ? value : undefined;
+  return d.toISOString().slice(0, 10);
+}
+
+function sameTransactionField(key: keyof Transaction, nextValue: unknown, currentValue: unknown): boolean {
+  if (key === "declarationDate" || key === "containerArrivalDate" || key === "documentArrivalDate") {
+    return normalizeDateOnly(nextValue) === normalizeDateOnly(currentValue);
+  }
+  if (Array.isArray(nextValue) || Array.isArray(currentValue)) {
+    const a = Array.isArray(nextValue) ? nextValue : [];
+    const b = Array.isArray(currentValue) ? currentValue : [];
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  if (nextValue == null && currentValue == null) return true;
+  return nextValue === currentValue;
+}
+
 function mapTransaction(doc: any): Transaction {
   const attachments: DocumentAttachment[] | undefined = Array.isArray(doc.documentAttachments)
     ? doc.documentAttachments.map((a: { path: string; originalName: string; category?: DocumentAttachment["category"] }) => ({
@@ -449,9 +470,7 @@ export async function setTransactionStage(id: string, stage: TransactionStage) {
 
   const fromIdx = stageOrder.indexOf(currentStage);
   const toIdx = stageOrder.indexOf(stage);
-  if (fromIdx < 0 || toIdx < 0 || toIdx < fromIdx) return false;
-  if (currentStage === "STORAGE" && !["INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"].includes(stage)) return false;
-  if ((currentStage === "INTERNAL_DELIVERY" || currentStage === "EXTERNAL_TRANSFER") && currentStage !== stage) return false;
+  if (fromIdx < 0 || toIdx < 0) return false;
 
   const updated = await TransactionModel.findByIdAndUpdate(
     id,
@@ -537,15 +556,19 @@ export async function updateTransaction(
     >
   >,
 ) {
-  const current = (await TransactionModel.findById(id).lean()) as
-    | { invoiceValue: number; hsCode: string; originCountry: string; transactionStage?: TransactionStage }
-    | null;
+  const current = await getTransaction(id);
   if (!current) return null;
 
   const currentStage = current.transactionStage ?? "PREPARATION";
   const targetStage = nextStageOnArrival(currentStage, input.documentArrivalDate);
   const lockedFields = getLockedFieldsForStage(targetStage);
-  const attemptedLocked = Object.keys(input).filter((key) => lockedFields.has(key as keyof Transaction));
+  const attemptedLocked = Object.entries(input)
+    .filter(([key, nextValue]) => {
+      const field = key as keyof Transaction;
+      if (!lockedFields.has(field)) return false;
+      return !sameTransactionField(field, nextValue, current[field]);
+    })
+    .map(([key]) => key);
   if (attemptedLocked.length > 0) {
     throw new Error(`Fields are locked for stage ${targetStage}: ${attemptedLocked.join(", ")}`);
   }

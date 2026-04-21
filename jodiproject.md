@@ -37,13 +37,15 @@ Full client-facing portal, reports/export, real Mirsal 2 integration.
 | Persistence | **MongoDB** via **Mongoose** |
 | Auth | **JWT** (`jsonwebtoken`), Bearer token in `Authorization` header |
 | Web | React, Vite, TypeScript, React Router |
-| Mobile | Flutter + `http` (demo; align with API auth in production) |
+| Mobile | Flutter + `http`, `shared_preferences`, file picker, PDF/printing helpers (`apps/app`, package `judi_mount`) |
 
 **Environment**
 
 - `MONGO_URI` — default `mongodb://127.0.0.1:27017/customs_broker_track`
 - `JWT_SECRET` — signing secret for tokens (defaults to dev placeholder; set in production)
 - `PORT` — API port (default `4000`)
+
+**Static files:** uploaded transaction documents are stored under the API working directory and exposed at `GET /uploads/...` (see `apps/api/src/server.ts`).
 
 ---
 
@@ -68,8 +70,10 @@ Used for login. Fields include: `name`, `email` (unique), `password` (plain in M
 | `clientId` | Optional string reference if needed |
 | `shippingCompanyName` | **Required** shipping company display name per transaction |
 | `shippingCompanyId` | Optional reference to shipping company record |
-| `declarationNumber` | Unique, e.g. `DXB-2026-000001` |
+| `declarationNumber` | **Required**, unique, e.g. `DXB-2026-000001` (auto-generated on create if omitted) |
+| `declarationNumber2`, `declarationDate`, `declarationType`, `declarationType2`, `portType` | Optional customs declaration metadata |
 | `airwayBill`, `hsCode`, `goodsDescription`, `invoiceValue`, `originCountry` | Core shipment data (origin 2-letter code) |
+| `invoiceCurrency` | `AED` \| `USD` \| `EUR` \| `SAR` (default `AED` in schema) |
 | `documentStatus` | `copy_received` \| `original_received` \| `telex_release` |
 | `clearanceStatus` | Enum including `GREEN_CHANNEL`, `YELLOW_CHANNEL`, `RED_CHANNEL`, `PAID`, `E_RELEASE_ISSUED`, `DELIVERED`, etc. |
 | `riskLevel` | `low` \| `medium` \| `high` |
@@ -79,16 +83,21 @@ Used for login. Fields include: `name`, `email` (unique), `password` (plain in M
 | `xrayResult` | `not_required` \| `passed` \| `manual_inspection` |
 | `releaseCode` | Optional; set when release is issued |
 | `transactionStage` | `PREPARATION` \| `CUSTOMS_CLEARANCE` \| `STORAGE` \| `INTERNAL_DELIVERY` \| `EXTERNAL_TRANSFER` |
-| `documentAttachments` | Optional uploaded files with category + public path |
+| `documentAttachments` | Optional uploaded files: `path`, `originalName`, optional `category` (`bill_of_lading`, `certificate_of_origin`, `invoice`, `packing_list`) |
+| `containerCount`, `goodsWeightKg`, `invoiceToWeightRateAedPerKg` | Optional logistics / pricing helpers |
+| `containerArrivalDate`, `documentArrivalDate` | Optional dates (ISO); `documentArrivalDate` participates in auto stage logic in `updateTransaction` |
+| `fileNumber`, `containerNumbers`, `unitCount` | Optional |
+| `isStopped`, `stopReason`, `holdReason`, `documentPostalNumber` | Optional workflow fields (`isStopped` **required** on API create/update body per `transactionSchemas.ts`) |
+| `goodsQuantity`, `goodsQuality`, `goodsUnit` | Optional goods metadata |
 | `createdAt`, `updatedAt` | Timestamps |
 
 ### 4.3 Client (`clients` collection)
 
-Legacy/auxiliary CRUD for broker-style client records. Not required for the main transaction form (transactions carry `clientName`).
+Broker client records used by the Clients UI and optional `clientId` on transactions. Fields include: `companyName`, `trn` (unique), optional `immigrationCode`, `email`, `country`, `creditLimit`, `status` (`active` \| `suspended`).
 
 ### 4.4 Shipping Company (`shippingcompanies` collection)
 
-Fields: `companyName`, `code` (unique), `contactName`, `phone`, `status` (`active` | `inactive`).
+Fields: `companyName`, `code` (unique), optional `contactName`, `phone`, `email`, `dispatchFormTemplate`, optional `latitude` / `longitude` (paired), `status` (`active` \| `inactive`).
 
 Used by:
 - Shipping Companies management section
@@ -123,9 +132,16 @@ Used by:
 
 ### 5.5 Stage workflow
 
-- Stage update endpoint: `POST /api/transactions/:id/stage`
-- Stage transition is forward-only and guarded by business rules
-- Transition from `PREPARATION` to `CUSTOMS_CLEARANCE` is blocked until required preparation fields are completed
+- Stage update endpoint: `POST /api/transactions/:id/stage` (roles: **manager**, **employee2**)
+- Stage transition is forward-only and guarded by `setTransactionStage` in `store.ts` (e.g. storage/delivery locks)
+- Transition from `PREPARATION` to `CUSTOMS_CLEARANCE` is rejected with `400` until the transaction record satisfies preparation checks in `getMissingFieldsBeforeCustomsClearance` (`server.ts`), including: non-empty `clientName`, `shippingCompanyName`, `airwayBill`, `hsCode`, `goodsDescription`, `originCountry`, `invoiceCurrency`; numeric constraints on `invoiceValue`, `containerCount`, `goodsWeightKg`, `invoiceToWeightRateAedPerKg`, `goodsQuantity`, `goodsQuality`, `goodsUnit`, `unitCount`; if `isStopped === true`, `stopReason` must be non-empty
+- **Create / update** also adjusts `transactionStage` when `documentArrivalDate` is set (`nextStageOnArrival` in `store.ts`), which can move a transaction toward `CUSTOMS_CLEARANCE` independently of the stage endpoint
+
+### 5.6 Transaction payload validation (API)
+
+- `POST /api/transactions` and `PUT /api/transactions/:id` bodies are validated with Zod (`transactionSchemas.ts`)
+- **`isStopped`** is **required** (boolean) on both create and update payloads; clients should always send it (web/Flutter forms do)
+- Multipart uploads: each file must have a matching entry in `documentPhotoCategories` JSON; categories must be one of the four attachment enums above
 
 ---
 
@@ -141,7 +157,7 @@ Used by:
 
 ### 6.2 Protected routes
 
-All **transaction** and **client** API routes expect:
+All **transaction**, **client**, **shipping-company**, and **employee** API routes (except login) expect:
 
 ```http
 Authorization: Bearer <jwt>
@@ -151,14 +167,15 @@ Authorization: Bearer <jwt>
 
 | Role | Capabilities (summary) |
 |------|-------------------------|
-| **manager** | Full: CRUD transactions, pay, release, all edits |
-| **employee** | Create/read/update/delete transactions, mark original BL; **cannot** pay, release, or set `paymentStatus` via update |
-| **employee2** | Read transactions, update stage-2 operational fields, move transaction stage, no accounting updates |
+| **manager** | Full: CRUD transactions, pay, release, all fields on `PUT`, stage changes, employee CRUD, client/shipping CRUD |
+| **employee** | Create/read/update/delete transactions, mark original BL; on `PUT`, only **stage-1** fields (`server.ts` `stage1EmployeeFields`); **cannot** pay, release, or set `paymentStatus` |
+| **employee2** | List/read transactions; `POST .../stage`; on `PUT`, only **stage-2** fields: `containerArrivalDate`, `documentArrivalDate`, `fileNumber`, `documentStatus`, `clearanceStatus`; **cannot** create/delete transactions, **cannot** use multipart attachment uploads on `PUT`, **cannot** set `paymentStatus` |
 | **accountant** | Read transactions; **pay** and **release**; `PUT` may **only** change `paymentStatus` |
 
 Manager-only sections:
 - Clients create/update/delete
 - Shipping companies create/update/delete
+- Employees create/update/delete (`POST`/`PUT`/`DELETE /api/employees*`)
 
 ---
 
@@ -170,15 +187,20 @@ Manager-only sections:
 | POST | `/api/auth/login` | Login |
 | POST | `/api/auth/logout` | Logout (client-side token clear) |
 | GET | `/api/auth/me` | Current user |
+| GET | `/api/employees` | List employees (any authenticated role) |
+| POST | `/api/employees` | Create employee (manager only) |
+| PUT/DELETE | `/api/employees/:id` | Update / delete employee (manager only) |
 | GET/POST | `/api/clients` | List / create clients (create = manager only) |
+| GET | `/api/clients/:id` | Client detail |
 | PUT/DELETE | `/api/clients/:id` | Update / delete client (manager only) |
 | GET/POST | `/api/shipping-companies` | List / create shipping companies (create = manager only) |
+| GET | `/api/shipping-companies/:id` | Shipping company detail |
 | PUT/DELETE | `/api/shipping-companies/:id` | Update / delete shipping company (manager only) |
-| GET | `/api/transactions` | List (auth + role) |
+| GET | `/api/transactions` | List (manager, employee, employee2, accountant); optional `?clientId=` |
 | POST | `/api/transactions` | Create (manager, employee) |
 | GET | `/api/transactions/:id` | Detail |
 | PUT | `/api/transactions/:id` | Partial/full field update per role rules |
-| DELETE | `/api/transactions/:id` | Manager, employee |
+| DELETE | `/api/transactions/:id` | Manager, employee (not employee2/accountant) |
 | POST | `/api/transactions/:id/stage` | Manager, employee2 |
 | POST | `/api/transactions/:id/original-bl` | Manager, employee |
 | POST | `/api/transactions/:id/pay` | Manager, accountant |
@@ -192,12 +214,14 @@ Manager-only sections:
 
 - `/` — Transaction list with menu bar + auto search + filters (click row → detail)
 - `/login` — Shown when unauthenticated (root app gates on session)
-- `/transactions/new` — Create (blocked for accountant in UI)
+- `/transactions/new` — Create (blocked for accountant and employee2 in UI; API allows manager + employee only)
 - `/transactions/:id` — Detail; pay/release for manager/accountant; edit/delete per role
 - `/transactions/:id/edit` — Edit form
-- `/employees` — Explains roles (role comes from logged-in user, not manual switch)
+- `/employees` — Employee directory: all authenticated users can list; **manager** can create, edit, and delete via the same screen (backed by `/api/employees`)
 - `/clients` — Clients list + manager CRUD
+- `/clients/:id` — Client detail
 - `/shipping-companies` — Shipping companies list + manager CRUD
+- `/shipping-companies/:id` — Shipping company detail
 
 **Transaction list UX upgrades**
 - Top menu bar for navigation/actions
@@ -210,11 +234,13 @@ Manager-only sections:
 
 **Attachments:** Transaction create/edit supports multipart uploads and category tagging for document files.
 
+**API base URL:** `apps/web/src/types.ts` defines `API_BASE` (default `http://localhost:4000`) for attachment links and fetches; change it for non-local deployments.
+
 ---
 
 ## 9. Mobile (`apps/app`)
 
-Flutter app supports list/details/form workflows with auth. Use reachable API host for device/emulator (e.g. `10.0.2.2` for Android emulator or `--dart-define=API_BASE=...`).
+Flutter package **`judi_mount`**: list, detail, and transaction form with auth, stage handling, attachments, localization, and staff screens. Configure API host via `--dart-define=API_BASE=...` or use built-in host fallback order in `lib/api.dart`.
 
 ---
 
@@ -232,6 +258,12 @@ npm install
 # Start MongoDB, then:
 npm run dev:api
 npm run dev:web
+```
+
+Optional production build:
+
+```bash
+npm run build
 ```
 
 ---

@@ -26,6 +26,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [stageFilter, setStageFilter] = useState("all");
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const pageSize = 30;
@@ -47,14 +48,16 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
       (tx.declarationNumber2 ?? "").toLowerCase().includes(q) ||
       tx.airwayBill.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || tx.clearanceStatus === statusFilter;
-    return matchesQuery && matchesStatus;
+    const matchesStage = stageFilter === "all" || (tx.transactionStage ?? "PREPARATION") === stageFilter;
+    return matchesQuery && matchesStatus && matchesStage;
   });
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter]);
+  }, [query, statusFilter, stageFilter]);
 
   const statusOptions = Array.from(new Set(transactions.map((tx) => tx.clearanceStatus)));
+  const stageOptions = Array.from(new Set(transactions.map((tx) => tx.transactionStage ?? "PREPARATION")));
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pagedTransactions = filteredTransactions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -102,6 +105,14 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
             {statusOptions.map((status) => (
               <option key={status} value={status}>
                 {status}
+              </option>
+            ))}
+          </select>
+          <select className="filter-select" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}>
+            <option value="all">All stages</option>
+            {stageOptions.map((stage) => (
+              <option key={stage} value={stage}>
+                {stage}
               </option>
             ))}
           </select>

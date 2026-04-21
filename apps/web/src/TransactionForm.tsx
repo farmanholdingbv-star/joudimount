@@ -462,6 +462,8 @@ export default function TransactionForm({ role }: { role: Role }) {
   const customsEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
   const storageEditable = !isEdit || stage === "PREPARATION" || stage === "STORAGE";
   const fullyLocked = isEdit && (stage === "INTERNAL_DELIVERY" || stage === "EXTERNAL_TRANSFER");
+  /** Stage can move forward or back; only manager and employee2 may call the API. */
+  const canSetStage = role === "manager" || role === "employee2";
   /** Customs Declaration + file number: hidden for new transactions and in Preparation; visible from Customs clearance onward when editing. */
   const showCustomsDeclarationSection = isEdit && stage !== "PREPARATION";
 
@@ -482,7 +484,7 @@ export default function TransactionForm({ role }: { role: Role }) {
               <select
                 value={stage}
                 onChange={(e) => setTransactionStage(e.target.value as TransactionStage)}
-                disabled={fullyLocked}
+                disabled={!canSetStage}
               >
                 {STAGE_OPTIONS.map((s) => (
                   <option key={s} value={s}>
@@ -681,21 +683,6 @@ export default function TransactionForm({ role }: { role: Role }) {
         </label>
         {!isEdit ? (
           <>
-            <label>
-              {t("form.unitsType")}
-              <select
-                disabled={!prepEditable}
-                value={form.goodsUnit}
-                onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })}
-              >
-                <option value="">{t("form.optionalSelect")}</option>
-                {UNIT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {t(o.labelKey as MessageKey)}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label>
               {t("form.numberOfUnits")}
               <input

@@ -409,6 +409,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final storageEditable =
         !_isEdit || _stage == 'PREPARATION' || _stage == 'STORAGE';
     final fullyLocked = _isEdit && (_stage == 'INTERNAL_DELIVERY' || _stage == 'EXTERNAL_TRANSFER');
+    final canSetStage = widget.role == 'manager' || widget.role == 'employee2';
     final showCustomsDeclarationSection = _isEdit && _stage != 'PREPARATION';
     final groupedRetained = _groupRetainedDocs();
 
@@ -455,7 +456,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               items: _stageOptions
                   .map((s) => DropdownMenuItem(value: s, child: Text(_stageLabel(s))))
                   .toList(),
-              onChanged: fullyLocked
+              onChanged: !canSetStage
                   ? null
                   : (v) {
                       if (v != null && v != _stage) _changeStage(v);
@@ -686,28 +687,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      key: ValueKey('tx-unit-new-${_unit ?? 'none'}'),
-                      decoration: InputDecoration(labelText: l10n.txUnitsType),
-                      initialValue: _unit,
-                      items: [
-                        DropdownMenuItem<String?>(value: null, child: Text(l10n.optionalSelect)),
-                        DropdownMenuItem(value: 'kg', child: Text(l10n.txUnitKg)),
-                        DropdownMenuItem(value: 'ton', child: Text(l10n.txUnitTon)),
-                        DropdownMenuItem(value: 'piece', child: Text(l10n.txUnitPiece)),
-                        DropdownMenuItem(value: 'carton', child: Text(l10n.txUnitCarton)),
-                        DropdownMenuItem(value: 'pallet', child: Text(l10n.txUnitPallet)),
-                        DropdownMenuItem(value: 'cbm', child: Text(l10n.txUnitCbm)),
-                        DropdownMenuItem(value: 'liter', child: Text(l10n.txUnitLiter)),
-                        DropdownMenuItem(value: 'set', child: Text(l10n.txUnitSet)),
-                      ],
-                      onChanged: prepEditable ? (v) => setState(() => _unit = v) : null,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: TextFormField(
                       controller: _unitCount,

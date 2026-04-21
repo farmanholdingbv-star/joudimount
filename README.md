@@ -19,10 +19,10 @@ Internal transaction tracking platform for customs operations with role-based ac
 
 ## Roles
 
-- `manager`: full access
-- `employee`: can create/edit transactions, cannot do accounting actions
-- `employee2`: stage/operations role for customs/storage workflow edits
-- `accountant`: accounting actions and restricted payment updates
+- `manager`: full access (transactions, clients, shipping companies, employees, accounting actions)
+- `employee`: create/update/delete transactions and original-BL action; **stage 1** fields only on `PUT`; cannot pay, release, or change `paymentStatus`
+- `employee2`: list/read transactions, change stage (`POST .../stage`), **stage 2** fields only on `PUT` (`containerArrivalDate`, `documentArrivalDate`, `fileNumber`, `documentStatus`, `clearanceStatus`); cannot create/delete transactions, upload attachments on `PUT`, or change `paymentStatus`
+- `accountant`: read transactions; pay and release; `PUT` may **only** set `paymentStatus`
 
 Default accounts are auto-seeded on API startup:
 
@@ -40,13 +40,16 @@ Default accounts are auto-seeded on API startup:
   - `INTERNAL_DELIVERY`
   - `EXTERNAL_TRANSFER`
 - Stage transition endpoint with validation and transition guards
-- Preparation completeness check before moving to customs clearance
+- Preparation completeness check before moving from `PREPARATION` to `CUSTOMS_CLEARANCE` (server validates required preparation fields on the saved transaction)
+- Auto stage bump: setting `documentArrivalDate` on create/update can move the transaction toward `CUSTOMS_CLEARANCE` per `store.ts` (in addition to explicit `POST .../stage`)
 - Risk simulation and channel mapping
 - Duty calculation (`5% + 100`)
 - Payment + release flow with rule checks
-- Clients and shipping companies management
-- Document attachments upload (images/PDF) with categories
+- Clients and shipping companies management (detail routes in web UI)
+- Staff directory: `GET /api/employees` (all authenticated); create/update/delete employees (manager only)
+- Document attachments upload (images/PDF) with categories; files served under `/uploads` on the API host
 - Arabic/English localization (web and app)
+- Create/update payloads require **`isStopped`** (boolean); if stopped, **`stopReason`** is required before advancing to customs clearance
 
 ## API Endpoints
 
@@ -54,6 +57,10 @@ Default accounts are auto-seeded on API startup:
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `GET /api/employees` (authenticated)
+- `POST /api/employees` (manager)
+- `PUT /api/employees/:id` (manager)
+- `DELETE /api/employees/:id` (manager)
 - `GET /api/clients`
 - `GET /api/clients/:id`
 - `POST /api/clients` (manager)
@@ -64,15 +71,15 @@ Default accounts are auto-seeded on API startup:
 - `POST /api/shipping-companies` (manager)
 - `PUT /api/shipping-companies/:id` (manager)
 - `DELETE /api/shipping-companies/:id` (manager)
-- `GET /api/transactions`
-- `POST /api/transactions`
+- `GET /api/transactions` (optional query: `?clientId=<id>`)
+- `POST /api/transactions` (manager, employee; multipart supported)
 - `GET /api/transactions/:id`
-- `PUT /api/transactions/:id`
-- `DELETE /api/transactions/:id`
-- `POST /api/transactions/:id/stage`
-- `POST /api/transactions/:id/original-bl`
-- `POST /api/transactions/:id/pay`
-- `POST /api/transactions/:id/release`
+- `PUT /api/transactions/:id` (authenticated; role-based field rules; multipart supported except employee2)
+- `DELETE /api/transactions/:id` (manager, employee)
+- `POST /api/transactions/:id/stage` (manager, employee2)
+- `POST /api/transactions/:id/original-bl` (manager, employee)
+- `POST /api/transactions/:id/pay` (manager, accountant)
+- `POST /api/transactions/:id/release` (manager, accountant)
 
 ## Run Locally
 
@@ -90,6 +97,12 @@ Start web:
 
 ```bash
 npm run dev:web
+```
+
+Production build (API + web):
+
+```bash
+npm run build
 ```
 
 Default Mongo URI:
