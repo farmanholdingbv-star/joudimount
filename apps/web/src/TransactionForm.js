@@ -29,11 +29,8 @@ const DECLARATION_TYPE_OPTIONS = [
     "Import to Free Zone",
     "Import for Re-Export",
     "Temporary Import",
-    "Export",
-    "Re-Export",
-    "Transfer",
-    "Transit",
-    "Temporary Admission",
+    "Transit in",
+    "Transit in from GCC",
 ];
 const PORT_TYPE_OPTIONS = ["Seaports", "Free Zones", "Mainland"];
 const DOCUMENT_CATEGORY_OPTIONS = [

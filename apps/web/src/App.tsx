@@ -194,6 +194,7 @@ export default function App() {
   return (
     <>
       <header className="app-header">
+        <img src="/logo.png" alt="Project logo" className="app-logo" />
         <div className="app-header-user-wrap">
           {user ? <span className="app-header-user">{user.name}</span> : null}
         </div>

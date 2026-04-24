@@ -24,10 +24,6 @@ function stageLabel(stage) {
             return "Customs clearance";
         case "STORAGE":
             return "Storage";
-        case "INTERNAL_DELIVERY":
-            return "Internal delivery";
-        case "EXTERNAL_TRANSFER":
-            return "External transfer";
         default:
             return stage || "Preparation";
     }

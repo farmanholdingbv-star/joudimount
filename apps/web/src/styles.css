@@ -15,6 +15,12 @@ body {
   gap: 0.75rem;
 }
 
+.app-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
 .app-header-user-wrap {
   margin-right: auto;
   min-width: 0;
