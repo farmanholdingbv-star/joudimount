@@ -11,12 +11,13 @@ import Login from "./Login";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { apiFetch, getCurrentUser, logout } from "./api";
 import { useI18n } from "./i18n/I18nContext";
+import type { MessageKey } from "./i18n/messages";
 import { AuthUser, Role, Transaction } from "./types";
 
-function roleLabel(role: Role, t: (key: "role.manager" | "role.employee" | "role.accountant") => string) {
+function roleLabel(role: Role, t: (key: MessageKey) => string) {
   if (role === "manager") return t("role.manager");
   if (role === "employee") return t("role.employee");
-  if (role === "employee2") return "Employee 2";
+  if (role === "employee2") return t("app.roleEmployee2");
   return t("role.accountant");
 }
 
@@ -109,10 +110,10 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
             ))}
           </select>
           <select className="filter-select" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}>
-            <option value="all">All stages</option>
+            <option value="all">{t("list.filterAllStages")}</option>
             {stageOptions.map((stage) => (
               <option key={stage} value={stage}>
-                {stage}
+                {t(`stage.${stage}` as MessageKey)}
               </option>
             ))}
           </select>
@@ -135,7 +136,9 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
                 <td>{tx.clientName}</td>
                 <td>{tx.shippingCompanyName}</td>
                 <td>
-                  <span className="status-badge">{tx.transactionStage ?? "PREPARATION"} • {tx.clearanceStatus}</span>
+                  <span className="status-badge">
+                    {t(`stage.${tx.transactionStage ?? "PREPARATION"}` as MessageKey)} • {tx.clearanceStatus}
+                  </span>
                 </td>
                 <td>{new Date(tx.createdAt).toLocaleString(numberLocale)}</td>
               </tr>
@@ -151,7 +154,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
       {filteredTransactions.length > 0 && (
         <div className="page-actions">
           <button type="button" className="primary-button" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}>
-            Prev
+            {t("list.paginationPrev")}
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
@@ -169,7 +172,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
             onClick={() => setPage(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
-            Next
+            {t("list.paginationNext")}
           </button>
         </div>
       )}

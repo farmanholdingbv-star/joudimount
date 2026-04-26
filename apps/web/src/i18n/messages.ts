@@ -230,7 +230,60 @@ export type MessageKey =
   | "details.shippingPaperMessage"
   | "details.shippingPaperMessagePlaceholder"
   | "details.shippingPaperPrint"
-  | "details.shippingPaperClose";
+  | "details.shippingPaperClose"
+  | "app.roleEmployee2"
+  | "list.filterAllStages"
+  | "list.paginationPrev"
+  | "list.paginationNext"
+  | "stage.PREPARATION"
+  | "stage.CUSTOMS_CLEARANCE"
+  | "stage.STORAGE"
+  | "stage.INTERNAL_DELIVERY"
+  | "stage.EXTERNAL_TRANSFER"
+  | "docCategory.bill_of_lading"
+  | "docCategory.certificate_of_origin"
+  | "docCategory.invoice"
+  | "docCategory.packing_list"
+  | "docCategory.uncategorized"
+  | "form.stage"
+  | "form.snapshotReadOnly"
+  | "form.stageChangeError"
+  | "form.fileNumber"
+  | "form.partiesSection"
+  | "form.customsDeclarationSection"
+  | "form.declarationNumber1"
+  | "form.declarationNumber2"
+  | "form.declarationDate"
+  | "form.declarationType1"
+  | "form.declarationType2"
+  | "form.portType"
+  | "form.shipmentCoreSection"
+  | "form.currency"
+  | "form.cargoContainersSection"
+  | "form.containerNumbers"
+  | "form.containerNumbersPlaceholder"
+  | "form.workflowStatusSection"
+  | "form.stopTransaction"
+  | "form.stopReason"
+  | "form.yes"
+  | "form.no"
+  | "form.selectDocumentCategory"
+  | "form.categoryRequiredError"
+  | "form.documentStatus.copy_received"
+  | "form.documentStatus.original_received"
+  | "form.documentStatus.telex_release"
+  | "form.paymentStatus.pending"
+  | "form.paymentStatus.paid"
+  | "form.attachmentsSection"
+  | "form.declarationType.import"
+  | "form.declarationType.import_free_zone"
+  | "form.declarationType.import_re_export"
+  | "form.declarationType.temporary_import"
+  | "form.declarationType.transitin"
+  | "form.declarationType.transitin_gcc"
+  | "form.portType.seaports"
+  | "form.portType.free_zones"
+  | "form.portType.mainland";
 
 const messages: Record<Locale, Record<MessageKey, string>> = {
   ar: {
@@ -463,6 +516,59 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "details.shippingPaperMessagePlaceholder": "تعليمات التسليم، عنوان، هاتف، إلخ.",
     "details.shippingPaperPrint": "طباعة",
     "details.shippingPaperClose": "إغلاق",
+    "app.roleEmployee2": "موظف 2",
+    "list.filterAllStages": "كل المراحل",
+    "list.paginationPrev": "السابق",
+    "list.paginationNext": "التالي",
+    "stage.PREPARATION": "التحضير",
+    "stage.CUSTOMS_CLEARANCE": "التخليص الجمركي",
+    "stage.STORAGE": "التخزين",
+    "stage.INTERNAL_DELIVERY": "التسليم الداخلي",
+    "stage.EXTERNAL_TRANSFER": "النقل الخارجي",
+    "docCategory.bill_of_lading": "بوليصة الشحن",
+    "docCategory.certificate_of_origin": "شهادة المنشأ",
+    "docCategory.invoice": "فاتورة",
+    "docCategory.packing_list": "قائمة التعبئة",
+    "docCategory.uncategorized": "غير مصنف",
+    "form.stage": "مرحلة المعاملة",
+    "form.snapshotReadOnly": "ملخص المعاملة (للقراءة فقط)",
+    "form.stageChangeError": "فشل تغيير المرحلة",
+    "form.fileNumber": "رقم الملف",
+    "form.partiesSection": "الأطراف",
+    "form.customsDeclarationSection": "الإقرار الجمركي",
+    "form.declarationNumber1": "رقم الإقرار (1)",
+    "form.declarationNumber2": "رقم الإقرار (2)",
+    "form.declarationDate": "تاريخ الإقرار",
+    "form.declarationType1": "نوع الإقرار (1)",
+    "form.declarationType2": "نوع الإقرار (2)",
+    "form.portType": "نوع المنفذ",
+    "form.shipmentCoreSection": "بيانات الشحنة الأساسية",
+    "form.currency": "العملة",
+    "form.cargoContainersSection": "البضاعة والحاويات",
+    "form.containerNumbers": "أرقام الحاويات",
+    "form.containerNumbersPlaceholder": "مثال: MSKU1234567, TGHU9876543",
+    "form.workflowStatusSection": "سير العمل والحالة",
+    "form.stopTransaction": "إيقاف المعاملة",
+    "form.stopReason": "سبب الإيقاف",
+    "form.yes": "نعم",
+    "form.no": "لا",
+    "form.selectDocumentCategory": "اختر فئة المستند",
+    "form.categoryRequiredError": "يرجى اختيار فئة لكل مستند مرفوع.",
+    "form.documentStatus.copy_received": "تم استلام نسخة",
+    "form.documentStatus.original_received": "تم استلام الأصل",
+    "form.documentStatus.telex_release": "إفراج تيليكس",
+    "form.paymentStatus.pending": "قيد الانتظار",
+    "form.paymentStatus.paid": "مدفوع",
+    "form.attachmentsSection": "المرفقات",
+    "form.declarationType.import": "استيراد",
+    "form.declarationType.import_free_zone": "استيراد إلى المنطقة الحرة",
+    "form.declarationType.import_re_export": "استيراد لإعادة التصدير",
+    "form.declarationType.temporary_import": "استيراد مؤقت",
+    "form.declarationType.transitin": "ترانزيت",
+    "form.declarationType.transitin_gcc": "ترانزيت من دول الخليج",
+    "form.portType.seaports": "الموانئ البحرية",
+    "form.portType.free_zones": "المناطق الحرة",
+    "form.portType.mainland": "البر الرئيسي",
   },
   en: {
     "lang.label": "Language",
@@ -695,6 +801,59 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "details.shippingPaperMessagePlaceholder": "Delivery instructions, address, phone, etc.",
     "details.shippingPaperPrint": "Print",
     "details.shippingPaperClose": "Close",
+    "app.roleEmployee2": "Employee 2",
+    "list.filterAllStages": "All stages",
+    "list.paginationPrev": "Prev",
+    "list.paginationNext": "Next",
+    "stage.PREPARATION": "Preparation",
+    "stage.CUSTOMS_CLEARANCE": "Customs clearance",
+    "stage.STORAGE": "Storage",
+    "stage.INTERNAL_DELIVERY": "Internal delivery",
+    "stage.EXTERNAL_TRANSFER": "External transfer",
+    "docCategory.bill_of_lading": "Bill of Lading",
+    "docCategory.certificate_of_origin": "Certificate of Origin",
+    "docCategory.invoice": "Invoice",
+    "docCategory.packing_list": "Packing List",
+    "docCategory.uncategorized": "Uncategorized",
+    "form.stage": "Transaction Stage",
+    "form.snapshotReadOnly": "Transaction Snapshot (Read-only)",
+    "form.stageChangeError": "Failed to change stage",
+    "form.fileNumber": "File Number",
+    "form.partiesSection": "Parties",
+    "form.customsDeclarationSection": "Customs Declaration",
+    "form.declarationNumber1": "Declaration Number (1)",
+    "form.declarationNumber2": "Declaration Number (2)",
+    "form.declarationDate": "Declaration Date",
+    "form.declarationType1": "Declaration Type (1)",
+    "form.declarationType2": "Declaration Type (2)",
+    "form.portType": "Port Type",
+    "form.shipmentCoreSection": "Shipment Core",
+    "form.currency": "Currency",
+    "form.cargoContainersSection": "Cargo & Containers",
+    "form.containerNumbers": "Container Numbers",
+    "form.containerNumbersPlaceholder": "e.g. MSKU1234567, TGHU9876543",
+    "form.workflowStatusSection": "Workflow & Status",
+    "form.stopTransaction": "Stop Transaction",
+    "form.stopReason": "Stop Reason",
+    "form.yes": "Yes",
+    "form.no": "No",
+    "form.selectDocumentCategory": "Select document category",
+    "form.categoryRequiredError": "Please choose a category for each uploaded document.",
+    "form.documentStatus.copy_received": "Copy received",
+    "form.documentStatus.original_received": "Original received",
+    "form.documentStatus.telex_release": "Telex release",
+    "form.paymentStatus.pending": "Pending",
+    "form.paymentStatus.paid": "Paid",
+    "form.attachmentsSection": "Attachments",
+    "form.declarationType.import": "Import",
+    "form.declarationType.import_free_zone": "Import to Free Zone",
+    "form.declarationType.import_re_export": "Import for Re-Export",
+    "form.declarationType.temporary_import": "Temporary Import",
+    "form.declarationType.transitin": "Transitin",
+    "form.declarationType.transitin_gcc": "Transitin from GCC",
+    "form.portType.seaports": "Seaports",
+    "form.portType.free_zones": "Free Zones",
+    "form.portType.mainland": "Mainland",
   },
 };
 

@@ -40,19 +40,23 @@ const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
 
 const CURRENCY_OPTIONS: InvoiceCurrency[] = ["AED", "USD", "EUR", "SAR"];
 const DECLARATION_TYPE_OPTIONS = [
-  "Import",
-  "Import to Free Zone",
-  "Import for Re-Export",
-  "Temporary Import",
-  "Transitin",
-"Transitin from GCC",
+  { value: "Import", labelKey: "form.declarationType.import" },
+  { value: "Import to Free Zone", labelKey: "form.declarationType.import_free_zone" },
+  { value: "Import for Re-Export", labelKey: "form.declarationType.import_re_export" },
+  { value: "Temporary Import", labelKey: "form.declarationType.temporary_import" },
+  { value: "Transitin", labelKey: "form.declarationType.transitin" },
+  { value: "Transitin from GCC", labelKey: "form.declarationType.transitin_gcc" },
 ] as const;
-const PORT_TYPE_OPTIONS = ["Seaports", "Free Zones", "Mainland"] as const;
-const DOCUMENT_CATEGORY_OPTIONS: { value: DocumentCategory; label: string }[] = [
-  { value: "bill_of_lading", label: "Bill of Lading" },
-  { value: "certificate_of_origin", label: "Certificate of Origin" },
-  { value: "invoice", label: "Invoice" },
-  { value: "packing_list", label: "Packing List" },
+const PORT_TYPE_OPTIONS = [
+  { value: "Seaports", labelKey: "form.portType.seaports" },
+  { value: "Free Zones", labelKey: "form.portType.free_zones" },
+  { value: "Mainland", labelKey: "form.portType.mainland" },
+] as const;
+const DOCUMENT_CATEGORY_OPTIONS: { value: DocumentCategory; labelKey: MessageKey }[] = [
+  { value: "bill_of_lading", labelKey: "docCategory.bill_of_lading" },
+  { value: "certificate_of_origin", labelKey: "docCategory.certificate_of_origin" },
+  { value: "invoice", labelKey: "docCategory.invoice" },
+  { value: "packing_list", labelKey: "docCategory.packing_list" },
 ];
 const STAGE_OPTIONS: TransactionStage[] = [
   "PREPARATION",
@@ -75,9 +79,10 @@ function isImageFile(name: string): boolean {
   return /\.(png|jpe?g|gif|webp)$/i.test(name);
 }
 
-function categoryLabel(category?: DocumentCategory | ""): string {
-  if (!category) return "Uncategorized";
-  return DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category;
+function categoryLabel(category?: DocumentCategory | "", t?: (key: MessageKey) => string): string {
+  if (!category) return t ? t("docCategory.uncategorized") : "Uncategorized";
+  const key = DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === category)?.labelKey;
+  return key && t ? t(key) : category;
 }
 
 type FormState = {
@@ -320,7 +325,7 @@ export default function TransactionForm({ role }: { role: Role }) {
   const groupedRetainedDocs = useMemo(() => {
     const groups = new Map<string, DocumentAttachment[]>();
     for (const d of retainedDocs) {
-      const key = categoryLabel(d.category);
+      const key = categoryLabel(d.category, t);
       const arr = groups.get(key) ?? [];
       arr.push(d);
       groups.set(key, arr);
@@ -389,7 +394,7 @@ export default function TransactionForm({ role }: { role: Role }) {
         fd.append("existingAttachments", JSON.stringify(retainedDocs));
       }
       if (newDocFiles.some((item) => !item.category)) {
-        setError("Please choose a category for each uploaded document.");
+        setError(t("form.categoryRequiredError"));
         return;
       }
       if (newDocFiles.length) {
@@ -423,15 +428,15 @@ export default function TransactionForm({ role }: { role: Role }) {
   const stageLabel = (value: TransactionStage) => {
     switch (value) {
       case "PREPARATION":
-        return "Preparation";
+        return t("stage.PREPARATION");
       case "CUSTOMS_CLEARANCE":
-        return "Customs clearance";
+        return t("stage.CUSTOMS_CLEARANCE");
       case "STORAGE":
-        return "Storage";
+        return t("stage.STORAGE");
       case "INTERNAL_DELIVERY":
-        return "Internal delivery";
+        return t("stage.INTERNAL_DELIVERY");
       case "EXTERNAL_TRANSFER":
-        return "External transfer";
+        return t("stage.EXTERNAL_TRANSFER");
       default:
         return value;
     }
@@ -445,7 +450,7 @@ export default function TransactionForm({ role }: { role: Role }) {
     });
     if (!res.ok) {
       const detail = await parseApiErrorMessage(res);
-      setError(detail || "Failed to change stage");
+      setError(detail || t("form.stageChangeError"));
       return;
     }
     const data = (await res.json()) as Transaction;
@@ -477,7 +482,7 @@ export default function TransactionForm({ role }: { role: Role }) {
         {isEdit && editMeta ? (
           <>
             <label className="full-row">
-              Transaction Stage
+              {t("form.stage")}
               <select
                 value={stage}
                 onChange={(e) => setTransactionStage(e.target.value as TransactionStage)}
@@ -490,7 +495,7 @@ export default function TransactionForm({ role }: { role: Role }) {
                 ))}
               </select>
             </label>
-            <h2 className="form-section-title full-row">Transaction Snapshot (Read-only)</h2>
+            <h2 className="form-section-title full-row">{t("form.snapshotReadOnly")}</h2>
             {editMeta.createdAt ? (
               <p className="details-item">
                 <strong>{t("details.createdAt")}:</strong> {new Date(editMeta.createdAt).toLocaleString(numberLocale)}
@@ -498,17 +503,17 @@ export default function TransactionForm({ role }: { role: Role }) {
             ) : null}
             {editMeta.declarationNumber ? (
               <p className="details-item">
-                <strong>Declaration Number (1):</strong> {editMeta.declarationNumber}
+                <strong>{t("form.declarationNumber1")}:</strong> {editMeta.declarationNumber}
               </p>
             ) : null}
             {editMeta.declarationNumber2 ? (
               <p className="details-item">
-                <strong>Declaration Number (2):</strong> {editMeta.declarationNumber2}
+                <strong>{t("form.declarationNumber2")}:</strong> {editMeta.declarationNumber2}
               </p>
             ) : null}
             {editMeta.releaseCode ? (
               <p className="details-item">
-                <strong>Release Code:</strong> {editMeta.releaseCode}
+                <strong>{t("details.releaseCode")}:</strong> {editMeta.releaseCode}
               </p>
             ) : null}
             {typeof editMeta.customsDuty === "number" ? (
@@ -522,17 +527,17 @@ export default function TransactionForm({ role }: { role: Role }) {
               </p>
             ) : null}
             <p className="details-item">
-              <strong>Stage:</strong> {stageLabel(stage)}
+              <strong>{t("form.stage")}:</strong> {stageLabel(stage)}
             </p>
           </>
         ) : null}
         {showCustomsDeclarationSection ? (
           <label>
-            File Number
+            {t("form.fileNumber")}
             <input value={form.fileNumber} disabled={!customsEditable} onChange={(e) => setForm({ ...form, fileNumber: e.target.value })} />
           </label>
         ) : null}
-        <h2 className="form-section-title full-row">Parties</h2>
+        <h2 className="form-section-title full-row">{t("form.partiesSection")}</h2>
         <AutocompleteField
           label={t("form.clientName")}
           value={form.clientName}
@@ -570,9 +575,9 @@ export default function TransactionForm({ role }: { role: Role }) {
 
         {showCustomsDeclarationSection ? (
           <>
-            <h2 className="form-section-title full-row">Customs Declaration</h2>
+            <h2 className="form-section-title full-row">{t("form.customsDeclarationSection")}</h2>
             <label>
-              Declaration Number (1)
+              {t("form.declarationNumber1")}
               <input
                 disabled={!customsEditable}
                 maxLength={120}
@@ -581,7 +586,7 @@ export default function TransactionForm({ role }: { role: Role }) {
               />
             </label>
             <label>
-              Declaration Date
+              {t("form.declarationDate")}
               <input
                 disabled={!customsEditable}
                 type="date"
@@ -590,18 +595,18 @@ export default function TransactionForm({ role }: { role: Role }) {
               />
             </label>
             <label>
-              Declaration Type (1)
+              {t("form.declarationType1")}
               <select disabled={!customsEditable} value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {DECLARATION_TYPE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                  <option key={option.value} value={option.value}>
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              Declaration Number (2)
+              {t("form.declarationNumber2")}
               <input
                 disabled={!customsEditable}
                 maxLength={120}
@@ -610,23 +615,23 @@ export default function TransactionForm({ role }: { role: Role }) {
               />
             </label>
             <label>
-              Declaration Type (2)
+              {t("form.declarationType2")}
               <select disabled={!customsEditable} value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {DECLARATION_TYPE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                  <option key={option.value} value={option.value}>
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              Port Type
+              {t("form.portType")}
               <select disabled={!customsEditable} value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {PORT_TYPE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                  <option key={option.value} value={option.value}>
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
@@ -634,7 +639,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           </>
         ) : null}
 
-        <h2 className="form-section-title full-row">Shipment Core</h2>
+        <h2 className="form-section-title full-row">{t("form.shipmentCoreSection")}</h2>
         <label>
           {t("form.airwayBill")}
           <input disabled={!prepEditable} value={form.airwayBill} onChange={(e) => setForm({ ...form, airwayBill: e.target.value })} required />
@@ -655,7 +660,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           />
         </label>
         <label>
-          Currency
+          {t("form.currency")}
           <select
             value={form.invoiceCurrency}
             disabled={!prepEditable}
@@ -694,7 +699,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           </>
         ) : null}
 
-        <h2 className="form-section-title full-row">Cargo & Containers</h2>
+        <h2 className="form-section-title full-row">{t("form.cargoContainersSection")}</h2>
         <label>
           {t("form.goodsWeightKg")}
           <input
@@ -789,27 +794,27 @@ export default function TransactionForm({ role }: { role: Role }) {
           />
         </label>
         <label>
-          Container Numbers
+          {t("form.containerNumbers")}
           <textarea
             value={form.containerNumbers}
             disabled={!storageEditable}
             onChange={(e) => setForm({ ...form, containerNumbers: e.target.value })}
             rows={3}
-            placeholder="e.g. MSKU1234567, TGHU9876543"
+            placeholder={t("form.containerNumbersPlaceholder")}
           />
         </label>
 
-        <h2 className="form-section-title full-row">Workflow & Status</h2>
+        <h2 className="form-section-title full-row">{t("form.workflowStatusSection")}</h2>
         <label>
-          Stop Transaction
+          {t("form.stopTransaction")}
           <select disabled={!storageEditable} value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
+            <option value="no">{t("form.no")}</option>
+            <option value="yes">{t("form.yes")}</option>
           </select>
         </label>
         {form.isStopped === "yes" ? (
           <label>
-            Stop Reason
+            {t("form.stopReason")}
             <textarea
               value={form.stopReason}
               disabled={!storageEditable}
@@ -826,9 +831,9 @@ export default function TransactionForm({ role }: { role: Role }) {
             disabled={!customsEditable}
             onChange={(e) => setForm({ ...form, documentStatus: e.target.value as typeof form.documentStatus })}
           >
-            <option value="copy_received">copy_received</option>
-            <option value="original_received">original_received</option>
-            <option value="telex_release">telex_release</option>
+            <option value="copy_received">{t("form.documentStatus.copy_received")}</option>
+            <option value="original_received">{t("form.documentStatus.original_received")}</option>
+            <option value="telex_release">{t("form.documentStatus.telex_release")}</option>
           </select>
         </label>
         <label>
@@ -838,12 +843,12 @@ export default function TransactionForm({ role }: { role: Role }) {
             onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as "pending" | "paid" })}
             disabled={!customsEditable || role === "employee" || role === "employee2"}
           >
-            <option value="pending">pending</option>
-            <option value="paid">paid</option>
+            <option value="pending">{t("form.paymentStatus.pending")}</option>
+            <option value="paid">{t("form.paymentStatus.paid")}</option>
           </select>
         </label>
 
-        <h2 className="form-section-title full-row">Attachments</h2>
+        <h2 className="form-section-title full-row">{t("form.attachmentsSection")}</h2>
         <div className="full-row doc-upload-block doc-upload-prominent">
           <h2 className="doc-upload-heading">{t("form.documentPhotosSection")}</h2>
           <p className="muted">{t("form.documentPhotosHelp")}</p>
@@ -925,10 +930,10 @@ export default function TransactionForm({ role }: { role: Role }) {
                       }
                       required
                     >
-                      <option value="">Select document category</option>
+                      <option value="">{t("form.selectDocumentCategory")}</option>
                       {DOCUMENT_CATEGORY_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.labelKey)}
                         </option>
                       ))}
                     </select>

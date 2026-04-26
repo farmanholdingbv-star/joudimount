@@ -7,28 +7,58 @@ import ShippingPaperModal from "./ShippingPaperModal";
 import { API_BASE, DocumentAttachment, Role, Transaction } from "./types";
 
 const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
-  bill_of_lading: "Bill of Lading",
-  certificate_of_origin: "Certificate of Origin",
-  invoice: "Invoice",
-  packing_list: "Packing List",
+  bill_of_lading: "docCategory.bill_of_lading",
+  certificate_of_origin: "docCategory.certificate_of_origin",
+  invoice: "docCategory.invoice",
+  packing_list: "docCategory.packing_list",
 };
 
-function categoryLabel(category?: string): string {
-  if (!category) return "Uncategorized";
-  return DOCUMENT_CATEGORY_LABELS[category] ?? category;
+function categoryLabel(category: string | undefined, t: (key: MessageKey) => string): string {
+  if (!category) return t("docCategory.uncategorized");
+  const key = DOCUMENT_CATEGORY_LABELS[category] as MessageKey | undefined;
+  return key ? t(key) : category;
 }
 
-function stageLabel(stage?: string): string {
+function stageLabel(stage: string | undefined, t: (key: MessageKey) => string): string {
   switch (stage) {
     case "PREPARATION":
-      return "Preparation";
+      return t("stage.PREPARATION");
     case "CUSTOMS_CLEARANCE":
-      return "Customs clearance";
+      return t("stage.CUSTOMS_CLEARANCE");
     case "STORAGE":
-      return "Storage";
+      return t("stage.STORAGE");
+    case "INTERNAL_DELIVERY":
+      return t("stage.INTERNAL_DELIVERY");
+    case "EXTERNAL_TRANSFER":
+      return t("stage.EXTERNAL_TRANSFER");
     default:
-      return stage || "Preparation";
+      return stage || t("stage.PREPARATION");
   }
+}
+
+function declarationTypeLabel(value: string | undefined, t: (key: MessageKey) => string): string {
+  const map: Record<string, MessageKey> = {
+    Import: "form.declarationType.import",
+    "Import to Free Zone": "form.declarationType.import_free_zone",
+    "Import for Re-Export": "form.declarationType.import_re_export",
+    "Temporary Import": "form.declarationType.temporary_import",
+    Transitin: "form.declarationType.transitin",
+    "Transitin from GCC": "form.declarationType.transitin_gcc",
+  };
+  if (!value) return "";
+  const key = map[value];
+  return key ? t(key) : value;
+}
+
+function portTypeLabel(value: string | undefined, t: (key: MessageKey) => string): string {
+  const map: Record<string, MessageKey> = {
+    Seaports: "form.portType.seaports",
+    "Free Zones": "form.portType.free_zones",
+    Mainland: "form.portType.mainland",
+  };
+  if (!value) return "";
+  const key = map[value];
+  return key ? t(key) : value;
 }
 
 export default function TransactionDetails({ role }: { role: Role }) {
@@ -42,7 +72,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
   const [shippingPaperOpen, setShippingPaperOpen] = useState(false);
   const groupedAttachments = (transaction?.documentAttachments ?? []).reduce<Record<string, DocumentAttachment[]>>(
     (acc, item) => {
-      const key = categoryLabel(item.category);
+      const key = categoryLabel(item.category, t);
       if (!acc[key]) acc[key] = [];
       acc[key].push(item);
       return acc;
@@ -158,16 +188,16 @@ export default function TransactionDetails({ role }: { role: Role }) {
       {transaction && (
         <section className="details-card">
           <div className="details-grid">
-          <h2 className="form-section-title full-row">Transaction Snapshot (Read-only)</h2>
+          <h2 className="form-section-title full-row">{t("form.snapshotReadOnly")}</h2>
           <p className="details-item">
             <strong>{t("details.createdAt")}:</strong> {new Date(transaction.createdAt).toLocaleString(numberLocale)}
           </p>
           <p className="details-item">
-            <strong>Declaration Number (1):</strong> {transaction.declarationNumber}
+            <strong>{t("form.declarationNumber1")}:</strong> {transaction.declarationNumber}
           </p>
           {transaction.declarationNumber2 ? (
             <p className="details-item">
-              <strong>Declaration Number (2):</strong> {transaction.declarationNumber2}
+              <strong>{t("form.declarationNumber2")}:</strong> {transaction.declarationNumber2}
             </p>
           ) : null}
           <p className="details-item">
@@ -177,7 +207,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
             <strong>{t("details.status")}:</strong> {transaction.clearanceStatus}
           </p>
           <p className="details-item">
-            <strong>Stage:</strong> {stageLabel(transaction.transactionStage)}
+            <strong>{t("form.stage")}:</strong> {stageLabel(transaction.transactionStage, t)}
           </p>
           {transaction.releaseCode ? (
             <p className="details-item full-row">
@@ -185,7 +215,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
             </p>
           ) : null}
 
-          <h2 className="form-section-title full-row">Parties</h2>
+          <h2 className="form-section-title full-row">{t("form.partiesSection")}</h2>
           <p className="details-item">
             <strong>{t("details.client")}:</strong> {transaction.clientName}
           </p>
@@ -200,39 +230,39 @@ export default function TransactionDetails({ role }: { role: Role }) {
 
           {showCustomsDeclarationSection ? (
             <>
-              <h2 className="form-section-title full-row">Customs Declaration</h2>
+              <h2 className="form-section-title full-row">{t("form.customsDeclarationSection")}</h2>
               <p className="details-item">
-                <strong>Declaration Number (1):</strong> {transaction.declarationNumber}
+                  <strong>{t("form.declarationNumber1")}:</strong> {transaction.declarationNumber}
               </p>
               {transaction.declarationNumber2 ? (
                 <p className="details-item">
-                  <strong>Declaration Number (2):</strong> {transaction.declarationNumber2}
+                    <strong>{t("form.declarationNumber2")}:</strong> {transaction.declarationNumber2}
                 </p>
               ) : null}
               {transaction.declarationDate ? (
                 <p className="details-item">
-                  <strong>Declaration Date:</strong> {new Date(transaction.declarationDate).toLocaleString(numberLocale)}
+                  <strong>{t("form.declarationDate")}:</strong> {new Date(transaction.declarationDate).toLocaleString(numberLocale)}
                 </p>
               ) : null}
               {transaction.declarationType ? (
                 <p className="details-item">
-                  <strong>Declaration Type (1):</strong> {transaction.declarationType}
+                  <strong>{t("form.declarationType1")}:</strong> {declarationTypeLabel(transaction.declarationType, t)}
                 </p>
               ) : null}
               {transaction.declarationType2 ? (
                 <p className="details-item">
-                  <strong>Declaration Type (2):</strong> {transaction.declarationType2}
+                  <strong>{t("form.declarationType2")}:</strong> {declarationTypeLabel(transaction.declarationType2, t)}
                 </p>
               ) : null}
               {transaction.portType ? (
                 <p className="details-item">
-                  <strong>Port Type:</strong> {transaction.portType}
+                  <strong>{t("form.portType")}:</strong> {portTypeLabel(transaction.portType, t)}
                 </p>
               ) : null}
             </>
           ) : null}
 
-          <h2 className="form-section-title full-row">Shipment Core</h2>
+          <h2 className="form-section-title full-row">{t("form.shipmentCoreSection")}</h2>
           <p className="details-item">
             <strong>{t("details.airwayBill")}:</strong> {transaction.airwayBill}
           </p>
@@ -250,7 +280,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
             {transaction.invoiceCurrency ?? t("details.currencySuffix")}
           </p>
 
-          <h2 className="form-section-title full-row">Cargo & Containers</h2>
+          <h2 className="form-section-title full-row">{t("form.cargoContainersSection")}</h2>
           {transaction.containerCount != null ? (
             <p className="details-item">
               <strong>{t("details.containerCount")}:</strong> {transaction.containerCount}
@@ -281,21 +311,21 @@ export default function TransactionDetails({ role }: { role: Role }) {
           ) : null}
           {showCustomsDeclarationSection && transaction.fileNumber ? (
             <p className="details-item">
-              <strong>File Number:</strong> {transaction.fileNumber}
+              <strong>{t("form.fileNumber")}:</strong> {transaction.fileNumber}
             </p>
           ) : null}
           {transaction.containerNumbers && transaction.containerNumbers.length > 0 ? (
             <p className="details-item">
-              <strong>Container Numbers:</strong> {transaction.containerNumbers.join(", ")}
+              <strong>{t("form.containerNumbers")}:</strong> {transaction.containerNumbers.join(", ")}
             </p>
           ) : null}
           {transaction.unitCount != null ? (
             <p className="details-item">
-              <strong>Number of Units:</strong> {transaction.unitCount}
+              <strong>{t("form.numberOfUnits")}:</strong> {transaction.unitCount}
             </p>
           ) : null}
 
-          <h2 className="form-section-title full-row">Workflow & Status</h2>
+          <h2 className="form-section-title full-row">{t("form.workflowStatusSection")}</h2>
           <p className="details-item">
             <strong>{t("details.document")}:</strong> {transaction.documentStatus}
           </p>
@@ -303,11 +333,11 @@ export default function TransactionDetails({ role }: { role: Role }) {
             <strong>{t("details.payment")}:</strong> {transaction.paymentStatus}
           </p>
           <p className="details-item">
-            <strong>Stopped:</strong> {transaction.isStopped ? "Yes" : "No"}
+            <strong>{t("form.stopTransaction")}:</strong> {transaction.isStopped ? t("form.yes") : t("form.no")}
           </p>
           {transaction.isStopped && transaction.stopReason ? (
             <p className="details-item">
-              <strong>Stop Reason:</strong> {transaction.stopReason}
+              <strong>{t("form.stopReason")}:</strong> {transaction.stopReason}
             </p>
           ) : null}
           {transaction.goodsQuantity != null ? (
