@@ -217,9 +217,6 @@ export default function TransactionDetails({
             </p>
           ) : null}
           <p className="details-item">
-            <strong>{t("details.duty")}:</strong> {transaction.customsDuty.toLocaleString(numberLocale)} {t("details.currencySuffix")}
-          </p>
-          <p className="details-item">
             <strong>{t("details.status")}:</strong> {transaction.clearanceStatus}
           </p>
           <p className="details-item">

@@ -145,7 +145,6 @@ export type MessageKey =
   | "details.origin"
   | "details.invoiceValue"
   | "details.currencySuffix"
-  | "details.duty"
   | "details.risk"
   | "details.channel"
   | "details.document"
@@ -470,7 +469,6 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "details.origin": "المنشأ",
     "details.invoiceValue": "قيمة الفاتورة",
     "details.currencySuffix": "درهم",
-    "details.duty": "الرسوم",
     "details.risk": "المخاطر",
     "details.channel": "القناة",
     "details.document": "المستند",
@@ -792,7 +790,6 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "details.origin": "Origin",
     "details.invoiceValue": "Invoice Value",
     "details.currencySuffix": "AED",
-    "details.duty": "Duty",
     "details.risk": "Risk",
     "details.channel": "Channel",
     "details.document": "Document",

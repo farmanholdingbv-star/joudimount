@@ -81,7 +81,6 @@ interface TransactionDoc {
   clearanceStatus: ClearanceStatus;
   riskLevel: RiskLevel;
   channel: Channel;
-  customsDuty: number;
   paymentStatus: PaymentStatus;
   xrayResult: XrayResult;
   releaseCode?: string;
@@ -177,7 +176,6 @@ const transactionSchema = new Schema<TransactionDoc>(
     },
     riskLevel: { type: String, enum: ["low", "medium", "high"], default: "low" },
     channel: { type: String, enum: ["green", "yellow", "red"], default: "green" },
-    customsDuty: { type: Number, required: true },
     paymentStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
     xrayResult: { type: String, enum: ["not_required", "passed", "manual_inspection"], default: "not_required" },
     releaseCode: { type: String },

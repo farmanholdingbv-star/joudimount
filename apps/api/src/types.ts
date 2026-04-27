@@ -95,7 +95,6 @@ export interface Transaction {
   clearanceStatus: ClearanceStatus;
   riskLevel: RiskLevel;
   channel: Channel;
-  customsDuty: number;
   paymentStatus: PaymentStatus;
   xrayResult: XrayResult;
   releaseCode?: string;

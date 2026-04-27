@@ -78,11 +78,10 @@ Used for login. Fields include: `name`, `email` (unique), `password` (plain in M
 | `clearanceStatus` | Enum including `GREEN_CHANNEL`, `YELLOW_CHANNEL`, `RED_CHANNEL`, `PAID`, `E_RELEASE_ISSUED`, `DELIVERED`, etc. |
 | `riskLevel` | `low` \| `medium` \| `high` |
 | `channel` | `green` \| `yellow` \| `red` |
-| `customsDuty` | Calculated server-side |
 | `paymentStatus` | `pending` \| `paid` |
 | `xrayResult` | `not_required` \| `passed` \| `manual_inspection` |
 | `releaseCode` | Optional; set when release is issued |
-| `transactionStage` | `PREPARATION` \| `CUSTOMS_CLEARANCE` \| `STORAGE` \| `INTERNAL_DELIVERY` \| `EXTERNAL_TRANSFER` |
+| `transactionStage` | `PREPARATION` \| `CUSTOMS_CLEARANCE` \| `TRANSPORTATION` \| `STORAGE` |
 | `documentAttachments` | Optional uploaded files: `path`, `originalName`, optional `category` (`bill_of_lading`, `certificate_of_origin`, `invoice`, `packing_list`) |
 | `containerCount`, `goodsWeightKg`, `invoiceToWeightRateAedPerKg` | Optional logistics / pricing helpers |
 | `containerArrivalDate`, `documentArrivalDate` | Optional dates (ISO); `documentArrivalDate` participates in auto stage logic in `updateTransaction` |

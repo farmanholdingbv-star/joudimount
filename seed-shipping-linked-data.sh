@@ -4,7 +4,9 @@ set -euo pipefail
 
 MONGO_URI="${MONGO_URI:-mongodb://127.0.0.1:27017/customs_broker_track}"
 SHIPPING_COMPANY_COUNT="${SHIPPING_COMPANY_COUNT:-8}"
-TRANSACTION_COUNT="${TRANSACTION_COUNT:-50}"
+TRANSACTION_COUNT="${TRANSACTION_COUNT:-20}"
+TRANSFER_COUNT="${TRANSFER_COUNT:-15}"
+EXPORT_COUNT="${EXPORT_COUNT:-15}"
 
 if ! command -v mongosh >/dev/null 2>&1; then
   echo "Error: mongosh is required. Install MongoDB shell and retry."
@@ -13,11 +15,13 @@ fi
 
 echo "Seeding shipping-linked test data..."
 echo "MONGO_URI=${MONGO_URI}"
-echo "ShippingCompanies=${SHIPPING_COMPANY_COUNT}, Transactions=${TRANSACTION_COUNT}"
+echo "ShippingCompanies=${SHIPPING_COMPANY_COUNT}, Transactions=${TRANSACTION_COUNT}, Transfers=${TRANSFER_COUNT}, Exports=${EXPORT_COUNT}"
 
 mongosh "${MONGO_URI}" --quiet --eval "
   const shippingCompanyCount = Number(process.env.SHIPPING_COMPANY_COUNT || ${SHIPPING_COMPANY_COUNT});
   const transactionCount = Number(process.env.TRANSACTION_COUNT || ${TRANSACTION_COUNT});
+  const transferCount = Number(process.env.TRANSFER_COUNT || ${TRANSFER_COUNT});
+  const exportCount = Number(process.env.EXPORT_COUNT || ${EXPORT_COUNT});
 
   function assessRisk(invoiceValue, hsCode, originCountry) {
     if (
@@ -34,10 +38,6 @@ mongosh "${MONGO_URI}" --quiet --eval "
     return { riskLevel: 'low', channel: 'green', clearanceStatus: 'GREEN_CHANNEL' };
   }
 
-  function duty(value) {
-    return Math.round((value * 0.05 + 100) * 100) / 100;
-  }
-
   const hsPool = ['847130', '391590', '300490', '930110', '870899', '610910'];
   const countryPool = ['CN', 'DE', 'IN', 'US', 'AE', 'SY', 'JP'];
   const goodsPool = ['Electronics', 'Industrial Plastics', 'Pharmaceuticals', 'Tools', 'Textiles', 'Auto Parts'];
@@ -46,6 +46,8 @@ mongosh "${MONGO_URI}" --quiet --eval "
   // Clean only records created by this script.
   db.shippingcompanies.deleteMany({ code: /^SHIP-SEED-/ });
   db.transactions.deleteMany({ airwayBill: /^AWB-SHIP-SEED-/ });
+  db.transfers.deleteMany({ airwayBill: /^AWB-SHIP-TRF-SEED-/ });
+  db.exports.deleteMany({ airwayBill: /^AWB-SHIP-EXP-SEED-/ });
 
   const shippingCompanies = [];
   for (let i = 1; i <= shippingCompanyCount; i++) {
@@ -64,8 +66,9 @@ mongosh "${MONGO_URI}" --quiet --eval "
   const shippingIds = Object.values(shippingInsert.insertedIds).map((v) => String(v));
   const shippingNames = shippingCompanies.map((c) => c.companyName);
 
-  const transactions = [];
-  for (let i = 1; i <= transactionCount; i++) {
+  function makeLinkedRecords(count, declarationPrefix, airwayPrefix) {
+    const records = [];
+    for (let i = 1; i <= count; i++) {
     const hsCode = hsPool[i % hsPool.length];
     const originCountry = countryPool[i % countryPool.length];
     const invoiceValue = 75000 + (i * 12000);
@@ -84,12 +87,12 @@ mongosh "${MONGO_URI}" --quiet --eval "
     const shippingCompanyId = shippingIds[shippingIndex];
     const shippingCompanyName = shippingNames[shippingIndex];
 
-    transactions.push({
+    records.push({
       clientName: clientPool[i % clientPool.length],
       shippingCompanyId,
       shippingCompanyName,
-      declarationNumber: 'DXB-2026-' + String(900000 + i).slice(-6),
-      airwayBill: 'AWB-SHIP-SEED-' + String(i).padStart(6, '0'),
+      declarationNumber: declarationPrefix + '-' + String(900000 + i).slice(-6),
+      airwayBill: airwayPrefix + '-' + String(i).padStart(6, '0'),
       hsCode,
       goodsDescription: goodsPool[i % goodsPool.length] + ' shipment linked to ' + shippingCompanyName,
       invoiceValue,
@@ -98,19 +101,37 @@ mongosh "${MONGO_URI}" --quiet --eval "
       clearanceStatus,
       riskLevel: risk.riskLevel,
       channel: risk.channel,
-      customsDuty: duty(invoiceValue),
       paymentStatus,
       xrayResult: risk.channel === 'red' ? 'manual_inspection' : 'not_required',
       releaseCode: releaseCode || undefined,
+      transactionStage: i % 4 === 0 ? 'STORAGE' : i % 3 === 0 ? 'TRANSPORTATION' : i % 2 === 0 ? 'CUSTOMS_CLEARANCE' : 'PREPARATION',
       createdAt: new Date(),
       updatedAt: new Date()
     });
   }
+    return records;
+  }
+
+  const transactions = makeLinkedRecords(transactionCount, 'DXB-2026', 'AWB-SHIP-SEED');
+  const transfers = makeLinkedRecords(transferCount, 'TRF-2026', 'AWB-SHIP-TRF-SEED');
+  const exportsData = makeLinkedRecords(exportCount, 'EXP-2026', 'AWB-SHIP-EXP-SEED');
 
   const txInsert = db.transactions.insertMany(transactions);
+  const trfInsert = db.transfers.insertMany(transfers);
+  const expInsert = db.exports.insertMany(exportsData);
 
   const linkedTransactions = db.transactions.countDocuments({
     airwayBill: /^AWB-SHIP-SEED-/,
+    shippingCompanyId: { \$exists: true, \$ne: null },
+    shippingCompanyName: { \$exists: true, \$ne: null }
+  });
+  const linkedTransfers = db.transfers.countDocuments({
+    airwayBill: /^AWB-SHIP-TRF-SEED-/,
+    shippingCompanyId: { \$exists: true, \$ne: null },
+    shippingCompanyName: { \$exists: true, \$ne: null }
+  });
+  const linkedExports = db.exports.countDocuments({
+    airwayBill: /^AWB-SHIP-EXP-SEED-/,
     shippingCompanyId: { \$exists: true, \$ne: null },
     shippingCompanyName: { \$exists: true, \$ne: null }
   });
@@ -119,7 +140,11 @@ mongosh "${MONGO_URI}" --quiet --eval "
     ok: 1,
     insertedShippingCompanies: Object.keys(shippingInsert.insertedIds).length,
     insertedTransactions: Object.keys(txInsert.insertedIds).length,
-    linkedTransactions
+    insertedTransfers: Object.keys(trfInsert.insertedIds).length,
+    insertedExports: Object.keys(expInsert.insertedIds).length,
+    linkedTransactions,
+    linkedTransfers,
+    linkedExports
   }, null, 2));
 "
 

@@ -338,7 +338,6 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                       l10n.invoiceValue,
                       '${numberFormat.format(tx!['invoiceValue'] ?? 0)} ${tx!['invoiceCurrency'] ?? 'AED'}',
                     ),
-                    _kv(l10n.duty, numberFormat.format(tx!['customsDuty'] ?? 0)),
                     _kv(l10n.document, '${tx!['documentStatus']}'),
                     _kv(l10n.status, '${tx!['clearanceStatus']}'),
                     _kv(l10n.payment, '${tx!['paymentStatus']}'),
@@ -506,10 +505,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         return 'Customs clearance';
       case 'STORAGE':
         return 'Storage';
-      case 'INTERNAL_DELIVERY':
-        return 'Internal delivery';
-      case 'EXTERNAL_TRANSFER':
-        return 'External transfer';
+      case 'TRANSPORTATION':
+        return 'Transportation';
       default:
         return stage;
     }

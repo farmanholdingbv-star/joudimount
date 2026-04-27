@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import { assessRisk, calculateDuty } from "./risk.js";
+import { assessRisk } from "./risk.js";
 import type { UserRole } from "./auth.js";
 import type { Client, ClearanceStatus, DocumentAttachment, Employee, Transaction, TransactionStage } from "./types.js";
 import { ClientModel, CounterModel, EmployeeModel, ExportModel, ShippingCompanyModel, TransactionModel, TransferModel } from "./models.js";
@@ -198,7 +198,6 @@ function mapTransaction(doc: any): Transaction {
     clearanceStatus: doc.clearanceStatus,
     riskLevel: doc.riskLevel,
     channel: doc.channel,
-    customsDuty: doc.customsDuty,
     paymentStatus: doc.paymentStatus,
     xrayResult: doc.xrayResult,
     releaseCode: doc.releaseCode,
@@ -522,7 +521,6 @@ async function createEntity(
     documentStatus: "copy_received",
     paymentStatus: "pending",
     xrayResult: risk.channel === "red" ? "manual_inspection" : "not_required",
-    customsDuty: calculateDuty(input.invoiceValue),
     clearanceStatus: status,
     declarationDate: declarationDate ? new Date(declarationDate) : undefined,
     orderDate: orderDate ? new Date(orderDate) : undefined,
@@ -695,7 +693,6 @@ async function updateEntity(
       ...datePatch,
       riskLevel: risk.riskLevel,
       channel: risk.channel,
-      customsDuty: calculateDuty(invoiceValue),
       clearanceStatus: input.clearanceStatus ?? suggestedStatus,
       transactionStage: targetStage,
     },

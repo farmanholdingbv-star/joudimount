@@ -191,7 +191,6 @@ type EditReadOnlyMeta = {
   declarationNumber?: string;
   declarationNumber2?: string;
   releaseCode?: string;
-  customsDuty?: number;
   clearanceStatus?: string;
   createdAt?: string;
   transactionStage?: TransactionStage;
@@ -277,7 +276,6 @@ export default function TransactionForm({
           declarationNumber: data.declarationNumber,
           declarationNumber2: data.declarationNumber2,
           releaseCode: data.releaseCode,
-          customsDuty: data.customsDuty,
           clearanceStatus: data.clearanceStatus,
           createdAt: data.createdAt,
           transactionStage: data.transactionStage,
@@ -921,11 +919,6 @@ export default function TransactionForm({
             {editMeta.releaseCode ? (
               <p className="details-item">
                 <strong>{t("details.releaseCode")}:</strong> {editMeta.releaseCode}
-              </p>
-            ) : null}
-            {typeof editMeta.customsDuty === "number" ? (
-              <p className="details-item">
-                <strong>{t("details.duty")}:</strong> {editMeta.customsDuty.toLocaleString(numberLocale)} {t("details.currencySuffix")}
               </p>
             ) : null}
             {editMeta.clearanceStatus ? (

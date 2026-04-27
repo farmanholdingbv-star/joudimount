@@ -32,9 +32,3 @@ export function assessRisk(input: RiskInput): RiskOutput {
   const channel: Channel = riskLevel === "low" ? "green" : riskLevel === "medium" ? "yellow" : "red";
   return { riskLevel, channel };
 }
-
-export function calculateDuty(invoiceValue: number): number {
-  const baseDuty = invoiceValue * 0.05;
-  const processingFee = 100;
-  return Number((baseDuty + processingFee).toFixed(2));
-}

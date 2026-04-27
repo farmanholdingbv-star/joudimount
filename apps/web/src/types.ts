@@ -50,7 +50,6 @@ export interface Transaction {
   documentStatus: "copy_received" | "original_received" | "telex_release";
   clearanceStatus: string;
   paymentStatus: "pending" | "paid";
-  customsDuty: number;
   releaseCode?: string;
   documentAttachments?: DocumentAttachment[];
   containerCount?: number;

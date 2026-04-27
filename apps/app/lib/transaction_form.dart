@@ -83,7 +83,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   bool _loadingTx = false;
   String? _releaseCode;
   String? _clearanceStatus;
-  double? _customsDuty;
   String _stage = 'PREPARATION';
 
   bool get _isEdit {
@@ -170,8 +169,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _clearanceStatus = tx['clearanceStatus']?.toString();
       final loadedStage = (tx['transactionStage'] ?? 'PREPARATION').toString();
       _stage = _stageOptions.contains(loadedStage) ? loadedStage : 'PREPARATION';
-      final dutyNum = tx['customsDuty'];
-      _customsDuty = dutyNum is num ? dutyNum.toDouble() : null;
       final att = tx['documentAttachments'];
       if (att is List) {
         _retainedDocs = att.cast<Map<String, dynamic>>();
@@ -465,7 +462,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             const SizedBox(height: 8),
             Text('Read-only Transaction Fields', style: Theme.of(context).textTheme.titleMedium),
             if ((_releaseCode ?? '').isNotEmpty) _readonlyField(l10n.releaseCode, _releaseCode!),
-            if (_customsDuty != null) _readonlyField(l10n.duty, _customsDuty!.toStringAsFixed(2)),
             if ((_clearanceStatus ?? '').isNotEmpty) _readonlyField(l10n.status, _clearanceStatus!),
             const SizedBox(height: 8),
           ],
@@ -810,10 +806,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         return 'Customs clearance';
       case 'STORAGE':
         return 'Storage';
-      case 'INTERNAL_DELIVERY':
-        return 'Internal delivery';
-      case 'EXTERNAL_TRANSFER':
-        return 'External transfer';
+      case 'TRANSPORTATION':
+        return 'Transportation';
       default:
         return stage;
     }
