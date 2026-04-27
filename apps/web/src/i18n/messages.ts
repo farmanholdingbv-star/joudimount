@@ -239,8 +239,6 @@ export type MessageKey =
   | "stage.CUSTOMS_CLEARANCE"
   | "stage.TRANSPORTATION"
   | "stage.STORAGE"
-  | "stage.INTERNAL_DELIVERY"
-  | "stage.EXTERNAL_TRANSFER"
   | "docCategory.bill_of_lading"
   | "docCategory.certificate_of_origin"
   | "docCategory.invoice"
@@ -307,7 +305,22 @@ export type MessageKey =
   | "export.details.title"
   | "dashboard.transactionsDesc"
   | "dashboard.transfersDesc"
-  | "dashboard.exportsDesc";
+  | "dashboard.exportsDesc"
+  | "form.orderDate"
+  | "form.containerSize"
+  | "form.portOfLading"
+  | "form.portOfDischarge"
+  | "form.destination"
+  | "form.unitNumber"
+  | "transportation.sectionTitle"
+  | "transportation.toUpper"
+  | "transportation.trachNo"
+  | "transportation.company"
+  | "transportation.from"
+  | "transportation.to"
+  | "transportation.tripCharge"
+  | "transportation.waitingCharge"
+  | "transportation.maccrikCharge";
 
 const messages: Record<Locale, Record<MessageKey, string>> = {
   ar: {
@@ -552,8 +565,6 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "stage.CUSTOMS_CLEARANCE": "التخليص الجمركي",
     "stage.TRANSPORTATION": "النقل",
     "stage.STORAGE": "التخزين",
-    "stage.INTERNAL_DELIVERY": "التسليم الداخلي",
-    "stage.EXTERNAL_TRANSFER": "النقل الخارجي",
     "docCategory.bill_of_lading": "بوليصة الشحن",
     "docCategory.certificate_of_origin": "شهادة المنشأ",
     "docCategory.invoice": "فاتورة",
@@ -617,6 +628,21 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "dashboard.transactionsDesc": "المعاملات الجمركية الرئيسية وسيرها الكامل.",
     "dashboard.transfersDesc": "عمليات التحويل بسجل مستقل وقواعد مستقلة.",
     "dashboard.exportsDesc": "ملفات التصدير بسجل مستقل وقواعد مستقلة.",
+    "form.orderDate": "تاريخ الطلب",
+    "form.containerSize": "حجم الحاوية",
+    "form.portOfLading": "ميناء الشحن",
+    "form.portOfDischarge": "ميناء التفريغ",
+    "form.destination": "الوجهة",
+    "form.unitNumber": "رقم الوحدة",
+    "transportation.sectionTitle": "النقل",
+    "transportation.toUpper": "إلى",
+    "transportation.trachNo": "رقم الشاحنة",
+    "transportation.company": "شركة النقل",
+    "transportation.from": "من",
+    "transportation.to": "إلى",
+    "transportation.tripCharge": "رسوم الرحلة",
+    "transportation.waitingCharge": "رسوم الانتظار",
+    "transportation.maccrikCharge": "رسوم ماكريك",
   },
   en: {
     "lang.label": "Language",
@@ -699,7 +725,7 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.loadError": "Unable to load transaction",
     "form.saveError": "Could not save transaction",
     "form.validationError": "Please complete all required fields. The browser will highlight invalid fields.",
-    "form.saveLockedHint": "Save is disabled at Internal delivery and External transfer stages.",
+    "form.saveLockedHint": "Save is disabled at Transportation and Storage stages.",
     "form.clientName": "Client Name",
     "form.shippingCompanyName": "Shipping Company Name",
     "form.shippingCompanyId": "Shipping Company ID",
@@ -861,8 +887,6 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "stage.CUSTOMS_CLEARANCE": "Customs clearance",
     "stage.TRANSPORTATION": "Transportation",
     "stage.STORAGE": "Storage",
-    "stage.INTERNAL_DELIVERY": "Internal delivery",
-    "stage.EXTERNAL_TRANSFER": "External transfer",
     "docCategory.bill_of_lading": "Bill of Lading",
     "docCategory.certificate_of_origin": "Certificate of Origin",
     "docCategory.invoice": "Invoice",
@@ -926,6 +950,21 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "dashboard.transactionsDesc": "Main customs transactions and full workflow.",
     "dashboard.transfersDesc": "Transfer operations with independent records and rules.",
     "dashboard.exportsDesc": "Export records with independent workflows and storage.",
+    "form.orderDate": "Order date",
+    "form.containerSize": "Container size",
+    "form.portOfLading": "Port of lading",
+    "form.portOfDischarge": "Port of discharge",
+    "form.destination": "Destination",
+    "form.unitNumber": "Unit number",
+    "transportation.sectionTitle": "Transportation",
+    "transportation.toUpper": "TO",
+    "transportation.trachNo": "TrachNo",
+    "transportation.company": "Company transportation",
+    "transportation.from": "From",
+    "transportation.to": "To",
+    "transportation.tripCharge": "Trip Charge",
+    "transportation.waitingCharge": "Waiting charge",
+    "transportation.maccrikCharge": "Maccrik charge",
   },
 };
 

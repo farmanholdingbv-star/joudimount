@@ -595,7 +595,7 @@ export default function TransactionForm({
             hint={t("form.typeToSearch")}
           />
           <label>
-            Order date
+            {t("form.orderDate")}
             <input type="date" value={form.orderDate} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} required />
           </label>
           <label>
@@ -603,19 +603,19 @@ export default function TransactionForm({
             <input type="number" min={0} step={1} value={form.containerCount} onChange={(e) => setForm({ ...form, containerCount: e.target.value })} required />
           </label>
           <label>
-            Container size
+            {t("form.containerSize")}
             <input value={form.containerSize} onChange={(e) => setForm({ ...form, containerSize: e.target.value })} required />
           </label>
           <label>
-            Port of lading
+            {t("form.portOfLading")}
             <input value={form.portOfLading} onChange={(e) => setForm({ ...form, portOfLading: e.target.value })} required />
           </label>
           <label>
-            Port of discharge
+            {t("form.portOfDischarge")}
             <input value={form.portOfDischarge} onChange={(e) => setForm({ ...form, portOfDischarge: e.target.value })} required />
           </label>
           <label>
-            Destination
+            {t("form.destination")}
             <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} required />
           </label>
           <label>
@@ -627,7 +627,7 @@ export default function TransactionForm({
             <input value={form.originCountry} onChange={(e) => setForm({ ...form, originCountry: e.target.value })} minLength={2} maxLength={2} required />
           </label>
           <label>
-            Unit number
+            {t("form.unitNumber")}
             <input type="number" min={0} step={1} value={form.unitNumber} onChange={(e) => setForm({ ...form, unitNumber: e.target.value })} required />
           </label>
           <label className="full-row">
@@ -742,41 +742,41 @@ export default function TransactionForm({
 
           {isEdit && (stage === "TRANSPORTATION" || stage === "STORAGE") ? (
             <>
-              <h2 className="form-section-title full-row">Transportation</h2>
+              <h2 className="form-section-title full-row">{t("transportation.sectionTitle" as MessageKey)}</h2>
               <label>
-                TO
+                {t("transportation.toUpper" as MessageKey)}
                 <input
                   value={form.transportationTo}
                   onChange={(e) => setForm({ ...form, transportationTo: e.target.value })}
                 />
               </label>
               <label>
-                TrachNo
+                {t("transportation.trachNo" as MessageKey)}
                 <input value={form.trachNo} onChange={(e) => setForm({ ...form, trachNo: e.target.value })} />
               </label>
               <label>
-                Company transportasion
+                {t("transportation.company" as MessageKey)}
                 <input
                   value={form.transportationCompany}
                   onChange={(e) => setForm({ ...form, transportationCompany: e.target.value })}
                 />
               </label>
               <label>
-                from
+                {t("transportation.from" as MessageKey)}
                 <input
                   value={form.transportationFrom}
                   onChange={(e) => setForm({ ...form, transportationFrom: e.target.value })}
                 />
               </label>
               <label>
-                to
+                {t("transportation.to" as MessageKey)}
                 <input
                   value={form.transportationToLocation}
                   onChange={(e) => setForm({ ...form, transportationToLocation: e.target.value })}
                 />
               </label>
               <label>
-                Trip Charge
+                {t("transportation.tripCharge" as MessageKey)}
                 <input
                   type="number"
                   min={0}
@@ -786,7 +786,7 @@ export default function TransactionForm({
                 />
               </label>
               <label>
-                wating charge
+                {t("transportation.waitingCharge" as MessageKey)}
                 <input
                   type="number"
                   min={0}
@@ -796,7 +796,7 @@ export default function TransactionForm({
                 />
               </label>
               <label>
-                maccrik charge
+                {t("transportation.maccrikCharge" as MessageKey)}
                 <input
                   type="number"
                   min={0}

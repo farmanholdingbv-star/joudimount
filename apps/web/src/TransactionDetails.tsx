@@ -341,6 +341,59 @@ export default function TransactionDetails({
             </p>
           ) : null}
 
+          {(transaction.transportationTo ||
+            transaction.trachNo ||
+            transaction.transportationCompany ||
+            transaction.transportationFrom ||
+            transaction.transportationToLocation ||
+            transaction.tripCharge != null ||
+            transaction.waitingCharge != null ||
+            transaction.maccrikCharge != null) ? (
+            <>
+              <h2 className="form-section-title full-row">{t("transportation.sectionTitle" as MessageKey)}</h2>
+              {transaction.transportationTo ? (
+                <p className="details-item">
+                  <strong>{t("transportation.toUpper" as MessageKey)}:</strong> {transaction.transportationTo}
+                </p>
+              ) : null}
+              {transaction.trachNo ? (
+                <p className="details-item">
+                  <strong>{t("transportation.trachNo" as MessageKey)}:</strong> {transaction.trachNo}
+                </p>
+              ) : null}
+              {transaction.transportationCompany ? (
+                <p className="details-item">
+                  <strong>{t("transportation.company" as MessageKey)}:</strong> {transaction.transportationCompany}
+                </p>
+              ) : null}
+              {transaction.transportationFrom ? (
+                <p className="details-item">
+                  <strong>{t("transportation.from" as MessageKey)}:</strong> {transaction.transportationFrom}
+                </p>
+              ) : null}
+              {transaction.transportationToLocation ? (
+                <p className="details-item">
+                  <strong>{t("transportation.to" as MessageKey)}:</strong> {transaction.transportationToLocation}
+                </p>
+              ) : null}
+              {transaction.tripCharge != null ? (
+                <p className="details-item">
+                  <strong>{t("transportation.tripCharge" as MessageKey)}:</strong> {transaction.tripCharge.toLocaleString(numberLocale)}
+                </p>
+              ) : null}
+              {transaction.waitingCharge != null ? (
+                <p className="details-item">
+                  <strong>{t("transportation.waitingCharge" as MessageKey)}:</strong> {transaction.waitingCharge.toLocaleString(numberLocale)}
+                </p>
+              ) : null}
+              {transaction.maccrikCharge != null ? (
+                <p className="details-item">
+                  <strong>{t("transportation.maccrikCharge" as MessageKey)}:</strong> {transaction.maccrikCharge.toLocaleString(numberLocale)}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
           <h2 className="form-section-title full-row">{t("form.workflowStatusSection")}</h2>
           <p className="details-item">
             <strong>{t("details.document")}:</strong> {transaction.documentStatus}
