@@ -13,24 +13,40 @@ import {
   createClient,
   createEmployee,
   createShippingCompany,
+  createExport,
+  createTransfer,
   createTransaction,
   deleteClient,
   deleteEmployee,
+  deleteExport,
   deleteShippingCompany,
+  deleteTransfer,
   deleteTransaction,
+  getExport,
   getClientById,
   getShippingCompanyById,
+  getTransfer,
   getTransaction,
+  issueExportRelease,
+  issueTransferRelease,
   issueRelease,
+  listExports,
   listClients,
   listEmployees,
   listShippingCompanies,
+  listTransfers,
   listTransactions,
+  markExportPaid,
   markOriginalBl,
   markPaid,
+  markTransferPaid,
+  setExportStage,
+  setTransferStage,
   setTransactionStage,
   updateEmployee,
+  updateExport,
   updateShippingCompany,
+  updateTransfer,
   updateClient,
   updateTransaction,
 } from "./store.js";
@@ -51,9 +67,14 @@ const stage1EmployeeFields = new Set([
   "declarationNumber",
   "declarationNumber2",
   "declarationDate",
+  "orderDate",
   "declarationType",
   "declarationType2",
   "portType",
+  "containerSize",
+  "portOfLading",
+  "portOfDischarge",
+  "destination",
   "airwayBill",
   "hsCode",
   "goodsDescription",
@@ -64,8 +85,17 @@ const stage1EmployeeFields = new Set([
   "goodsWeightKg",
   "invoiceToWeightRateAedPerKg",
   "goodsQuantity",
+  "unitNumber",
   "goodsQuality",
   "goodsUnit",
+  "transportationTo",
+  "trachNo",
+  "transportationCompany",
+  "transportationFrom",
+  "transportationToLocation",
+  "tripCharge",
+  "waitingCharge",
+  "maccrikCharge",
 ]);
 const stage2EmployeeFields = new Set([
   "containerArrivalDate",
@@ -73,6 +103,14 @@ const stage2EmployeeFields = new Set([
   "fileNumber",
   "documentStatus",
   "clearanceStatus",
+  "transportationTo",
+  "trachNo",
+  "transportationCompany",
+  "transportationFrom",
+  "transportationToLocation",
+  "tripCharge",
+  "waitingCharge",
+  "maccrikCharge",
 ]);
 
 interface AuthRequest extends Request {
@@ -585,7 +623,7 @@ app.post("/api/transactions/:id/stage", authenticate, async (req: AuthRequest, r
   const denied = ensureRole(req, res, ["manager", "employee2"]);
   if (!denied) return;
   const schema = z.object({
-    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "STORAGE", "INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"]),
+    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"]),
   });
   const result = schema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });
@@ -699,6 +737,300 @@ app.delete("/api/transactions/:id", authenticate, async (req: AuthRequest, res) 
   if (!denied) return;
   const ok = await deleteTransaction(req.params.id);
   if (!ok) return res.status(404).json({ error: "Transaction not found" });
+  return res.status(204).send();
+});
+
+app.get("/api/transfers", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
+  if (!denied) return;
+  const clientId = typeof req.query.clientId === "string" ? req.query.clientId : undefined;
+  res.json(await listTransfers(clientId));
+});
+
+app.post("/api/transfers", authenticate, maybeUpload, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee"]);
+  if (!denied) return;
+  try {
+    const result = createTransactionPayloadSchema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+    const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
+    const categories = parseDocumentPhotoCategories((req.body as Record<string, unknown>).documentPhotoCategories, files.length);
+    if (files.length > 0 && categories.length !== files.length) {
+      return res.status(400).json({ error: "Each uploaded document must have a category" });
+    }
+    for (const c of categories) {
+      if (!documentCategoryEnum.safeParse(c).success) return res.status(400).json({ error: "Invalid document category" });
+    }
+    const documentAttachments: DocumentAttachment[] = files.map((f, idx) => ({
+      path: publicPathForUploadedFile(f.filename),
+      originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+      category: categories[idx] as DocumentAttachment["category"],
+    }));
+    const data = {
+      ...result.data,
+      originCountry: result.data.originCountry.toUpperCase(),
+      documentAttachments: documentAttachments.length ? documentAttachments : undefined,
+    };
+    return res.status(201).json(await createTransfer(data));
+  } catch (e) {
+    console.error("POST /api/transfers", e);
+    const message = e instanceof Error ? e.message : "Transfer create failed";
+    return res.status(500).json({ error: message });
+  }
+});
+
+app.get("/api/transfers/:id", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
+  if (!denied) return;
+  const tx = await getTransfer(req.params.id);
+  if (!tx) return res.status(404).json({ error: "Transfer not found" });
+  return res.json(tx);
+});
+
+app.post("/api/transfers/:id/pay", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "accountant"]);
+  if (!denied) return;
+  const tx = await markTransferPaid(req.params.id);
+  if (!tx) return res.status(404).json({ error: "Transfer not found" });
+  return res.json(tx);
+});
+
+app.post("/api/transfers/:id/release", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "accountant"]);
+  if (!denied) return;
+  const result = await issueTransferRelease(req.params.id);
+  if (result === null) return res.status(404).json({ error: "Transfer not found" });
+  if (result === false) return res.status(400).json({ error: "Payment and Original BL/Telex are required before release" });
+  return res.json(result);
+});
+
+app.post("/api/transfers/:id/stage", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee2"]);
+  if (!denied) return;
+  const schema = z.object({
+    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"]),
+  });
+  const result = schema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+  const updated = await setTransferStage(req.params.id, result.data.stage);
+  if (updated === null) return res.status(404).json({ error: "Transfer not found" });
+  if (updated === false) return res.status(400).json({ error: "Invalid stage transition" });
+  return res.json(updated);
+});
+
+app.put("/api/transfers/:id", authenticate, maybeUpload, async (req: AuthRequest, res) => {
+  const role = req.user?.role;
+  if (!role) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const body = req.body as Record<string, unknown>;
+    const existingRaw = body.existingAttachments;
+    const bodyForZod = { ...body };
+    delete bodyForZod.existingAttachments;
+    const result = updateTransactionPayloadSchema.safeParse(bodyForZod);
+    if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+
+    if ((role === "employee" || role === "employee2") && result.data.paymentStatus !== undefined) {
+      return res.status(403).json({ error: "Employee cannot manage accounting fields" });
+    }
+    if (role === "employee") {
+      const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
+      if (invalidFields.length > 0) return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+    }
+    if (role === "employee2") {
+      const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
+      if (invalidFields.length > 0) return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+    }
+    if (role === "accountant") {
+      const nonAccountingFieldProvided = Object.keys(result.data).some((key) => key !== "paymentStatus");
+      if (nonAccountingFieldProvided) return res.status(403).json({ error: "Accountant can only update paymentStatus via edit endpoint" });
+    }
+
+    const hasMultipart = (req.headers["content-type"] || "").includes("multipart/form-data");
+    let payload: Parameters<typeof updateTransfer>[1] = {
+      ...result.data,
+      originCountry: result.data.originCountry ? result.data.originCountry.toUpperCase() : undefined,
+    };
+    if (hasMultipart) {
+      const prev = await getTransfer(req.params.id);
+      if (!prev) return res.status(404).json({ error: "Transfer not found" });
+      const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
+      const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
+      if (files.length > 0 && categories.length !== files.length) return res.status(400).json({ error: "Each uploaded document must have a category" });
+      for (const c of categories) {
+        if (!documentCategoryEnum.safeParse(c).success) return res.status(400).json({ error: "Invalid document category" });
+      }
+      const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
+        path: publicPathForUploadedFile(f.filename),
+        originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+        category: categories[idx] as DocumentAttachment["category"],
+      }));
+      const retained = parseExistingAttachmentsJson(existingRaw);
+      const merged = [...retained, ...uploaded];
+      await removeOrphanFiles(prev.documentAttachments, merged);
+      payload = { ...payload, documentAttachments: merged };
+    }
+    const tx = await updateTransfer(req.params.id, payload);
+    if (!tx) return res.status(404).json({ error: "Transfer not found" });
+    return res.json(tx);
+  } catch (e) {
+    console.error("PUT /api/transfers/:id", e);
+    const message = e instanceof Error ? e.message : "Transfer update failed";
+    return res.status(500).json({ error: message });
+  }
+});
+
+app.delete("/api/transfers/:id", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee"]);
+  if (!denied) return;
+  const ok = await deleteTransfer(req.params.id);
+  if (!ok) return res.status(404).json({ error: "Transfer not found" });
+  return res.status(204).send();
+});
+
+app.get("/api/exports", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
+  if (!denied) return;
+  const clientId = typeof req.query.clientId === "string" ? req.query.clientId : undefined;
+  res.json(await listExports(clientId));
+});
+
+app.post("/api/exports", authenticate, maybeUpload, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee"]);
+  if (!denied) return;
+  try {
+    const result = createTransactionPayloadSchema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+    const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
+    const categories = parseDocumentPhotoCategories((req.body as Record<string, unknown>).documentPhotoCategories, files.length);
+    if (files.length > 0 && categories.length !== files.length) {
+      return res.status(400).json({ error: "Each uploaded document must have a category" });
+    }
+    for (const c of categories) {
+      if (!documentCategoryEnum.safeParse(c).success) return res.status(400).json({ error: "Invalid document category" });
+    }
+    const documentAttachments: DocumentAttachment[] = files.map((f, idx) => ({
+      path: publicPathForUploadedFile(f.filename),
+      originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+      category: categories[idx] as DocumentAttachment["category"],
+    }));
+    const data = {
+      ...result.data,
+      originCountry: result.data.originCountry.toUpperCase(),
+      documentAttachments: documentAttachments.length ? documentAttachments : undefined,
+    };
+    return res.status(201).json(await createExport(data));
+  } catch (e) {
+    console.error("POST /api/exports", e);
+    const message = e instanceof Error ? e.message : "Export create failed";
+    return res.status(500).json({ error: message });
+  }
+});
+
+app.get("/api/exports/:id", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
+  if (!denied) return;
+  const tx = await getExport(req.params.id);
+  if (!tx) return res.status(404).json({ error: "Export not found" });
+  return res.json(tx);
+});
+
+app.post("/api/exports/:id/pay", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "accountant"]);
+  if (!denied) return;
+  const tx = await markExportPaid(req.params.id);
+  if (!tx) return res.status(404).json({ error: "Export not found" });
+  return res.json(tx);
+});
+
+app.post("/api/exports/:id/release", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "accountant"]);
+  if (!denied) return;
+  const result = await issueExportRelease(req.params.id);
+  if (result === null) return res.status(404).json({ error: "Export not found" });
+  if (result === false) return res.status(400).json({ error: "Payment and Original BL/Telex are required before release" });
+  return res.json(result);
+});
+
+app.post("/api/exports/:id/stage", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee2"]);
+  if (!denied) return;
+  const schema = z.object({
+    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"]),
+  });
+  const result = schema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+  const updated = await setExportStage(req.params.id, result.data.stage);
+  if (updated === null) return res.status(404).json({ error: "Export not found" });
+  if (updated === false) return res.status(400).json({ error: "Invalid stage transition" });
+  return res.json(updated);
+});
+
+app.put("/api/exports/:id", authenticate, maybeUpload, async (req: AuthRequest, res) => {
+  const role = req.user?.role;
+  if (!role) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const body = req.body as Record<string, unknown>;
+    const existingRaw = body.existingAttachments;
+    const bodyForZod = { ...body };
+    delete bodyForZod.existingAttachments;
+    const result = updateTransactionPayloadSchema.safeParse(bodyForZod);
+    if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+
+    if ((role === "employee" || role === "employee2") && result.data.paymentStatus !== undefined) {
+      return res.status(403).json({ error: "Employee cannot manage accounting fields" });
+    }
+    if (role === "employee") {
+      const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
+      if (invalidFields.length > 0) return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+    }
+    if (role === "employee2") {
+      const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
+      if (invalidFields.length > 0) return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+    }
+    if (role === "accountant") {
+      const nonAccountingFieldProvided = Object.keys(result.data).some((key) => key !== "paymentStatus");
+      if (nonAccountingFieldProvided) return res.status(403).json({ error: "Accountant can only update paymentStatus via edit endpoint" });
+    }
+
+    const hasMultipart = (req.headers["content-type"] || "").includes("multipart/form-data");
+    let payload: Parameters<typeof updateExport>[1] = {
+      ...result.data,
+      originCountry: result.data.originCountry ? result.data.originCountry.toUpperCase() : undefined,
+    };
+    if (hasMultipart) {
+      const prev = await getExport(req.params.id);
+      if (!prev) return res.status(404).json({ error: "Export not found" });
+      const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
+      const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
+      if (files.length > 0 && categories.length !== files.length) return res.status(400).json({ error: "Each uploaded document must have a category" });
+      for (const c of categories) {
+        if (!documentCategoryEnum.safeParse(c).success) return res.status(400).json({ error: "Invalid document category" });
+      }
+      const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
+        path: publicPathForUploadedFile(f.filename),
+        originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+        category: categories[idx] as DocumentAttachment["category"],
+      }));
+      const retained = parseExistingAttachmentsJson(existingRaw);
+      const merged = [...retained, ...uploaded];
+      await removeOrphanFiles(prev.documentAttachments, merged);
+      payload = { ...payload, documentAttachments: merged };
+    }
+    const tx = await updateExport(req.params.id, payload);
+    if (!tx) return res.status(404).json({ error: "Export not found" });
+    return res.json(tx);
+  } catch (e) {
+    console.error("PUT /api/exports/:id", e);
+    const message = e instanceof Error ? e.message : "Export update failed";
+    return res.status(500).json({ error: message });
+  }
+});
+
+app.delete("/api/exports/:id", authenticate, async (req: AuthRequest, res) => {
+  const denied = ensureRole(req, res, ["manager", "employee"]);
+  if (!denied) return;
+  const ok = await deleteExport(req.params.id);
+  if (!ok) return res.status(404).json({ error: "Export not found" });
   return res.status(204).send();
 });
 

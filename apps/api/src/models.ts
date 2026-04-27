@@ -55,9 +55,22 @@ interface TransactionDoc {
   declarationNumber: string;
   declarationNumber2?: string;
   declarationDate?: Date;
+  orderDate?: Date;
   declarationType?: string;
   declarationType2?: string;
   portType?: string;
+  containerSize?: string;
+  portOfLading?: string;
+  portOfDischarge?: string;
+  destination?: string;
+  transportationTo?: string;
+  trachNo?: string;
+  transportationCompany?: string;
+  transportationFrom?: string;
+  transportationToLocation?: string;
+  tripCharge?: number;
+  waitingCharge?: number;
+  maccrikCharge?: number;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -85,6 +98,7 @@ interface TransactionDoc {
   fileNumber?: string;
   containerNumbers?: string[];
   unitCount?: number;
+  unitNumber?: number;
   isStopped?: boolean;
   holdReason?: string;
   stopReason?: string;
@@ -92,7 +106,7 @@ interface TransactionDoc {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
-  transactionStage: "PREPARATION" | "CUSTOMS_CLEARANCE" | "STORAGE" | "INTERNAL_DELIVERY" | "EXTERNAL_TRANSFER";
+  transactionStage: "PREPARATION" | "CUSTOMS_CLEARANCE" | "TRANSPORTATION" | "STORAGE";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -119,9 +133,22 @@ const transactionSchema = new Schema<TransactionDoc>(
     declarationNumber: { type: String, required: true, unique: true, index: true },
     declarationNumber2: { type: String },
     declarationDate: { type: Date },
+    orderDate: { type: Date },
     declarationType: { type: String },
     declarationType2: { type: String },
     portType: { type: String },
+    containerSize: { type: String },
+    portOfLading: { type: String },
+    portOfDischarge: { type: String },
+    destination: { type: String },
+    transportationTo: { type: String },
+    trachNo: { type: String },
+    transportationCompany: { type: String },
+    transportationFrom: { type: String },
+    transportationToLocation: { type: String },
+    tripCharge: { type: Number },
+    waitingCharge: { type: Number },
+    maccrikCharge: { type: Number },
     airwayBill: { type: String, required: true },
     hsCode: { type: String, required: true },
     goodsDescription: { type: String, required: true },
@@ -172,6 +199,7 @@ const transactionSchema = new Schema<TransactionDoc>(
     fileNumber: { type: String },
     containerNumbers: [{ type: String }],
     unitCount: { type: Number },
+    unitNumber: { type: Number },
     isStopped: { type: Boolean, default: false },
     holdReason: { type: String },
     stopReason: { type: String },
@@ -187,7 +215,7 @@ const transactionSchema = new Schema<TransactionDoc>(
     },
     transactionStage: {
       type: String,
-      enum: ["PREPARATION", "CUSTOMS_CLEARANCE", "STORAGE", "INTERNAL_DELIVERY", "EXTERNAL_TRANSFER"],
+      enum: ["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"],
       default: "PREPARATION",
       index: true,
     },
@@ -231,6 +259,10 @@ const counterSchema = new Schema<CounterDoc>(
 export const ClientModel = mongoose.models.Client || mongoose.model<ClientDoc>("Client", clientSchema);
 export const TransactionModel =
   mongoose.models.Transaction || mongoose.model<TransactionDoc>("Transaction", transactionSchema);
+export const TransferModel =
+  mongoose.models.Transfer || mongoose.model<TransactionDoc>("Transfer", transactionSchema);
+export const ExportModel =
+  mongoose.models.Export || mongoose.model<TransactionDoc>("Export", transactionSchema);
 export const EmployeeModel = mongoose.models.Employee || mongoose.model<EmployeeDoc>("Employee", employeeSchema);
 export const ShippingCompanyModel =
   mongoose.models.ShippingCompany || mongoose.model<ShippingCompanyDoc>("ShippingCompany", shippingCompanySchema);

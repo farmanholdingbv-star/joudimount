@@ -21,7 +21,24 @@ function roleLabel(role: Role, t: (key: MessageKey) => string) {
   return t("role.accountant");
 }
 
-function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser; onLogout: () => void }) {
+type TransactionModule = "transactions" | "transfers" | "exports";
+const MODULES: Array<{ id: TransactionModule; route: string; titleKey: MessageKey; descKey: MessageKey }> = [
+  { id: "transactions", route: "/", titleKey: "app.title", descKey: "dashboard.transactionsDesc" as MessageKey },
+  { id: "transfers", route: "/transfers", titleKey: "transfer.app.title" as MessageKey, descKey: "dashboard.transfersDesc" as MessageKey },
+  { id: "exports", route: "/exports", titleKey: "export.app.title" as MessageKey, descKey: "dashboard.exportsDesc" as MessageKey },
+];
+
+function TransactionsList({
+  role,
+  user,
+  onLogout,
+  module = "transactions",
+}: {
+  role: Role;
+  user: AuthUser;
+  onLogout: () => void;
+  module?: TransactionModule;
+}) {
   const { t, numberLocale } = useI18n();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState("");
@@ -33,11 +50,11 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
   const pageSize = 30;
 
   useEffect(() => {
-    apiFetch("/api/transactions")
+    apiFetch(`/api/${module}`)
       .then((res) => res.json())
       .then((data) => setTransactions(data))
-      .catch(() => setError(t("list.loadError")));
-  }, [role, t]);
+      .catch(() => setError(t(module === "transactions" ? "list.loadError" : (module === "transfers" ? "transfer.list.loadError" : "export.list.loadError") as MessageKey)));
+  }, [role, t, module]);
 
   const filteredTransactions = transactions.filter((tx) => {
     const q = query.trim().toLowerCase();
@@ -65,8 +82,8 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
 
   return (
     <main className="container">
-      <h1>{t("app.title")}</h1>
-      <p className="section-subtitle">{t("app.tagline")}</p>
+      <h1>{t((module === "transactions" ? "app.title" : module === "transfers" ? "transfer.app.title" : "export.app.title") as MessageKey)}</h1>
+      <p className="section-subtitle">{t((module === "transactions" ? "app.tagline" : module === "transfers" ? "transfer.app.tagline" : "export.app.tagline") as MessageKey)}</p>
       <div className="menu-bar">
         <div className="menu-row">
           <span>
@@ -82,15 +99,33 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
             <Link to="/shipping-companies" className="link-button">
               {t("nav.shippingCompanies")}
             </Link>
+            <Link to="/transfers" className="link-button">
+              {t("nav.transfers" as MessageKey)}
+            </Link>
+            <Link to="/exports" className="link-button">
+              {t("nav.exports" as MessageKey)}
+            </Link>
             {role === "manager" || role === "employee" ? (
-              <Link to="/transactions/new" className="primary-button">
-                {t("nav.addTransaction")}
+              <Link to={`/${module}/new`} className="primary-button">
+                {t((module === "transactions" ? "nav.addTransaction" : module === "transfers" ? "nav.addTransfer" : "nav.addExport") as MessageKey)}
               </Link>
             ) : null}
             <button className="danger-button" onClick={onLogout}>
               {t("nav.logout")}
             </button>
           </div>
+        </div>
+        <div className="module-cards">
+          {MODULES.map((item) => (
+            <Link
+              key={item.id}
+              to={item.route}
+              className={`module-card ${module === item.id ? "module-card-active" : ""}`}
+            >
+              <span className="module-card-title">{t(item.titleKey)}</span>
+              <span className="module-card-desc">{t(item.descKey)}</span>
+            </Link>
+          ))}
         </div>
 
         <div className="filter-row">
@@ -132,7 +167,7 @@ function TransactionsList({ role, user, onLogout }: { role: Role; user: AuthUser
           </thead>
           <tbody>
             {pagedTransactions.map((tx) => (
-              <tr key={tx.id} className="clickable-row" onClick={() => navigate(`/transactions/${tx.id}`)}>
+              <tr key={tx.id} className="clickable-row" onClick={() => navigate(`/${module}/${tx.id}`)}>
                 <td>{tx.clientName}</td>
                 <td>{tx.shippingCompanyName}</td>
                 <td>
@@ -228,15 +263,23 @@ function AuthenticatedRoutes({ user, onLogout }: { user: AuthUser; onLogout: () 
   const role = user.role;
   return (
     <Routes>
-      <Route path="/" element={<TransactionsList role={role} user={user} onLogout={onLogout} />} />
+      <Route path="/" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="transactions" />} />
+      <Route path="/transfers" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="transfers" />} />
+      <Route path="/exports" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="exports" />} />
       <Route path="/employees" element={<EmployeeSection role={role} />} />
       <Route path="/clients" element={<ClientsPage role={role} />} />
       <Route path="/clients/:id" element={<ClientDetailPage />} />
       <Route path="/shipping-companies" element={<ShippingCompaniesPage role={role} />} />
       <Route path="/shipping-companies/:id" element={<ShippingCompanyDetailPage />} />
-      <Route path="/transactions/new" element={<TransactionForm role={role} />} />
-      <Route path="/transactions/:id/edit" element={<TransactionForm role={role} />} />
-      <Route path="/transactions/:id" element={<TransactionDetails role={role} />} />
+      <Route path="/transactions/new" element={<TransactionForm role={role} module="transactions" />} />
+      <Route path="/transactions/:id/edit" element={<TransactionForm role={role} module="transactions" />} />
+      <Route path="/transactions/:id" element={<TransactionDetails role={role} module="transactions" />} />
+      <Route path="/transfers/new" element={<TransactionForm role={role} module="transfers" />} />
+      <Route path="/transfers/:id/edit" element={<TransactionForm role={role} module="transfers" />} />
+      <Route path="/transfers/:id" element={<TransactionDetails role={role} module="transfers" />} />
+      <Route path="/exports/new" element={<TransactionForm role={role} module="exports" />} />
+      <Route path="/exports/:id/edit" element={<TransactionForm role={role} module="exports" />} />
+      <Route path="/exports/:id" element={<TransactionDetails role={role} module="exports" />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

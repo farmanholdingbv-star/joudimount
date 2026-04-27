@@ -6,9 +6,8 @@ export type DocumentCategory = "bill_of_lading" | "certificate_of_origin" | "inv
 export type TransactionStage =
   | "PREPARATION"
   | "CUSTOMS_CLEARANCE"
-  | "STORAGE"
-  | "INTERNAL_DELIVERY"
-  | "EXTERNAL_TRANSFER";
+  | "TRANSPORTATION"
+  | "STORAGE";
 
 export interface DocumentAttachment {
   path: string;
@@ -24,9 +23,22 @@ export interface Transaction {
   declarationNumber: string;
   declarationNumber2?: string;
   declarationDate?: string;
+  orderDate?: string;
   declarationType?: string;
   declarationType2?: string;
   portType?: string;
+  containerSize?: string;
+  portOfLading?: string;
+  portOfDischarge?: string;
+  destination?: string;
+  transportationTo?: string;
+  trachNo?: string;
+  transportationCompany?: string;
+  transportationFrom?: string;
+  transportationToLocation?: string;
+  tripCharge?: number;
+  waitingCharge?: number;
+  maccrikCharge?: number;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -49,6 +61,7 @@ export interface Transaction {
   fileNumber?: string;
   containerNumbers?: string[];
   unitCount?: number;
+  unitNumber?: number;
   isStopped?: boolean;
   stopReason?: string;
   documentPostalNumber?: string;

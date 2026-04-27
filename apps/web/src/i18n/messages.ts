@@ -237,6 +237,7 @@ export type MessageKey =
   | "list.paginationNext"
   | "stage.PREPARATION"
   | "stage.CUSTOMS_CLEARANCE"
+  | "stage.TRANSPORTATION"
   | "stage.STORAGE"
   | "stage.INTERNAL_DELIVERY"
   | "stage.EXTERNAL_TRANSFER"
@@ -279,11 +280,34 @@ export type MessageKey =
   | "form.declarationType.import_free_zone"
   | "form.declarationType.import_re_export"
   | "form.declarationType.temporary_import"
+  | "form.declarationType.transfer"
+  | "form.declarationType.export"
+  | "form.declarationType.transit_out"
+  | "form.declarationType.export_gcc"
   | "form.declarationType.transitin"
   | "form.declarationType.transitin_gcc"
   | "form.portType.seaports"
   | "form.portType.free_zones"
-  | "form.portType.mainland";
+  | "form.portType.mainland"
+  | "nav.transfers"
+  | "nav.exports"
+  | "nav.addTransfer"
+  | "nav.addExport"
+  | "transfer.app.title"
+  | "transfer.app.tagline"
+  | "transfer.list.loadError"
+  | "transfer.form.newTitle"
+  | "transfer.form.editTitle"
+  | "transfer.details.title"
+  | "export.app.title"
+  | "export.app.tagline"
+  | "export.list.loadError"
+  | "export.form.newTitle"
+  | "export.form.editTitle"
+  | "export.details.title"
+  | "dashboard.transactionsDesc"
+  | "dashboard.transfersDesc"
+  | "dashboard.exportsDesc";
 
 const messages: Record<Locale, Record<MessageKey, string>> = {
   ar: {
@@ -296,7 +320,11 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "nav.employeeSection": "قسم الموظفين",
     "nav.clients": "العملاء",
     "nav.shippingCompanies": "شركات الشحن",
+    "nav.transfers": "قسم التحويل",
+    "nav.exports": "قسم التصدير",
     "nav.addTransaction": "إضافة معاملة جديدة",
+    "nav.addTransfer": "إضافة تحويل جديد",
+    "nav.addExport": "إضافة تصدير جديد",
     "nav.logout": "تسجيل الخروج",
     "list.loadError": "تعذر تحميل المعاملات. هل يعمل الخادم على المنفذ 4000؟",
     "list.col.client": "العميل",
@@ -522,6 +550,7 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "list.paginationNext": "التالي",
     "stage.PREPARATION": "التحضير",
     "stage.CUSTOMS_CLEARANCE": "التخليص الجمركي",
+    "stage.TRANSPORTATION": "النقل",
     "stage.STORAGE": "التخزين",
     "stage.INTERNAL_DELIVERY": "التسليم الداخلي",
     "stage.EXTERNAL_TRANSFER": "النقل الخارجي",
@@ -564,11 +593,30 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.declarationType.import_free_zone": "استيراد إلى المنطقة الحرة",
     "form.declarationType.import_re_export": "استيراد لإعادة التصدير",
     "form.declarationType.temporary_import": "استيراد مؤقت",
+    "form.declarationType.transfer": "تحويل",
+    "form.declarationType.export": "تصدير",
+    "form.declarationType.transit_out": "عبور خارجي",
+    "form.declarationType.export_gcc": "تصدير إلى دول الخليج",
     "form.declarationType.transitin": "ترانزيت",
     "form.declarationType.transitin_gcc": "ترانزيت من دول الخليج",
     "form.portType.seaports": "الموانئ البحرية",
     "form.portType.free_zones": "المناطق الحرة",
     "form.portType.mainland": "البر الرئيسي",
+    "transfer.app.title": "قسم التحويل",
+    "transfer.app.tagline": "إدارة معاملات التحويل بشكل مستقل.",
+    "transfer.list.loadError": "تعذر تحميل معاملات التحويل.",
+    "transfer.form.newTitle": "تحويل جديد",
+    "transfer.form.editTitle": "تعديل التحويل",
+    "transfer.details.title": "تفاصيل التحويل",
+    "export.app.title": "قسم التصدير",
+    "export.app.tagline": "إدارة معاملات التصدير بشكل مستقل.",
+    "export.list.loadError": "تعذر تحميل معاملات التصدير.",
+    "export.form.newTitle": "تصدير جديد",
+    "export.form.editTitle": "تعديل التصدير",
+    "export.details.title": "تفاصيل التصدير",
+    "dashboard.transactionsDesc": "المعاملات الجمركية الرئيسية وسيرها الكامل.",
+    "dashboard.transfersDesc": "عمليات التحويل بسجل مستقل وقواعد مستقلة.",
+    "dashboard.exportsDesc": "ملفات التصدير بسجل مستقل وقواعد مستقلة.",
   },
   en: {
     "lang.label": "Language",
@@ -580,7 +628,11 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "nav.employeeSection": "Employee Section",
     "nav.clients": "Clients",
     "nav.shippingCompanies": "Shipping Companies",
+    "nav.transfers": "Transfers",
+    "nav.exports": "Exports",
     "nav.addTransaction": "Add New Transaction",
+    "nav.addTransfer": "Add New Transfer",
+    "nav.addExport": "Add New Export",
     "nav.logout": "Logout",
     "list.loadError": "Unable to load transactions. Is API running on port 4000?",
     "list.col.client": "Client",
@@ -807,6 +859,7 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "list.paginationNext": "Next",
     "stage.PREPARATION": "Preparation",
     "stage.CUSTOMS_CLEARANCE": "Customs clearance",
+    "stage.TRANSPORTATION": "Transportation",
     "stage.STORAGE": "Storage",
     "stage.INTERNAL_DELIVERY": "Internal delivery",
     "stage.EXTERNAL_TRANSFER": "External transfer",
@@ -849,11 +902,30 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.declarationType.import_free_zone": "Import to Free Zone",
     "form.declarationType.import_re_export": "Import for Re-Export",
     "form.declarationType.temporary_import": "Temporary Import",
+    "form.declarationType.transfer": "Transfer",
+    "form.declarationType.export": "Export",
+    "form.declarationType.transit_out": "Transit out",
+    "form.declarationType.export_gcc": "Export to GCC",
     "form.declarationType.transitin": "Transitin",
     "form.declarationType.transitin_gcc": "Transitin from GCC",
     "form.portType.seaports": "Seaports",
     "form.portType.free_zones": "Free Zones",
     "form.portType.mainland": "Mainland",
+    "transfer.app.title": "Transfer Tracker",
+    "transfer.app.tagline": "Create and manage transfer records independently.",
+    "transfer.list.loadError": "Unable to load transfers.",
+    "transfer.form.newTitle": "New Transfer",
+    "transfer.form.editTitle": "Edit Transfer",
+    "transfer.details.title": "Transfer Details",
+    "export.app.title": "Export Tracker",
+    "export.app.tagline": "Create and manage export records independently.",
+    "export.list.loadError": "Unable to load exports.",
+    "export.form.newTitle": "New Export",
+    "export.form.editTitle": "Edit Export",
+    "export.details.title": "Export Details",
+    "dashboard.transactionsDesc": "Main customs transactions and full workflow.",
+    "dashboard.transfersDesc": "Transfer operations with independent records and rules.",
+    "dashboard.exportsDesc": "Export records with independent workflows and storage.",
   },
 };
 

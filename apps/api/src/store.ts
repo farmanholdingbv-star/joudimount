@@ -2,14 +2,21 @@ import { promises as fs } from "fs";
 import { assessRisk, calculateDuty } from "./risk.js";
 import type { UserRole } from "./auth.js";
 import type { Client, ClearanceStatus, DocumentAttachment, Employee, Transaction, TransactionStage } from "./types.js";
-import { ClientModel, CounterModel, EmployeeModel, ShippingCompanyModel, TransactionModel } from "./models.js";
+import { ClientModel, CounterModel, EmployeeModel, ExportModel, ShippingCompanyModel, TransactionModel, TransferModel } from "./models.js";
 import { absolutePathFromPublicPath } from "./uploads.js";
 
 /** Single document in `counters` collection; $inc is atomic (fixes E11000 duplicate declarationNumber). */
 const DECLARATION_COUNTER_ID = "declaration_dxb_2026";
+const TRANSFER_DECLARATION_COUNTER_ID = "transfer_declaration_dxb_2026";
+const EXPORT_DECLARATION_COUNTER_ID = "export_declaration_dxb_2026";
 
-async function computeMaxDeclarationSeqFromExisting(): Promise<number> {
-  const docs = await TransactionModel.find({ declarationNumber: { $regex: /^DXB-2026-\d+$/ } })
+async function computeMaxDeclarationSeqFromExisting(
+  model: { find: typeof TransactionModel.find },
+  prefix = "DXB-2026",
+): Promise<number> {
+  const pattern = new RegExp(`^${prefix}-\\d+$`);
+  const docs = await model
+    .find({ declarationNumber: { $regex: pattern } })
     .select({ declarationNumber: 1 })
     .lean();
   let max = 0;
@@ -21,22 +28,26 @@ async function computeMaxDeclarationSeqFromExisting(): Promise<number> {
   return max;
 }
 
-async function ensureDeclarationCounterInitialized(): Promise<void> {
-  const exists = await CounterModel.exists({ _id: DECLARATION_COUNTER_ID });
+async function ensureDeclarationCounterInitialized(
+  counterId: string,
+  model: { find: typeof TransactionModel.find },
+  prefix = "DXB-2026",
+): Promise<void> {
+  const exists = await CounterModel.exists({ _id: counterId });
   if (exists) return;
-  const maxSeq = await computeMaxDeclarationSeqFromExisting();
+  const maxSeq = await computeMaxDeclarationSeqFromExisting(model, prefix);
   try {
-    await CounterModel.create({ _id: DECLARATION_COUNTER_ID, seq: maxSeq });
+    await CounterModel.create({ _id: counterId, seq: maxSeq });
   } catch (e: unknown) {
     const code = (e as { code?: number })?.code;
     if (code !== 11000) throw e;
   }
 }
 
-async function getNextDeclarationCounter(): Promise<number> {
-  await ensureDeclarationCounterInitialized();
+async function getNextDeclarationCounter(counterId: string, model: { find: typeof TransactionModel.find }, prefix = "DXB-2026"): Promise<number> {
+  await ensureDeclarationCounterInitialized(counterId, model, prefix);
   const updated = (await CounterModel.findOneAndUpdate(
-    { _id: DECLARATION_COUNTER_ID },
+    { _id: counterId },
     { $inc: { seq: 1 } },
     { new: true },
   ).lean()) as { seq?: number } | null;
@@ -46,9 +57,9 @@ async function getNextDeclarationCounter(): Promise<number> {
   return updated.seq;
 }
 
-function generateDeclarationNumber(counter: number) {
+function generateDeclarationNumber(counter: number, prefix = "DXB-2026") {
   const padded = String(counter).padStart(6, "0");
-  return `DXB-2026-${padded}`;
+  return `${prefix}-${padded}`;
 }
 
 function mapEmployeePublic(doc: any): Employee {
@@ -131,7 +142,7 @@ function normalizeDateOnly(value: unknown): string | undefined {
 }
 
 function sameTransactionField(key: keyof Transaction, nextValue: unknown, currentValue: unknown): boolean {
-  if (key === "declarationDate" || key === "containerArrivalDate" || key === "documentArrivalDate") {
+  if (key === "declarationDate" || key === "orderDate" || key === "containerArrivalDate" || key === "documentArrivalDate") {
     return normalizeDateOnly(nextValue) === normalizeDateOnly(currentValue);
   }
   if (Array.isArray(nextValue) || Array.isArray(currentValue)) {
@@ -161,9 +172,22 @@ function mapTransaction(doc: any): Transaction {
     declarationNumber: doc.declarationNumber,
     declarationNumber2: doc.declarationNumber2,
     declarationDate: mapOptionalDate(doc.declarationDate),
+    orderDate: mapOptionalDate(doc.orderDate),
     declarationType: doc.declarationType,
     declarationType2: doc.declarationType2,
     portType: doc.portType,
+    containerSize: doc.containerSize,
+    portOfLading: doc.portOfLading,
+    portOfDischarge: doc.portOfDischarge,
+    destination: doc.destination,
+    transportationTo: doc.transportationTo,
+    trachNo: doc.trachNo,
+    transportationCompany: doc.transportationCompany,
+    transportationFrom: doc.transportationFrom,
+    transportationToLocation: doc.transportationToLocation,
+    tripCharge: doc.tripCharge,
+    waitingCharge: doc.waitingCharge,
+    maccrikCharge: doc.maccrikCharge,
     airwayBill: doc.airwayBill,
     hsCode: doc.hsCode,
     goodsDescription: doc.goodsDescription,
@@ -187,6 +211,7 @@ function mapTransaction(doc: any): Transaction {
     fileNumber: doc.fileNumber,
     containerNumbers: Array.isArray(doc.containerNumbers) ? doc.containerNumbers : undefined,
     unitCount: doc.unitCount,
+    unitNumber: doc.unitNumber,
     isStopped: doc.isStopped,
     holdReason: doc.holdReason,
     stopReason: doc.stopReason,
@@ -203,9 +228,8 @@ function mapTransaction(doc: any): Transaction {
 const stageOrder: TransactionStage[] = [
   "PREPARATION",
   "CUSTOMS_CLEARANCE",
+  "TRANSPORTATION",
   "STORAGE",
-  "INTERNAL_DELIVERY",
-  "EXTERNAL_TRANSFER",
 ];
 
 const preparationFields = new Set<keyof Transaction>([
@@ -216,9 +240,14 @@ const preparationFields = new Set<keyof Transaction>([
   "declarationNumber",
   "declarationNumber2",
   "declarationDate",
+  "orderDate",
   "declarationType",
   "declarationType2",
   "portType",
+  "containerSize",
+  "portOfLading",
+  "portOfDischarge",
+  "destination",
   "airwayBill",
   "hsCode",
   "goodsDescription",
@@ -247,16 +276,28 @@ const customsFields = new Set<keyof Transaction>([
 const storageFields = new Set<keyof Transaction>([
   "containerNumbers",
   "unitCount",
+  "unitNumber",
   "isStopped",
   "holdReason",
   "stopReason",
 ]);
 
+const transportationFields = new Set<keyof Transaction>([
+  "transportationTo",
+  "trachNo",
+  "transportationCompany",
+  "transportationFrom",
+  "transportationToLocation",
+  "tripCharge",
+  "waitingCharge",
+  "maccrikCharge",
+]);
+
 function getLockedFieldsForStage(stage: TransactionStage): Set<keyof Transaction> {
   if (stage === "PREPARATION") return new Set();
   if (stage === "CUSTOMS_CLEARANCE") return new Set();
-  if (stage === "STORAGE") return new Set([...preparationFields, ...customsFields]);
-  return new Set([...preparationFields, ...customsFields, ...storageFields]);
+  if (stage === "TRANSPORTATION") return new Set([...preparationFields, ...customsFields]);
+  return new Set([...preparationFields, ...customsFields, ...transportationFields, ...storageFields]);
 }
 
 function nextStageOnArrival(current: TransactionStage, documentArrivalDate?: string): TransactionStage {
@@ -389,13 +430,15 @@ export async function deleteShippingCompany(id: string) {
   return Boolean(deleted);
 }
 
-export async function listTransactions(clientId?: string) {
-  const docs = await TransactionModel.find(clientId ? { clientId } : {}).sort({ createdAt: -1 }).lean();
+type EntityModel = typeof TransactionModel;
+
+async function listEntity(model: EntityModel, clientId?: string) {
+  const docs = await model.find(clientId ? { clientId } : {}).sort({ createdAt: -1 }).lean();
   return docs.map(mapTransaction);
 }
 
-export async function getTransaction(id: string) {
-  const doc = await TransactionModel.findById(id).lean();
+async function getEntity(model: EntityModel, id: string) {
+  const doc = await model.findById(id).lean();
   return doc ? mapTransaction(doc) : undefined;
 }
 
@@ -418,9 +461,30 @@ type CreateTransactionFields = Pick<
       | "declarationNumber"
       | "declarationNumber2"
       | "declarationDate"
+      | "orderDate"
       | "declarationType"
       | "declarationType2"
       | "portType"
+      | "containerSize"
+      | "portOfLading"
+      | "portOfDischarge"
+      | "destination"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
       | "documentAttachments"
       | "containerCount"
       | "goodsWeightKg"
@@ -430,6 +494,7 @@ type CreateTransactionFields = Pick<
       | "fileNumber"
       | "containerNumbers"
       | "unitCount"
+      | "unitNumber"
       | "isStopped"
       | "holdReason"
       | "stopReason"
@@ -440,21 +505,27 @@ type CreateTransactionFields = Pick<
     >
   >;
 
-export async function createTransaction(input: CreateTransactionFields) {
+async function createEntity(
+  model: EntityModel,
+  counterId: string,
+  input: CreateTransactionFields,
+  declarationPrefix = "DXB-2026",
+) {
   const risk = assessRisk(input);
   const status: ClearanceStatus = risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
-  const nextCounter = await getNextDeclarationCounter();
-  const { containerArrivalDate, documentArrivalDate, declarationDate, declarationNumber, ...restInput } = input;
-  const created = await TransactionModel.create({
+  const nextCounter = await getNextDeclarationCounter(counterId, model, declarationPrefix);
+  const { containerArrivalDate, documentArrivalDate, declarationDate, orderDate, declarationNumber, ...restInput } = input;
+  const created = await model.create({
     ...restInput,
     ...risk,
-    declarationNumber: declarationNumber ?? generateDeclarationNumber(nextCounter),
+    declarationNumber: declarationNumber ?? generateDeclarationNumber(nextCounter, declarationPrefix),
     documentStatus: "copy_received",
     paymentStatus: "pending",
     xrayResult: risk.channel === "red" ? "manual_inspection" : "not_required",
     customsDuty: calculateDuty(input.invoiceValue),
     clearanceStatus: status,
     declarationDate: declarationDate ? new Date(declarationDate) : undefined,
+    orderDate: orderDate ? new Date(orderDate) : undefined,
     containerArrivalDate: containerArrivalDate ? new Date(containerArrivalDate) : undefined,
     documentArrivalDate: documentArrivalDate ? new Date(documentArrivalDate) : undefined,
     transactionStage: documentArrivalDate ? "CUSTOMS_CLEARANCE" : "PREPARATION",
@@ -462,17 +533,17 @@ export async function createTransaction(input: CreateTransactionFields) {
   return mapTransaction(created.toObject());
 }
 
-export async function setTransactionStage(id: string, stage: TransactionStage) {
-  const current = (await TransactionModel.findById(id).lean()) as { transactionStage?: TransactionStage } | null;
+async function setEntityStage(model: EntityModel, id: string, stage: TransactionStage) {
+  const current = (await model.findById(id).lean()) as { transactionStage?: TransactionStage } | null;
   if (!current) return null;
   const currentStage = current.transactionStage ?? "PREPARATION";
-  if (currentStage === stage) return getTransaction(id);
+  if (currentStage === stage) return getEntity(model, id);
 
   const fromIdx = stageOrder.indexOf(currentStage);
   const toIdx = stageOrder.indexOf(stage);
   if (fromIdx < 0 || toIdx < 0) return false;
 
-  const updated = await TransactionModel.findByIdAndUpdate(
+  const updated = await model.findByIdAndUpdate(
     id,
     { transactionStage: stage },
     { new: true },
@@ -512,7 +583,367 @@ export async function issueRelease(id: string) {
   return updated ? mapTransaction(updated) : null;
 }
 
+async function updateEntity(
+  model: EntityModel,
+  id: string,
+  input: Partial<
+    Pick<
+      Transaction,
+      | "clientName"
+      | "clientId"
+      | "shippingCompanyId"
+      | "shippingCompanyName"
+      | "declarationNumber"
+      | "declarationNumber2"
+      | "declarationDate"
+      | "orderDate"
+      | "declarationType"
+      | "declarationType2"
+      | "portType"
+      | "containerSize"
+      | "portOfLading"
+      | "portOfDischarge"
+      | "destination"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "airwayBill"
+      | "hsCode"
+      | "goodsDescription"
+      | "invoiceValue"
+      | "invoiceCurrency"
+      | "originCountry"
+      | "documentStatus"
+      | "clearanceStatus"
+      | "paymentStatus"
+      | "documentAttachments"
+      | "containerCount"
+      | "goodsWeightKg"
+      | "invoiceToWeightRateAedPerKg"
+      | "containerArrivalDate"
+      | "documentArrivalDate"
+      | "fileNumber"
+      | "containerNumbers"
+      | "unitCount"
+      | "unitNumber"
+      | "isStopped"
+      | "holdReason"
+      | "stopReason"
+      | "documentPostalNumber"
+      | "goodsQuantity"
+      | "goodsQuality"
+      | "goodsUnit"
+      | "transactionStage"
+    >
+  >,
+) {
+  const current = await getEntity(model, id);
+  if (!current) return null;
+
+  const currentStage = current.transactionStage ?? "PREPARATION";
+  const targetStage = nextStageOnArrival(currentStage, input.documentArrivalDate);
+  const lockedFields = getLockedFieldsForStage(targetStage);
+  const attemptedLocked = Object.entries(input)
+    .filter(([key, nextValue]) => {
+      const field = key as keyof Transaction;
+      if (!lockedFields.has(field)) return false;
+      return !sameTransactionField(field, nextValue, current[field]);
+    })
+    .map(([key]) => key);
+  if (attemptedLocked.length > 0) {
+    throw new Error(`Fields are locked for stage ${targetStage}: ${attemptedLocked.join(", ")}`);
+  }
+
+  const invoiceValue = input.invoiceValue ?? current.invoiceValue;
+  const hsCode = input.hsCode ?? current.hsCode;
+  const originCountry = input.originCountry ?? current.originCountry;
+  const risk = assessRisk({ invoiceValue, hsCode, originCountry });
+  const suggestedStatus: ClearanceStatus =
+    risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
+
+  const { containerArrivalDate, documentArrivalDate, declarationDate, orderDate, ...rest } = input;
+  const datePatch: Record<string, unknown> = { ...rest };
+  if (declarationDate !== undefined) {
+    datePatch.declarationDate = declarationDate ? new Date(declarationDate) : null;
+  }
+  if (orderDate !== undefined) {
+    datePatch.orderDate = orderDate ? new Date(orderDate) : null;
+  }
+  if (containerArrivalDate !== undefined) {
+    datePatch.containerArrivalDate = containerArrivalDate ? new Date(containerArrivalDate) : null;
+  }
+  if (documentArrivalDate !== undefined) {
+    datePatch.documentArrivalDate = documentArrivalDate ? new Date(documentArrivalDate) : null;
+  }
+
+  const updated = await model.findByIdAndUpdate(
+    id,
+    {
+      ...datePatch,
+      riskLevel: risk.riskLevel,
+      channel: risk.channel,
+      customsDuty: calculateDuty(invoiceValue),
+      clearanceStatus: input.clearanceStatus ?? suggestedStatus,
+      transactionStage: targetStage,
+    },
+    { new: true },
+  ).lean();
+
+  return updated ? mapTransaction(updated) : null;
+}
+
+async function deleteEntity(model: EntityModel, id: string) {
+  const existing = await model.findById(id).lean();
+  if (!existing) return false;
+  const attachments = (existing as { documentAttachments?: DocumentAttachment[] }).documentAttachments;
+  if (Array.isArray(attachments)) {
+    for (const a of attachments) {
+      try {
+        await fs.unlink(absolutePathFromPublicPath(a.path));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  const deleted = await model.findByIdAndDelete(id).lean();
+  return Boolean(deleted);
+}
+
+export async function listTransactions(clientId?: string) {
+  return listEntity(TransactionModel, clientId);
+}
+
+export async function getTransaction(id: string) {
+  return getEntity(TransactionModel, id);
+}
+
+export async function createTransaction(input: CreateTransactionFields) {
+  return createEntity(TransactionModel, DECLARATION_COUNTER_ID, input, "DXB-2026");
+}
+
+export async function setTransactionStage(id: string, stage: TransactionStage) {
+  return setEntityStage(TransactionModel, id, stage);
+}
+
 export async function updateTransaction(
+  id: string,
+  input: Partial<
+    Pick<
+      Transaction,
+      | "clientName"
+      | "clientId"
+      | "shippingCompanyId"
+      | "shippingCompanyName"
+      | "declarationNumber"
+      | "declarationNumber2"
+      | "declarationDate"
+      | "orderDate"
+      | "declarationType"
+      | "declarationType2"
+      | "portType"
+      | "containerSize"
+      | "portOfLading"
+      | "portOfDischarge"
+      | "destination"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "airwayBill"
+      | "hsCode"
+      | "goodsDescription"
+      | "invoiceValue"
+      | "invoiceCurrency"
+      | "originCountry"
+      | "documentStatus"
+      | "clearanceStatus"
+      | "paymentStatus"
+      | "documentAttachments"
+      | "containerCount"
+      | "goodsWeightKg"
+      | "invoiceToWeightRateAedPerKg"
+      | "containerArrivalDate"
+      | "documentArrivalDate"
+      | "fileNumber"
+      | "containerNumbers"
+      | "unitCount"
+      | "unitNumber"
+      | "isStopped"
+      | "holdReason"
+      | "stopReason"
+      | "documentPostalNumber"
+      | "goodsQuantity"
+      | "goodsQuality"
+      | "goodsUnit"
+      | "transactionStage"
+    >
+  >,
+) {
+  return updateEntity(TransactionModel, id, input);
+}
+
+export async function deleteTransaction(id: string) {
+  return deleteEntity(TransactionModel, id);
+}
+
+export async function listTransfers(clientId?: string) {
+  return listEntity(TransferModel, clientId);
+}
+
+export async function getTransfer(id: string) {
+  return getEntity(TransferModel, id);
+}
+
+export async function createTransfer(input: CreateTransactionFields) {
+  return createEntity(TransferModel, TRANSFER_DECLARATION_COUNTER_ID, input, "TRF-2026");
+}
+
+export async function setTransferStage(id: string, stage: TransactionStage) {
+  return setEntityStage(TransferModel, id, stage);
+}
+
+export async function updateTransfer(
+  id: string,
+  input: Partial<
+    Pick<
+      Transaction,
+      | "clientName"
+      | "clientId"
+      | "shippingCompanyId"
+      | "shippingCompanyName"
+      | "declarationNumber"
+      | "declarationNumber2"
+      | "declarationDate"
+      | "orderDate"
+      | "declarationType"
+      | "declarationType2"
+      | "portType"
+      | "containerSize"
+      | "portOfLading"
+      | "portOfDischarge"
+      | "destination"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "transportationTo"
+      | "trachNo"
+      | "transportationCompany"
+      | "transportationFrom"
+      | "transportationToLocation"
+      | "tripCharge"
+      | "waitingCharge"
+      | "maccrikCharge"
+      | "airwayBill"
+      | "hsCode"
+      | "goodsDescription"
+      | "invoiceValue"
+      | "invoiceCurrency"
+      | "originCountry"
+      | "documentStatus"
+      | "clearanceStatus"
+      | "paymentStatus"
+      | "documentAttachments"
+      | "containerCount"
+      | "goodsWeightKg"
+      | "invoiceToWeightRateAedPerKg"
+      | "containerArrivalDate"
+      | "documentArrivalDate"
+      | "fileNumber"
+      | "containerNumbers"
+      | "unitCount"
+      | "unitNumber"
+      | "isStopped"
+      | "holdReason"
+      | "stopReason"
+      | "documentPostalNumber"
+      | "goodsQuantity"
+      | "goodsQuality"
+      | "goodsUnit"
+      | "transactionStage"
+    >
+  >,
+) {
+  return updateEntity(TransferModel, id, input);
+}
+
+export async function deleteTransfer(id: string) {
+  return deleteEntity(TransferModel, id);
+}
+
+export async function markTransferPaid(id: string) {
+  const updated = await TransferModel.findByIdAndUpdate(
+    id,
+    { paymentStatus: "paid", clearanceStatus: "PAID" },
+    { new: true },
+  ).lean();
+  return updated ? mapTransaction(updated) : null;
+}
+
+export async function issueTransferRelease(id: string) {
+  const tx = (await TransferModel.findById(id).lean()) as
+    | { paymentStatus?: string; documentStatus?: string }
+    | null;
+  if (!tx) return null;
+  const canRelease = tx.paymentStatus === "paid" && (tx.documentStatus === "original_received" || tx.documentStatus === "telex_release");
+  if (!canRelease) return false;
+  const updated = await TransferModel.findByIdAndUpdate(
+    id,
+    {
+      releaseCode: Math.random().toString(36).slice(2, 10).toUpperCase(),
+      clearanceStatus: "E_RELEASE_ISSUED",
+    },
+    { new: true },
+  ).lean();
+  return updated ? mapTransaction(updated) : null;
+}
+
+export async function listExports(clientId?: string) {
+  return listEntity(ExportModel, clientId);
+}
+
+export async function getExport(id: string) {
+  return getEntity(ExportModel, id);
+}
+
+export async function createExport(input: CreateTransactionFields) {
+  return createEntity(ExportModel, EXPORT_DECLARATION_COUNTER_ID, input, "EXP-2026");
+}
+
+export async function setExportStage(id: string, stage: TransactionStage) {
+  return setEntityStage(ExportModel, id, stage);
+}
+
+export async function updateExport(
   id: string,
   input: Partial<
     Pick<
@@ -556,71 +987,36 @@ export async function updateTransaction(
     >
   >,
 ) {
-  const current = await getTransaction(id);
-  if (!current) return null;
+  return updateEntity(ExportModel, id, input);
+}
 
-  const currentStage = current.transactionStage ?? "PREPARATION";
-  const targetStage = nextStageOnArrival(currentStage, input.documentArrivalDate);
-  const lockedFields = getLockedFieldsForStage(targetStage);
-  const attemptedLocked = Object.entries(input)
-    .filter(([key, nextValue]) => {
-      const field = key as keyof Transaction;
-      if (!lockedFields.has(field)) return false;
-      return !sameTransactionField(field, nextValue, current[field]);
-    })
-    .map(([key]) => key);
-  if (attemptedLocked.length > 0) {
-    throw new Error(`Fields are locked for stage ${targetStage}: ${attemptedLocked.join(", ")}`);
-  }
+export async function deleteExport(id: string) {
+  return deleteEntity(ExportModel, id);
+}
 
-  const invoiceValue = input.invoiceValue ?? current.invoiceValue;
-  const hsCode = input.hsCode ?? current.hsCode;
-  const originCountry = input.originCountry ?? current.originCountry;
-  const risk = assessRisk({ invoiceValue, hsCode, originCountry });
-  const suggestedStatus: ClearanceStatus =
-    risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
-
-  const { containerArrivalDate, documentArrivalDate, declarationDate, ...rest } = input;
-  const datePatch: Record<string, unknown> = { ...rest };
-  if (declarationDate !== undefined) {
-    datePatch.declarationDate = declarationDate ? new Date(declarationDate) : null;
-  }
-  if (containerArrivalDate !== undefined) {
-    datePatch.containerArrivalDate = containerArrivalDate ? new Date(containerArrivalDate) : null;
-  }
-  if (documentArrivalDate !== undefined) {
-    datePatch.documentArrivalDate = documentArrivalDate ? new Date(documentArrivalDate) : null;
-  }
-
-  const updated = await TransactionModel.findByIdAndUpdate(
+export async function markExportPaid(id: string) {
+  const updated = await ExportModel.findByIdAndUpdate(
     id,
-    {
-      ...datePatch,
-      riskLevel: risk.riskLevel,
-      channel: risk.channel,
-      customsDuty: calculateDuty(invoiceValue),
-      clearanceStatus: input.clearanceStatus ?? suggestedStatus,
-      transactionStage: targetStage,
-    },
+    { paymentStatus: "paid", clearanceStatus: "PAID" },
     { new: true },
   ).lean();
-
   return updated ? mapTransaction(updated) : null;
 }
 
-export async function deleteTransaction(id: string) {
-  const existing = await TransactionModel.findById(id).lean();
-  if (!existing) return false;
-  const attachments = (existing as { documentAttachments?: DocumentAttachment[] }).documentAttachments;
-  if (Array.isArray(attachments)) {
-    for (const a of attachments) {
-      try {
-        await fs.unlink(absolutePathFromPublicPath(a.path));
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-  const deleted = await TransactionModel.findByIdAndDelete(id).lean();
-  return Boolean(deleted);
+export async function issueExportRelease(id: string) {
+  const tx = (await ExportModel.findById(id).lean()) as
+    | { paymentStatus?: string; documentStatus?: string }
+    | null;
+  if (!tx) return null;
+  const canRelease = tx.paymentStatus === "paid" && (tx.documentStatus === "original_received" || tx.documentStatus === "telex_release");
+  if (!canRelease) return false;
+  const updated = await ExportModel.findByIdAndUpdate(
+    id,
+    {
+      releaseCode: Math.random().toString(36).slice(2, 10).toUpperCase(),
+      clearanceStatus: "E_RELEASE_ISSUED",
+    },
+    { new: true },
+  ).lean();
+  return updated ? mapTransaction(updated) : null;
 }

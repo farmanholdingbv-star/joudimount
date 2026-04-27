@@ -39,14 +39,23 @@ const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
 ];
 
 const CURRENCY_OPTIONS: InvoiceCurrency[] = ["AED", "USD", "EUR", "SAR"];
-const DECLARATION_TYPE_OPTIONS = [
-  { value: "Import", labelKey: "form.declarationType.import" },
-  { value: "Import to Free Zone", labelKey: "form.declarationType.import_free_zone" },
-  { value: "Import for Re-Export", labelKey: "form.declarationType.import_re_export" },
-  { value: "Temporary Import", labelKey: "form.declarationType.temporary_import" },
-  { value: "Transitin", labelKey: "form.declarationType.transitin" },
-  { value: "Transitin from GCC", labelKey: "form.declarationType.transitin_gcc" },
-] as const;
+type TransactionModule = "transactions" | "transfers" | "exports";
+const DECLARATION_TYPE_OPTIONS_BY_MODULE: Record<TransactionModule, Array<{ value: string; labelKey: MessageKey }>> = {
+  transactions: [
+    { value: "Import", labelKey: "form.declarationType.import" },
+    { value: "Import to Free Zone", labelKey: "form.declarationType.import_free_zone" },
+    { value: "Import for Re-Export", labelKey: "form.declarationType.import_re_export" },
+    { value: "Temporary Import", labelKey: "form.declarationType.temporary_import" },
+    { value: "Transitin", labelKey: "form.declarationType.transitin" },
+    { value: "Transitin from GCC", labelKey: "form.declarationType.transitin_gcc" },
+  ],
+  transfers: [{ value: "Transfer", labelKey: "form.declarationType.transfer" }],
+  exports: [
+    { value: "Export", labelKey: "form.declarationType.export" },
+    { value: "Transit out", labelKey: "form.declarationType.transit_out" },
+    { value: "Export to GCC", labelKey: "form.declarationType.export_gcc" },
+  ],
+};
 const PORT_TYPE_OPTIONS = [
   { value: "Seaports", labelKey: "form.portType.seaports" },
   { value: "Free Zones", labelKey: "form.portType.free_zones" },
@@ -61,9 +70,8 @@ const DOCUMENT_CATEGORY_OPTIONS: { value: DocumentCategory; labelKey: MessageKey
 const STAGE_OPTIONS: TransactionStage[] = [
   "PREPARATION",
   "CUSTOMS_CLEARANCE",
+  "TRANSPORTATION",
   "STORAGE",
-  "INTERNAL_DELIVERY",
-  "EXTERNAL_TRANSFER",
 ];
 
 type PendingDocument = { file: File; category: DocumentCategory | "" };
@@ -92,9 +100,22 @@ type FormState = {
   declarationNumber: string;
   declarationNumber2: string;
   declarationDate: string;
+  orderDate: string;
   declarationType: string;
   declarationType2: string;
   portType: string;
+  containerSize: string;
+  portOfLading: string;
+  portOfDischarge: string;
+  destination: string;
+  transportationTo: string;
+  trachNo: string;
+  transportationCompany: string;
+  transportationFrom: string;
+  transportationToLocation: string;
+  tripCharge: string;
+  waitingCharge: string;
+  maccrikCharge: string;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -111,6 +132,7 @@ type FormState = {
   fileNumber: string;
   containerNumbers: string;
   unitCount: string;
+  unitNumber: string;
   isStopped: "no" | "yes";
   stopReason: string;
   goodsQuantity: string;
@@ -125,9 +147,22 @@ const emptyForm: FormState = {
   declarationNumber: "",
   declarationNumber2: "",
   declarationDate: "",
+  orderDate: "",
   declarationType: "",
   declarationType2: "",
   portType: "",
+  containerSize: "",
+  portOfLading: "",
+  portOfDischarge: "",
+  destination: "",
+  transportationTo: "",
+  trachNo: "",
+  transportationCompany: "",
+  transportationFrom: "",
+  transportationToLocation: "",
+  tripCharge: "",
+  waitingCharge: "",
+  maccrikCharge: "",
   airwayBill: "",
   hsCode: "",
   goodsDescription: "",
@@ -144,6 +179,7 @@ const emptyForm: FormState = {
   fileNumber: "",
   containerNumbers: "",
   unitCount: "",
+  unitNumber: "",
   isStopped: "no",
   stopReason: "",
   goodsQuantity: "",
@@ -184,7 +220,13 @@ async function parseApiErrorMessage(res: Response): Promise<string> {
   }
 }
 
-export default function TransactionForm({ role }: { role: Role }) {
+export default function TransactionForm({
+  role,
+  module = "transactions",
+}: {
+  role: Role;
+  module?: TransactionModule;
+}) {
   const { t, numberLocale } = useI18n();
   const navigate = useNavigate();
   const { id: routeId } = useParams<{ id: string }>();
@@ -225,7 +267,7 @@ export default function TransactionForm({ role }: { role: Role }) {
 
   useEffect(() => {
     if (!isEdit || !routeId) return;
-    apiFetch(`/api/transactions/${routeId}`)
+    apiFetch(`/api/${module}/${routeId}`)
       .then((res) => {
         if (!res.ok) throw new Error("not-found");
         return res.json();
@@ -248,9 +290,22 @@ export default function TransactionForm({ role }: { role: Role }) {
           declarationNumber: data.declarationNumber ?? "",
           declarationNumber2: data.declarationNumber2 ?? "",
           declarationDate: isoToDateInput(data.declarationDate),
+          orderDate: isoToDateInput(data.orderDate),
           declarationType: data.declarationType ?? "",
           declarationType2: data.declarationType2 ?? "",
           portType: data.portType ?? "",
+          containerSize: data.containerSize ?? "",
+          portOfLading: data.portOfLading ?? "",
+          portOfDischarge: data.portOfDischarge ?? "",
+          destination: data.destination ?? "",
+          transportationTo: data.transportationTo ?? "",
+          trachNo: data.trachNo ?? "",
+          transportationCompany: data.transportationCompany ?? "",
+          transportationFrom: data.transportationFrom ?? "",
+          transportationToLocation: data.transportationToLocation ?? "",
+          tripCharge: data.tripCharge != null ? String(data.tripCharge) : "",
+          waitingCharge: data.waitingCharge != null ? String(data.waitingCharge) : "",
+          maccrikCharge: data.maccrikCharge != null ? String(data.maccrikCharge) : "",
           airwayBill: data.airwayBill,
           hsCode: data.hsCode,
           goodsDescription: data.goodsDescription,
@@ -268,6 +323,7 @@ export default function TransactionForm({ role }: { role: Role }) {
           fileNumber: data.fileNumber ?? "",
           containerNumbers: data.containerNumbers?.join(", ") ?? "",
           unitCount: data.unitCount != null ? String(data.unitCount) : "",
+          unitNumber: data.unitNumber != null ? String(data.unitNumber) : "",
           isStopped: data.isStopped ? "yes" : "no",
           stopReason: data.stopReason ?? "",
           goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
@@ -278,7 +334,7 @@ export default function TransactionForm({ role }: { role: Role }) {
         setNewDocFiles([]);
       })
       .catch(() => setError(t("form.loadError")));
-  }, [routeId, isEdit, t]);
+  }, [routeId, isEdit, t, module]);
 
   const derivedWeight = useMemo(() => {
     const inv = Number(form.invoiceValue);
@@ -347,19 +403,39 @@ export default function TransactionForm({ role }: { role: Role }) {
     try {
       const fd = new FormData();
       fd.append("clientName", form.clientName);
-      fd.append("shippingCompanyName", form.shippingCompanyName);
+      const effectiveShippingCompanyName =
+        module === "transactions"
+          ? form.shippingCompanyName
+          : form.destination.trim() || form.portOfDischarge.trim() || "N/A";
+      const effectiveAirwayBill = module === "transactions" ? form.airwayBill : form.portOfLading.trim() || "N/A";
+      const effectiveInvoiceValue =
+        module === "transactions" ? Number(form.invoiceValue) : Math.max(1, Number(form.invoiceValue) || 1);
+      fd.append("shippingCompanyName", effectiveShippingCompanyName);
       if (form.shippingCompanyId?.trim()) fd.append("shippingCompanyId", form.shippingCompanyId.trim());
       if (form.declarationNumber.trim()) fd.append("declarationNumber", form.declarationNumber.trim());
       if (form.declarationNumber2.trim()) fd.append("declarationNumber2", form.declarationNumber2.trim());
       if (form.declarationDate) fd.append("declarationDate", form.declarationDate);
+      if (form.orderDate) fd.append("orderDate", form.orderDate);
       if (form.declarationType.trim()) fd.append("declarationType", form.declarationType.trim());
       if (form.declarationType2.trim()) fd.append("declarationType2", form.declarationType2.trim());
       if (form.portType.trim()) fd.append("portType", form.portType.trim());
-      fd.append("airwayBill", form.airwayBill);
+      if (form.containerSize.trim()) fd.append("containerSize", form.containerSize.trim());
+      if (form.portOfLading.trim()) fd.append("portOfLading", form.portOfLading.trim());
+      if (form.portOfDischarge.trim()) fd.append("portOfDischarge", form.portOfDischarge.trim());
+      if (form.destination.trim()) fd.append("destination", form.destination.trim());
+      if (form.transportationTo.trim()) fd.append("transportationTo", form.transportationTo.trim());
+      if (form.trachNo.trim()) fd.append("trachNo", form.trachNo.trim());
+      if (form.transportationCompany.trim()) fd.append("transportationCompany", form.transportationCompany.trim());
+      if (form.transportationFrom.trim()) fd.append("transportationFrom", form.transportationFrom.trim());
+      if (form.transportationToLocation.trim()) fd.append("transportationToLocation", form.transportationToLocation.trim());
+      appendOptionalNumber(fd, "tripCharge", form.tripCharge);
+      appendOptionalNumber(fd, "waitingCharge", form.waitingCharge);
+      appendOptionalNumber(fd, "maccrikCharge", form.maccrikCharge);
+      fd.append("airwayBill", effectiveAirwayBill);
       fd.append("hsCode", form.hsCode);
       fd.append("goodsDescription", form.goodsDescription);
       fd.append("originCountry", form.originCountry.toUpperCase());
-      fd.append("invoiceValue", String(form.invoiceValue));
+      fd.append("invoiceValue", String(effectiveInvoiceValue));
       if (form.invoiceCurrency) fd.append("invoiceCurrency", form.invoiceCurrency);
       fd.append("documentStatus", form.documentStatus);
       if (role !== "employee") fd.append("paymentStatus", form.paymentStatus);
@@ -384,6 +460,7 @@ export default function TransactionForm({ role }: { role: Role }) {
         if (values.length) fd.append("containerNumbers", JSON.stringify(values));
       }
       appendOptionalNumber(fd, "unitCount", form.unitCount);
+      appendOptionalNumber(fd, "unitNumber", form.unitNumber);
       fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
       if (form.stopReason.trim()) fd.append("stopReason", form.stopReason.trim());
       appendOptionalNumber(fd, "goodsQuantity", form.goodsQuantity);
@@ -407,7 +484,7 @@ export default function TransactionForm({ role }: { role: Role }) {
         fd.append("documentPhotos", item.file);
       }
 
-      const res = await apiFetch(`/api/transactions${isEdit ? `/${routeId}` : ""}`, {
+      const res = await apiFetch(`/api/${module}${isEdit ? `/${routeId}` : ""}`, {
         method: isEdit ? "PUT" : "POST",
         body: fd,
       });
@@ -417,7 +494,7 @@ export default function TransactionForm({ role }: { role: Role }) {
         return;
       }
       const data = (await res.json()) as Transaction;
-      navigate(`/transactions/${data.id}`);
+      navigate(`/${module}/${data.id}`);
     } catch {
       setError(t("form.saveError"));
     } finally {
@@ -431,12 +508,10 @@ export default function TransactionForm({ role }: { role: Role }) {
         return t("stage.PREPARATION");
       case "CUSTOMS_CLEARANCE":
         return t("stage.CUSTOMS_CLEARANCE");
+      case "TRANSPORTATION":
+        return t("stage.TRANSPORTATION" as MessageKey);
       case "STORAGE":
         return t("stage.STORAGE");
-      case "INTERNAL_DELIVERY":
-        return t("stage.INTERNAL_DELIVERY");
-      case "EXTERNAL_TRANSFER":
-        return t("stage.EXTERNAL_TRANSFER");
       default:
         return value;
     }
@@ -444,7 +519,7 @@ export default function TransactionForm({ role }: { role: Role }) {
 
   const setTransactionStage = async (nextStage: TransactionStage) => {
     if (!isEdit || !routeId || nextStage === stage) return;
-    const res = await apiFetch(`/api/transactions/${routeId}/stage`, {
+    const res = await apiFetch(`/api/${module}/${routeId}/stage`, {
       method: "POST",
       body: JSON.stringify({ stage: nextStage }),
     });
@@ -463,20 +538,352 @@ export default function TransactionForm({ role }: { role: Role }) {
   const prepEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
   const customsEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
   const storageEditable = !isEdit || stage === "PREPARATION" || stage === "STORAGE";
-  const fullyLocked = isEdit && (stage === "INTERNAL_DELIVERY" || stage === "EXTERNAL_TRANSFER");
+  const fullyLocked = false;
   /** Stage can move forward or back; only manager and employee2 may call the API. */
   const canSetStage = role === "manager" || role === "employee2";
   /** Customs Declaration + file number: hidden for new transactions and in Preparation; visible from Customs clearance onward when editing. */
   const showCustomsDeclarationSection = isEdit && stage !== "PREPARATION";
+  const isTransferOrExport = module === "transfers" || module === "exports";
+  const declarationTypeOptions = DECLARATION_TYPE_OPTIONS_BY_MODULE[module];
+
+  if (isTransferOrExport) {
+    return (
+      <main className="container">
+        <div className="page-actions">
+          <Link to={`/${module}`} className="link-button">
+            {t("form.back")}
+          </Link>
+        </div>
+        <h1>
+          {module === "transfers"
+            ? isEdit
+              ? t("transfer.form.editTitle" as MessageKey)
+              : t("transfer.form.newTitle" as MessageKey)
+            : isEdit
+              ? t("export.form.editTitle" as MessageKey)
+              : t("export.form.newTitle" as MessageKey)}
+        </h1>
+        {error ? <p className="error">{error}</p> : null}
+        <form className="details-card form-grid" noValidate onSubmit={onSubmit}>
+          {isEdit ? (
+            <label className="full-row">
+              {t("form.stage")}
+              <select
+                value={stage}
+                onChange={(e) => setTransactionStage(e.target.value as TransactionStage)}
+                disabled={!canSetStage}
+              >
+                {STAGE_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {stageLabel(s)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <AutocompleteField
+            label={t("form.clientName")}
+            value={form.clientName}
+            onChange={(clientName) => setForm({ ...form, clientName })}
+            onSelectSuggestion={(key) => {
+              const c = clients.find((x) => x.id === key);
+              if (c) setForm((f) => ({ ...f, clientName: c.companyName }));
+            }}
+            suggestions={clientSuggestions}
+            disabled={!prepEditable}
+            required
+            hint={t("form.typeToSearch")}
+          />
+          <label>
+            Order date
+            <input type="date" value={form.orderDate} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} required />
+          </label>
+          <label>
+            {t("form.containerCount")}
+            <input type="number" min={0} step={1} value={form.containerCount} onChange={(e) => setForm({ ...form, containerCount: e.target.value })} required />
+          </label>
+          <label>
+            Container size
+            <input value={form.containerSize} onChange={(e) => setForm({ ...form, containerSize: e.target.value })} required />
+          </label>
+          <label>
+            Port of lading
+            <input value={form.portOfLading} onChange={(e) => setForm({ ...form, portOfLading: e.target.value })} required />
+          </label>
+          <label>
+            Port of discharge
+            <input value={form.portOfDischarge} onChange={(e) => setForm({ ...form, portOfDischarge: e.target.value })} required />
+          </label>
+          <label>
+            Destination
+            <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} required />
+          </label>
+          <label>
+            {t("form.goodsWeightKg")}
+            <input type="number" min={0} step="any" value={form.goodsWeightKg} onChange={(e) => setForm({ ...form, goodsWeightKg: e.target.value })} required />
+          </label>
+          <label>
+            {t("form.origin")}
+            <input value={form.originCountry} onChange={(e) => setForm({ ...form, originCountry: e.target.value })} minLength={2} maxLength={2} required />
+          </label>
+          <label>
+            Unit number
+            <input type="number" min={0} step={1} value={form.unitNumber} onChange={(e) => setForm({ ...form, unitNumber: e.target.value })} required />
+          </label>
+          <label className="full-row">
+            {t("form.goodsDescription")}
+            <textarea value={form.goodsDescription} onChange={(e) => setForm({ ...form, goodsDescription: e.target.value })} rows={3} required />
+          </label>
+          <label>
+            {t("form.goodsUnit")}
+            <select value={form.goodsUnit} onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })} required>
+              <option value="">{t("form.optionalSelect")}</option>
+              {UNIT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {t(o.labelKey as MessageKey)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t("form.stopTransaction")}
+            <select value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
+              <option value="no">{t("form.no")}</option>
+              <option value="yes">{t("form.yes")}</option>
+            </select>
+          </label>
+          <label>
+            {t("form.hsCode")}
+            <input value={form.hsCode} onChange={(e) => setForm({ ...form, hsCode: e.target.value })} required />
+          </label>
+          <label>
+            {t("form.goodsQuality")}
+            <select value={form.goodsQuality} onChange={(e) => setForm({ ...form, goodsQuality: e.target.value as GoodsQuality | "" })} required>
+              <option value="">{t("form.optionalSelect")}</option>
+              {QUALITY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {t(o.labelKey as MessageKey)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t("form.goodsQuantity")}
+            <input type="number" min={0} step="any" value={form.goodsQuantity} onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })} required />
+          </label>
+
+          {showCustomsDeclarationSection ? (
+            <>
+              <h2 className="form-section-title full-row">{t("form.customsDeclarationSection")}</h2>
+              <label>
+                {t("form.fileNumber")}
+                <input
+                  value={form.fileNumber}
+                  onChange={(e) => setForm({ ...form, fileNumber: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.declarationNumber1")}
+                <input
+                  value={form.declarationNumber}
+                  onChange={(e) => setForm({ ...form, declarationNumber: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.declarationNumber2")}
+                <input
+                  value={form.declarationNumber2}
+                  onChange={(e) => setForm({ ...form, declarationNumber2: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.declarationDate")}
+                <input
+                  type="date"
+                  value={form.declarationDate}
+                  onChange={(e) => setForm({ ...form, declarationDate: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.declarationType1")}
+                <select value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
+                  <option value="">{t("form.optionalSelect")}</option>
+                  {declarationTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("form.declarationType2")}
+                <select value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
+                  <option value="">{t("form.optionalSelect")}</option>
+                  {declarationTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("form.portType")}
+                <select value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })}>
+                  <option value="">{t("form.optionalSelect")}</option>
+                  {PORT_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : null}
+
+          {isEdit && (stage === "TRANSPORTATION" || stage === "STORAGE") ? (
+            <>
+              <h2 className="form-section-title full-row">Transportation</h2>
+              <label>
+                TO
+                <input
+                  value={form.transportationTo}
+                  onChange={(e) => setForm({ ...form, transportationTo: e.target.value })}
+                />
+              </label>
+              <label>
+                TrachNo
+                <input value={form.trachNo} onChange={(e) => setForm({ ...form, trachNo: e.target.value })} />
+              </label>
+              <label>
+                Company transportasion
+                <input
+                  value={form.transportationCompany}
+                  onChange={(e) => setForm({ ...form, transportationCompany: e.target.value })}
+                />
+              </label>
+              <label>
+                from
+                <input
+                  value={form.transportationFrom}
+                  onChange={(e) => setForm({ ...form, transportationFrom: e.target.value })}
+                />
+              </label>
+              <label>
+                to
+                <input
+                  value={form.transportationToLocation}
+                  onChange={(e) => setForm({ ...form, transportationToLocation: e.target.value })}
+                />
+              </label>
+              <label>
+                Trip Charge
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={form.tripCharge}
+                  onChange={(e) => setForm({ ...form, tripCharge: e.target.value })}
+                />
+              </label>
+              <label>
+                wating charge
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={form.waitingCharge}
+                  onChange={(e) => setForm({ ...form, waitingCharge: e.target.value })}
+                />
+              </label>
+              <label>
+                maccrik charge
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={form.maccrikCharge}
+                  onChange={(e) => setForm({ ...form, maccrikCharge: e.target.value })}
+                />
+              </label>
+            </>
+          ) : null}
+
+          {form.isStopped === "yes" ? (
+            <label className="full-row">
+              {t("form.stopReason")}
+              <textarea value={form.stopReason} onChange={(e) => setForm({ ...form, stopReason: e.target.value })} rows={2} required />
+            </label>
+          ) : null}
+          <div className="full-row doc-upload-block doc-upload-prominent">
+            <h2 className="doc-upload-heading">{t("form.documentPhotosSection")}</h2>
+            <p className="muted">{t("form.documentPhotosHelp")}</p>
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+              onChange={(e) =>
+                setNewDocFiles(
+                  Array.from(e.target.files ?? []).map((file) => ({
+                    file,
+                    category: "",
+                  })),
+                )
+              }
+            />
+            {newDocFiles.length > 0 ? (
+              <div className="full-row">
+                {newDocFiles.map((item, idx) => (
+                  <label key={`${item.file.name}-${idx}`}>
+                    {item.file.name}
+                    <select
+                      value={item.category}
+                      onChange={(e) =>
+                        setNewDocFiles((prev) =>
+                          prev.map((p, i) => (i === idx ? { ...p, category: e.target.value as DocumentCategory | "" } : p)),
+                        )
+                      }
+                      required
+                    >
+                      <option value="">{t("form.selectDocumentCategory")}</option>
+                      {DOCUMENT_CATEGORY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {t(option.labelKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <button className="primary-button" type="submit" disabled={loading}>
+            {loading ? t("form.saving") : t("form.save")}
+          </button>
+        </form>
+      </main>
+    );
+  }
 
   return (
     <main className="container">
       <div className="page-actions">
-        <Link to="/" className="link-button">
+        <Link to={`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/"} className="link-button">
           {t("form.back")}
         </Link>
       </div>
-      <h1>{isEdit ? t("form.editTitle") : t("form.newTitle")}</h1>
+      <h1>
+        {module === "transactions"
+          ? isEdit
+            ? t("form.editTitle")
+            : t("form.newTitle")
+          : module === "transfers"
+            ? isEdit
+              ? t("transfer.form.editTitle" as MessageKey)
+              : t("transfer.form.newTitle" as MessageKey)
+            : isEdit
+              ? t("export.form.editTitle" as MessageKey)
+              : t("export.form.newTitle" as MessageKey)}
+      </h1>
       {error ? <p className="error">{error}</p> : null}
       <form className="details-card form-grid" noValidate onSubmit={onSubmit}>
         {isEdit && editMeta ? (
@@ -598,7 +1005,7 @@ export default function TransactionForm({ role }: { role: Role }) {
               {t("form.declarationType1")}
               <select disabled={!customsEditable} value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
-                {DECLARATION_TYPE_OPTIONS.map((option) => (
+                {declarationTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {t(option.labelKey)}
                   </option>
@@ -618,7 +1025,7 @@ export default function TransactionForm({ role }: { role: Role }) {
               {t("form.declarationType2")}
               <select disabled={!customsEditable} value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
-                {DECLARATION_TYPE_OPTIONS.map((option) => (
+                {declarationTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {t(option.labelKey)}
                   </option>

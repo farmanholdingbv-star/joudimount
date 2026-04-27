@@ -8,9 +8,8 @@ export type XrayResult = "not_required" | "passed" | "manual_inspection";
 export type TransactionStage =
   | "PREPARATION"
   | "CUSTOMS_CLEARANCE"
-  | "STORAGE"
-  | "INTERNAL_DELIVERY"
-  | "EXTERNAL_TRANSFER";
+  | "TRANSPORTATION"
+  | "STORAGE";
 
 export type ClearanceStatus =
   | "DRAFT"
@@ -69,10 +68,23 @@ export interface Transaction {
   /** Second DEC NO (e.g. transit / FZ paired declarations). */
   declarationNumber2?: string;
   declarationDate?: string;
+  orderDate?: string;
   declarationType?: string;
   /** Second DEC TYPE when two declaration types apply. */
   declarationType2?: string;
   portType?: string;
+  containerSize?: string;
+  portOfLading?: string;
+  portOfDischarge?: string;
+  destination?: string;
+  transportationTo?: string;
+  trachNo?: string;
+  transportationCompany?: string;
+  transportationFrom?: string;
+  transportationToLocation?: string;
+  tripCharge?: number;
+  waitingCharge?: number;
+  maccrikCharge?: number;
   airwayBill: string;
   hsCode: string;
   goodsDescription: string;
@@ -96,6 +108,7 @@ export interface Transaction {
   fileNumber?: string;
   containerNumbers?: string[];
   unitCount?: number;
+  unitNumber?: number;
   isStopped?: boolean;
   holdReason?: string;
   stopReason?: string;

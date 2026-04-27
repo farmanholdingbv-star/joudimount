@@ -25,12 +25,10 @@ function stageLabel(stage: string | undefined, t: (key: MessageKey) => string): 
       return t("stage.PREPARATION");
     case "CUSTOMS_CLEARANCE":
       return t("stage.CUSTOMS_CLEARANCE");
+    case "TRANSPORTATION":
+      return t("stage.TRANSPORTATION" as MessageKey);
     case "STORAGE":
       return t("stage.STORAGE");
-    case "INTERNAL_DELIVERY":
-      return t("stage.INTERNAL_DELIVERY");
-    case "EXTERNAL_TRANSFER":
-      return t("stage.EXTERNAL_TRANSFER");
     default:
       return stage || t("stage.PREPARATION");
   }
@@ -42,6 +40,10 @@ function declarationTypeLabel(value: string | undefined, t: (key: MessageKey) =>
     "Import to Free Zone": "form.declarationType.import_free_zone",
     "Import for Re-Export": "form.declarationType.import_re_export",
     "Temporary Import": "form.declarationType.temporary_import",
+    Transfer: "form.declarationType.transfer",
+    Export: "form.declarationType.export",
+    "Transit out": "form.declarationType.transit_out",
+    "Export to GCC": "form.declarationType.export_gcc",
     Transitin: "form.declarationType.transitin",
     "Transitin from GCC": "form.declarationType.transitin_gcc",
   };
@@ -61,7 +63,15 @@ function portTypeLabel(value: string | undefined, t: (key: MessageKey) => string
   return key ? t(key) : value;
 }
 
-export default function TransactionDetails({ role }: { role: Role }) {
+type TransactionModule = "transactions" | "transfers" | "exports";
+
+export default function TransactionDetails({
+  role,
+  module = "transactions",
+}: {
+  role: Role;
+  module?: TransactionModule;
+}) {
   const { t, numberLocale } = useI18n();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -83,23 +93,23 @@ export default function TransactionDetails({ role }: { role: Role }) {
 
   useEffect(() => {
     if (!id) return;
-    apiFetch(`/api/transactions/${id}`)
+    apiFetch(`/api/${module}/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("not-found");
         return res.json();
       })
       .then((data) => setTransaction(data))
       .catch(() => setError(t("details.loadError")));
-  }, [id, t]);
+  }, [id, t, module]);
 
   const onDelete = async () => {
     if (!id) return;
     if (!window.confirm(t("details.deleteConfirm"))) return;
     setDeleting(true);
     try {
-      const res = await apiFetch(`/api/transactions/${id}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/${module}/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("delete-failed");
-      navigate("/");
+      navigate(`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/");
     } catch {
       setError(t("details.deleteError"));
     } finally {
@@ -112,7 +122,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
     setProcessing(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/transactions/${id}/${action}`, { method: "POST" });
+      const res = await apiFetch(`/api/${module}/${id}/${action}`, { method: "POST" });
       if (!res.ok) {
         const payload = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error ?? "failed");
@@ -130,7 +140,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
   return (
     <main className="container">
       <div className="page-actions">
-        <Link to="/" className="link-button">
+        <Link to={`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/"} className="link-button">
           {t("details.back")}
         </Link>
         {id ? (
@@ -138,7 +148,7 @@ export default function TransactionDetails({ role }: { role: Role }) {
             {" | "}
             {role !== "accountant" ? (
               <>
-                <Link to={`/transactions/${id}/edit`} className="link-button">
+                <Link to={`/${module}/${id}/edit`} className="link-button">
                   {t("details.edit")}
                 </Link>
                 {" | "}
@@ -182,7 +192,13 @@ export default function TransactionDetails({ role }: { role: Role }) {
           </>
         ) : null}
       </div>
-      <h1>{t("details.title")}</h1>
+      <h1>
+        {module === "transactions"
+          ? t("details.title")
+          : module === "transfers"
+            ? t("transfer.details.title" as MessageKey)
+            : t("export.details.title" as MessageKey)}
+      </h1>
       {error ? <p className="error">{error}</p> : null}
       {!transaction && !error ? <p>{t("details.loading")}</p> : null}
       {transaction && (
