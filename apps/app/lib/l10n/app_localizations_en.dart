@@ -429,5 +429,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountantNoTransactionForm => 'Accountant role cannot create or edit transactions in this form.';
 
   @override
-  String get saveDisabledLocked => 'Save is disabled for Internal delivery and External transfer stages.';
+  String get saveDisabledLocked => 'Save is disabled for Transportation and Storage stages.';
 }

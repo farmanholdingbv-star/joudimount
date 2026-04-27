@@ -938,7 +938,7 @@ abstract class AppLocalizations {
   /// No description provided for @saveDisabledLocked.
   ///
   /// In en, this message translates to:
-  /// **'Save is disabled for Internal delivery and External transfer stages.'**
+  /// **'Save is disabled for Transportation and Storage stages.'**
   String get saveDisabledLocked;
 }
 

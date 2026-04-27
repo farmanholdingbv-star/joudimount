@@ -140,5 +140,5 @@
   "optionalSelect": "— select —",
   "rememberMe": "Remember me",
   "accountantNoTransactionForm": "Accountant role cannot create or edit transactions in this form.",
-  "saveDisabledLocked": "Save is disabled for Internal delivery and External transfer stages."
+  "saveDisabledLocked": "Save is disabled for transportation stages."
 }

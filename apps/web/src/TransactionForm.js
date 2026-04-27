@@ -24,27 +24,38 @@ const QUALITY_OPTIONS = [
     { value: "mixed", labelKey: "form.quality.mixed" },
 ];
 const CURRENCY_OPTIONS = ["AED", "USD", "EUR", "SAR"];
-const DECLARATION_TYPE_OPTIONS = [
-    "Import",
-    "Import to Free Zone",
-    "Import for Re-Export",
-    "Temporary Import",
-    "Transit in",
-    "Transit in from GCC",
+const DECLARATION_TYPE_OPTIONS_BY_MODULE = {
+    transactions: [
+        { value: "Import", labelKey: "form.declarationType.import" },
+        { value: "Import to Free Zone", labelKey: "form.declarationType.import_free_zone" },
+        { value: "Import for Re-Export", labelKey: "form.declarationType.import_re_export" },
+        { value: "Temporary Import", labelKey: "form.declarationType.temporary_import" },
+        { value: "Transitin", labelKey: "form.declarationType.transitin" },
+        { value: "Transitin from GCC", labelKey: "form.declarationType.transitin_gcc" },
+    ],
+    transfers: [{ value: "Transfer", labelKey: "form.declarationType.transfer" }],
+    exports: [
+        { value: "Export", labelKey: "form.declarationType.export" },
+        { value: "Transit out", labelKey: "form.declarationType.transit_out" },
+        { value: "Export to GCC", labelKey: "form.declarationType.export_gcc" },
+    ],
+};
+const PORT_TYPE_OPTIONS = [
+    { value: "Seaports", labelKey: "form.portType.seaports" },
+    { value: "Free Zones", labelKey: "form.portType.free_zones" },
+    { value: "Mainland", labelKey: "form.portType.mainland" },
 ];
-const PORT_TYPE_OPTIONS = ["Seaports", "Free Zones", "Mainland"];
 const DOCUMENT_CATEGORY_OPTIONS = [
-    { value: "bill_of_lading", label: "Bill of Lading" },
-    { value: "certificate_of_origin", label: "Certificate of Origin" },
-    { value: "invoice", label: "Invoice" },
-    { value: "packing_list", label: "Packing List" },
+    { value: "bill_of_lading", labelKey: "docCategory.bill_of_lading" },
+    { value: "certificate_of_origin", labelKey: "docCategory.certificate_of_origin" },
+    { value: "invoice", labelKey: "docCategory.invoice" },
+    { value: "packing_list", labelKey: "docCategory.packing_list" },
 ];
 const STAGE_OPTIONS = [
     "PREPARATION",
     "CUSTOMS_CLEARANCE",
+    "TRANSPORTATION",
     "STORAGE",
-    "INTERNAL_DELIVERY",
-    "EXTERNAL_TRANSFER",
 ];
 function isoToDateInput(iso) {
     if (!iso)
@@ -57,10 +68,11 @@ function isoToDateInput(iso) {
 function isImageFile(name) {
     return /\.(png|jpe?g|gif|webp)$/i.test(name);
 }
-function categoryLabel(category) {
+function categoryLabel(category, t) {
     if (!category)
-        return "Uncategorized";
-    return DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === category)?.label ?? category;
+        return t ? t("docCategory.uncategorized") : "Uncategorized";
+    const key = DOCUMENT_CATEGORY_OPTIONS.find((o) => o.value === category)?.labelKey;
+    return key && t ? t(key) : category;
 }
 const emptyForm = {
     clientName: "",
@@ -69,9 +81,22 @@ const emptyForm = {
     declarationNumber: "",
     declarationNumber2: "",
     declarationDate: "",
+    orderDate: "",
     declarationType: "",
     declarationType2: "",
     portType: "",
+    containerSize: "",
+    portOfLading: "",
+    portOfDischarge: "",
+    destination: "",
+    transportationTo: "",
+    trachNo: "",
+    transportationCompany: "",
+    transportationFrom: "",
+    transportationToLocation: "",
+    tripCharge: "",
+    waitingCharge: "",
+    maccrikCharge: "",
     airwayBill: "",
     hsCode: "",
     goodsDescription: "",
@@ -88,6 +113,7 @@ const emptyForm = {
     fileNumber: "",
     containerNumbers: "",
     unitCount: "",
+    unitNumber: "",
     isStopped: "no",
     stopReason: "",
     goodsQuantity: "",
@@ -121,7 +147,7 @@ async function parseApiErrorMessage(res) {
         return text.trim() ? `HTTP ${status}: ${text.trim().slice(0, 400)}` : `HTTP ${status}`;
     }
 }
-export default function TransactionForm({ role }) {
+export default function TransactionForm({ role, module = "transactions", }) {
     const { t, numberLocale } = useI18n();
     const navigate = useNavigate();
     const { id: routeId } = useParams();
@@ -152,7 +178,7 @@ export default function TransactionForm({ role }) {
     useEffect(() => {
         if (!isEdit || !routeId)
             return;
-        apiFetch(`/api/transactions/${routeId}`)
+        apiFetch(`/api/${module}/${routeId}`)
             .then((res) => {
             if (!res.ok)
                 throw new Error("not-found");
@@ -163,7 +189,6 @@ export default function TransactionForm({ role }) {
                 declarationNumber: data.declarationNumber,
                 declarationNumber2: data.declarationNumber2,
                 releaseCode: data.releaseCode,
-                customsDuty: data.customsDuty,
                 clearanceStatus: data.clearanceStatus,
                 createdAt: data.createdAt,
                 transactionStage: data.transactionStage,
@@ -176,9 +201,22 @@ export default function TransactionForm({ role }) {
                 declarationNumber: data.declarationNumber ?? "",
                 declarationNumber2: data.declarationNumber2 ?? "",
                 declarationDate: isoToDateInput(data.declarationDate),
+                orderDate: isoToDateInput(data.orderDate),
                 declarationType: data.declarationType ?? "",
                 declarationType2: data.declarationType2 ?? "",
                 portType: data.portType ?? "",
+                containerSize: data.containerSize ?? "",
+                portOfLading: data.portOfLading ?? "",
+                portOfDischarge: data.portOfDischarge ?? "",
+                destination: data.destination ?? "",
+                transportationTo: data.transportationTo ?? "",
+                trachNo: data.trachNo ?? "",
+                transportationCompany: data.transportationCompany ?? "",
+                transportationFrom: data.transportationFrom ?? "",
+                transportationToLocation: data.transportationToLocation ?? "",
+                tripCharge: data.tripCharge != null ? String(data.tripCharge) : "",
+                waitingCharge: data.waitingCharge != null ? String(data.waitingCharge) : "",
+                maccrikCharge: data.maccrikCharge != null ? String(data.maccrikCharge) : "",
                 airwayBill: data.airwayBill,
                 hsCode: data.hsCode,
                 goodsDescription: data.goodsDescription,
@@ -195,6 +233,7 @@ export default function TransactionForm({ role }) {
                 fileNumber: data.fileNumber ?? "",
                 containerNumbers: data.containerNumbers?.join(", ") ?? "",
                 unitCount: data.unitCount != null ? String(data.unitCount) : "",
+                unitNumber: data.unitNumber != null ? String(data.unitNumber) : "",
                 isStopped: data.isStopped ? "yes" : "no",
                 stopReason: data.stopReason ?? "",
                 goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
@@ -205,7 +244,7 @@ export default function TransactionForm({ role }) {
             setNewDocFiles([]);
         })
             .catch(() => setError(t("form.loadError")));
-    }, [routeId, isEdit, t]);
+    }, [routeId, isEdit, t, module]);
     const derivedWeight = useMemo(() => {
         const inv = Number(form.invoiceValue);
         const rate = Number(form.invoiceToWeightRateAedPerKg);
@@ -251,7 +290,7 @@ export default function TransactionForm({ role }) {
     const groupedRetainedDocs = useMemo(() => {
         const groups = new Map();
         for (const d of retainedDocs) {
-            const key = categoryLabel(d.category);
+            const key = categoryLabel(d.category, t);
             const arr = groups.get(key) ?? [];
             arr.push(d);
             groups.set(key, arr);
@@ -272,7 +311,12 @@ export default function TransactionForm({ role }) {
         try {
             const fd = new FormData();
             fd.append("clientName", form.clientName);
-            fd.append("shippingCompanyName", form.shippingCompanyName);
+            const effectiveShippingCompanyName = module === "transactions"
+                ? form.shippingCompanyName
+                : form.destination.trim() || form.portOfDischarge.trim() || "N/A";
+            const effectiveAirwayBill = module === "transactions" ? form.airwayBill : form.portOfLading.trim() || "N/A";
+            const effectiveInvoiceValue = module === "transactions" ? Number(form.invoiceValue) : Math.max(1, Number(form.invoiceValue) || 1);
+            fd.append("shippingCompanyName", effectiveShippingCompanyName);
             if (form.shippingCompanyId?.trim())
                 fd.append("shippingCompanyId", form.shippingCompanyId.trim());
             if (form.declarationNumber.trim())
@@ -281,17 +325,40 @@ export default function TransactionForm({ role }) {
                 fd.append("declarationNumber2", form.declarationNumber2.trim());
             if (form.declarationDate)
                 fd.append("declarationDate", form.declarationDate);
+            if (form.orderDate)
+                fd.append("orderDate", form.orderDate);
             if (form.declarationType.trim())
                 fd.append("declarationType", form.declarationType.trim());
             if (form.declarationType2.trim())
                 fd.append("declarationType2", form.declarationType2.trim());
             if (form.portType.trim())
                 fd.append("portType", form.portType.trim());
-            fd.append("airwayBill", form.airwayBill);
+            if (form.containerSize.trim())
+                fd.append("containerSize", form.containerSize.trim());
+            if (form.portOfLading.trim())
+                fd.append("portOfLading", form.portOfLading.trim());
+            if (form.portOfDischarge.trim())
+                fd.append("portOfDischarge", form.portOfDischarge.trim());
+            if (form.destination.trim())
+                fd.append("destination", form.destination.trim());
+            if (form.transportationTo.trim())
+                fd.append("transportationTo", form.transportationTo.trim());
+            if (form.trachNo.trim())
+                fd.append("trachNo", form.trachNo.trim());
+            if (form.transportationCompany.trim())
+                fd.append("transportationCompany", form.transportationCompany.trim());
+            if (form.transportationFrom.trim())
+                fd.append("transportationFrom", form.transportationFrom.trim());
+            if (form.transportationToLocation.trim())
+                fd.append("transportationToLocation", form.transportationToLocation.trim());
+            appendOptionalNumber(fd, "tripCharge", form.tripCharge);
+            appendOptionalNumber(fd, "waitingCharge", form.waitingCharge);
+            appendOptionalNumber(fd, "maccrikCharge", form.maccrikCharge);
+            fd.append("airwayBill", effectiveAirwayBill);
             fd.append("hsCode", form.hsCode);
             fd.append("goodsDescription", form.goodsDescription);
             fd.append("originCountry", form.originCountry.toUpperCase());
-            fd.append("invoiceValue", String(form.invoiceValue));
+            fd.append("invoiceValue", String(effectiveInvoiceValue));
             if (form.invoiceCurrency)
                 fd.append("invoiceCurrency", form.invoiceCurrency);
             fd.append("documentStatus", form.documentStatus);
@@ -320,6 +387,7 @@ export default function TransactionForm({ role }) {
                     fd.append("containerNumbers", JSON.stringify(values));
             }
             appendOptionalNumber(fd, "unitCount", form.unitCount);
+            appendOptionalNumber(fd, "unitNumber", form.unitNumber);
             fd.append("isStopped", form.isStopped === "yes" ? "true" : "false");
             if (form.stopReason.trim())
                 fd.append("stopReason", form.stopReason.trim());
@@ -332,7 +400,7 @@ export default function TransactionForm({ role }) {
                 fd.append("existingAttachments", JSON.stringify(retainedDocs));
             }
             if (newDocFiles.some((item) => !item.category)) {
-                setError("Please choose a category for each uploaded document.");
+                setError(t("form.categoryRequiredError"));
                 return;
             }
             if (newDocFiles.length) {
@@ -341,7 +409,7 @@ export default function TransactionForm({ role }) {
             for (const item of newDocFiles) {
                 fd.append("documentPhotos", item.file);
             }
-            const res = await apiFetch(`/api/transactions${isEdit ? `/${routeId}` : ""}`, {
+            const res = await apiFetch(`/api/${module}${isEdit ? `/${routeId}` : ""}`, {
                 method: isEdit ? "PUT" : "POST",
                 body: fd,
             });
@@ -351,7 +419,7 @@ export default function TransactionForm({ role }) {
                 return;
             }
             const data = (await res.json());
-            navigate(`/transactions/${data.id}`);
+            navigate(`/${module}/${data.id}`);
         }
         catch {
             setError(t("form.saveError"));
@@ -363,15 +431,13 @@ export default function TransactionForm({ role }) {
     const stageLabel = (value) => {
         switch (value) {
             case "PREPARATION":
-                return "Preparation";
+                return t("stage.PREPARATION");
             case "CUSTOMS_CLEARANCE":
-                return "Customs clearance";
+                return t("stage.CUSTOMS_CLEARANCE");
+            case "TRANSPORTATION":
+                return t("stage.TRANSPORTATION");
             case "STORAGE":
-                return "Storage";
-            case "INTERNAL_DELIVERY":
-                return "Internal delivery";
-            case "EXTERNAL_TRANSFER":
-                return "External transfer";
+                return t("stage.STORAGE");
             default:
                 return value;
         }
@@ -379,13 +445,13 @@ export default function TransactionForm({ role }) {
     const setTransactionStage = async (nextStage) => {
         if (!isEdit || !routeId || nextStage === stage)
             return;
-        const res = await apiFetch(`/api/transactions/${routeId}/stage`, {
+        const res = await apiFetch(`/api/${module}/${routeId}/stage`, {
             method: "POST",
             body: JSON.stringify({ stage: nextStage }),
         });
         if (!res.ok) {
             const detail = await parseApiErrorMessage(res);
-            setError(detail || "Failed to change stage");
+            setError(detail || t("form.stageChangeError"));
             return;
         }
         const data = (await res.json());
@@ -395,12 +461,40 @@ export default function TransactionForm({ role }) {
     const prepEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
     const customsEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
     const storageEditable = !isEdit || stage === "PREPARATION" || stage === "STORAGE";
-    const fullyLocked = isEdit && (stage === "INTERNAL_DELIVERY" || stage === "EXTERNAL_TRANSFER");
+    const fullyLocked = false;
     /** Stage can move forward or back; only manager and employee2 may call the API. */
     const canSetStage = role === "manager" || role === "employee2";
     /** Customs Declaration + file number: hidden for new transactions and in Preparation; visible from Customs clearance onward when editing. */
     const showCustomsDeclarationSection = isEdit && stage !== "PREPARATION";
-    return (_jsxs("main", { className: "container", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: "/", className: "link-button", children: t("form.back") }) }), _jsx("h1", { children: isEdit ? t("form.editTitle") : t("form.newTitle") }), error ? _jsx("p", { className: "error", children: error }) : null, _jsxs("form", { className: "details-card form-grid", noValidate: true, onSubmit: onSubmit, children: [isEdit && editMeta ? (_jsxs(_Fragment, { children: [_jsxs("label", { className: "full-row", children: ["Transaction Stage", _jsx("select", { value: stage, onChange: (e) => setTransactionStage(e.target.value), disabled: !canSetStage, children: STAGE_OPTIONS.map((s) => (_jsx("option", { value: s, children: stageLabel(s) }, s))) })] }), _jsx("h2", { className: "form-section-title full-row", children: "Transaction Snapshot (Read-only)" }), editMeta.createdAt ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.createdAt"), ":"] }), " ", new Date(editMeta.createdAt).toLocaleString(numberLocale)] })) : null, editMeta.declarationNumber ? (_jsxs("p", { className: "details-item", children: [_jsx("strong", { children: "Declaration Number (1):" }), " ", editMeta.declarationNumber] })) : null, editMeta.declarationNumber2 ? (_jsxs("p", { className: "details-item", children: [_jsx("strong", { children: "Declaration Number (2):" }), " ", editMeta.declarationNumber2] })) : null, editMeta.releaseCode ? (_jsxs("p", { className: "details-item", children: [_jsx("strong", { children: "Release Code:" }), " ", editMeta.releaseCode] })) : null, typeof editMeta.customsDuty === "number" ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.duty"), ":"] }), " ", editMeta.customsDuty.toLocaleString(numberLocale), " ", t("details.currencySuffix")] })) : null, editMeta.clearanceStatus ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.status"), ":"] }), " ", editMeta.clearanceStatus] })) : null, _jsxs("p", { className: "details-item", children: [_jsx("strong", { children: "Stage:" }), " ", stageLabel(stage)] })] })) : null, showCustomsDeclarationSection ? (_jsxs("label", { children: ["File Number", _jsx("input", { value: form.fileNumber, disabled: !customsEditable, onChange: (e) => setForm({ ...form, fileNumber: e.target.value }) })] })) : null, _jsx("h2", { className: "form-section-title full-row", children: "Parties" }), _jsx(AutocompleteField, { label: t("form.clientName"), value: form.clientName, onChange: (clientName) => setForm({ ...form, clientName }), onSelectSuggestion: (key) => {
+    const isTransferOrExport = module === "transfers" || module === "exports";
+    const declarationTypeOptions = DECLARATION_TYPE_OPTIONS_BY_MODULE[module];
+    if (isTransferOrExport) {
+        return (_jsxs("main", { className: "container", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: `/${module}`, className: "link-button", children: t("form.back") }) }), _jsx("h1", { children: module === "transfers"
+                        ? isEdit
+                            ? t("transfer.form.editTitle")
+                            : t("transfer.form.newTitle")
+                        : isEdit
+                            ? t("export.form.editTitle")
+                            : t("export.form.newTitle") }), error ? _jsx("p", { className: "error", children: error }) : null, _jsxs("form", { className: "details-card form-grid", noValidate: true, onSubmit: onSubmit, children: [isEdit ? (_jsxs("label", { className: "full-row", children: [t("form.stage"), _jsx("select", { value: stage, onChange: (e) => setTransactionStage(e.target.value), disabled: !canSetStage, children: STAGE_OPTIONS.map((s) => (_jsx("option", { value: s, children: stageLabel(s) }, s))) })] })) : null, _jsx(AutocompleteField, { label: t("form.clientName"), value: form.clientName, onChange: (clientName) => setForm({ ...form, clientName }), onSelectSuggestion: (key) => {
+                                const c = clients.find((x) => x.id === key);
+                                if (c)
+                                    setForm((f) => ({ ...f, clientName: c.companyName }));
+                            }, suggestions: clientSuggestions, disabled: !prepEditable, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.orderDate"), _jsx("input", { type: "date", value: form.orderDate, onChange: (e) => setForm({ ...form, orderDate: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.containerSize"), _jsx("input", { value: form.containerSize, onChange: (e) => setForm({ ...form, containerSize: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.portOfLading"), _jsx("input", { value: form.portOfLading, onChange: (e) => setForm({ ...form, portOfLading: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.portOfDischarge"), _jsx("input", { value: form.portOfDischarge, onChange: (e) => setForm({ ...form, portOfDischarge: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.destination"), _jsx("input", { value: form.destination, onChange: (e) => setForm({ ...form, destination: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: [t("form.unitNumber"), _jsx("input", { type: "number", min: 0, step: 1, value: form.unitNumber, onChange: (e) => setForm({ ...form, unitNumber: e.target.value }), required: true })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), _jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), required: true, children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.stopTransaction"), _jsxs("select", { value: form.isStopped, onChange: (e) => setForm({ ...form, isStopped: e.target.value }), children: [_jsx("option", { value: "no", children: t("form.no") }), _jsx("option", { value: "yes", children: t("form.yes") })] })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.goodsQuality"), _jsxs("select", { value: form.goodsQuality, onChange: (e) => setForm({ ...form, goodsQuality: e.target.value }), required: true, children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), QUALITY_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }), required: true })] }), showCustomsDeclarationSection ? (_jsxs(_Fragment, { children: [_jsx("h2", { className: "form-section-title full-row", children: t("form.customsDeclarationSection") }), _jsxs("label", { children: [t("form.fileNumber"), _jsx("input", { value: form.fileNumber, onChange: (e) => setForm({ ...form, fileNumber: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationNumber1"), _jsx("input", { value: form.declarationNumber, onChange: (e) => setForm({ ...form, declarationNumber: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationNumber2"), _jsx("input", { value: form.declarationNumber2, onChange: (e) => setForm({ ...form, declarationNumber2: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationDate"), _jsx("input", { type: "date", value: form.declarationDate, onChange: (e) => setForm({ ...form, declarationDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationType1"), _jsxs("select", { value: form.declarationType, onChange: (e) => setForm({ ...form, declarationType: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), declarationTypeOptions.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }), _jsxs("label", { children: [t("form.declarationType2"), _jsxs("select", { value: form.declarationType2, onChange: (e) => setForm({ ...form, declarationType2: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), declarationTypeOptions.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }), _jsxs("label", { children: [t("form.portType"), _jsxs("select", { value: form.portType, onChange: (e) => setForm({ ...form, portType: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), PORT_TYPE_OPTIONS.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] })] })) : null, isEdit && (stage === "TRANSPORTATION" || stage === "STORAGE") ? (_jsxs(_Fragment, { children: [_jsx("h2", { className: "form-section-title full-row", children: t("transportation.sectionTitle") }), _jsxs("label", { children: [t("transportation.toUpper"), _jsx("input", { value: form.transportationTo, onChange: (e) => setForm({ ...form, transportationTo: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.trachNo"), _jsx("input", { value: form.trachNo, onChange: (e) => setForm({ ...form, trachNo: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.company"), _jsx("input", { value: form.transportationCompany, onChange: (e) => setForm({ ...form, transportationCompany: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.from"), _jsx("input", { value: form.transportationFrom, onChange: (e) => setForm({ ...form, transportationFrom: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.to"), _jsx("input", { value: form.transportationToLocation, onChange: (e) => setForm({ ...form, transportationToLocation: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.tripCharge"), _jsx("input", { type: "number", min: 0, step: "any", value: form.tripCharge, onChange: (e) => setForm({ ...form, tripCharge: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.waitingCharge"), _jsx("input", { type: "number", min: 0, step: "any", value: form.waitingCharge, onChange: (e) => setForm({ ...form, waitingCharge: e.target.value }) })] }), _jsxs("label", { children: [t("transportation.maccrikCharge"), _jsx("input", { type: "number", min: 0, step: "any", value: form.maccrikCharge, onChange: (e) => setForm({ ...form, maccrikCharge: e.target.value }) })] })] })) : null, form.isStopped === "yes" ? (_jsxs("label", { className: "full-row", children: [t("form.stopReason"), _jsx("textarea", { value: form.stopReason, onChange: (e) => setForm({ ...form, stopReason: e.target.value }), rows: 2, required: true })] })) : null, _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), _jsx("input", { type: "file", accept: "image/*,application/pdf", multiple: true, onChange: (e) => setNewDocFiles(Array.from(e.target.files ?? []).map((file) => ({
+                                        file,
+                                        category: "",
+                                    }))) }), newDocFiles.length > 0 ? (_jsx("div", { className: "full-row", children: newDocFiles.map((item, idx) => (_jsxs("label", { children: [item.file.name, _jsxs("select", { value: item.category, onChange: (e) => setNewDocFiles((prev) => prev.map((p, i) => (i === idx ? { ...p, category: e.target.value } : p))), required: true, children: [_jsx("option", { value: "", children: t("form.selectDocumentCategory") }), DOCUMENT_CATEGORY_OPTIONS.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }, `${item.file.name}-${idx}`))) })) : null] }), _jsx("button", { className: "primary-button", type: "submit", disabled: loading, children: loading ? t("form.saving") : t("form.save") })] })] }));
+    }
+    return (_jsxs("main", { className: "container", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: `/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/", className: "link-button", children: t("form.back") }) }), _jsx("h1", { children: module === "transactions"
+                    ? isEdit
+                        ? t("form.editTitle")
+                        : t("form.newTitle")
+                    : module === "transfers"
+                        ? isEdit
+                            ? t("transfer.form.editTitle")
+                            : t("transfer.form.newTitle")
+                        : isEdit
+                            ? t("export.form.editTitle")
+                            : t("export.form.newTitle") }), error ? _jsx("p", { className: "error", children: error }) : null, _jsxs("form", { className: "details-card form-grid", noValidate: true, onSubmit: onSubmit, children: [isEdit && editMeta ? (_jsxs(_Fragment, { children: [_jsxs("label", { className: "full-row", children: [t("form.stage"), _jsx("select", { value: stage, onChange: (e) => setTransactionStage(e.target.value), disabled: !canSetStage, children: STAGE_OPTIONS.map((s) => (_jsx("option", { value: s, children: stageLabel(s) }, s))) })] }), _jsx("h2", { className: "form-section-title full-row", children: t("form.snapshotReadOnly") }), editMeta.createdAt ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.createdAt"), ":"] }), " ", new Date(editMeta.createdAt).toLocaleString(numberLocale)] })) : null, editMeta.declarationNumber ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("form.declarationNumber1"), ":"] }), " ", editMeta.declarationNumber] })) : null, editMeta.declarationNumber2 ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("form.declarationNumber2"), ":"] }), " ", editMeta.declarationNumber2] })) : null, editMeta.releaseCode ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.releaseCode"), ":"] }), " ", editMeta.releaseCode] })) : null, editMeta.clearanceStatus ? (_jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("details.status"), ":"] }), " ", editMeta.clearanceStatus] })) : null, _jsxs("p", { className: "details-item", children: [_jsxs("strong", { children: [t("form.stage"), ":"] }), " ", stageLabel(stage)] })] })) : null, showCustomsDeclarationSection ? (_jsxs("label", { children: [t("form.fileNumber"), _jsx("input", { value: form.fileNumber, disabled: !customsEditable, onChange: (e) => setForm({ ...form, fileNumber: e.target.value }) })] })) : null, _jsx("h2", { className: "form-section-title full-row", children: t("form.partiesSection") }), _jsx(AutocompleteField, { label: t("form.clientName"), value: form.clientName, onChange: (clientName) => setForm({ ...form, clientName }), onSelectSuggestion: (key) => {
                             const c = clients.find((x) => x.id === key);
                             if (c)
                                 setForm((f) => ({ ...f, clientName: c.companyName }));
@@ -408,7 +502,7 @@ export default function TransactionForm({ role }) {
                             const s = shippingCompanies.find((x) => x.id === key);
                             if (s)
                                 setForm((f) => ({ ...f, shippingCompanyName: s.companyName, shippingCompanyId: s.id }));
-                        }, suggestions: shippingSuggestions, disabled: !prepEditable, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.shippingCompanyId"), _jsx("input", { disabled: !prepEditable, value: form.shippingCompanyId ?? "", onChange: (e) => setForm({ ...form, shippingCompanyId: e.target.value }) })] }), showCustomsDeclarationSection ? (_jsxs(_Fragment, { children: [_jsx("h2", { className: "form-section-title full-row", children: "Customs Declaration" }), _jsxs("label", { children: ["Declaration Number (1)", _jsx("input", { disabled: !customsEditable, maxLength: 120, value: form.declarationNumber, onChange: (e) => setForm({ ...form, declarationNumber: e.target.value }) })] }), _jsxs("label", { children: ["Declaration Date", _jsx("input", { disabled: !customsEditable, type: "date", value: form.declarationDate, onChange: (e) => setForm({ ...form, declarationDate: e.target.value }) })] }), _jsxs("label", { children: ["Declaration Type (1)", _jsxs("select", { disabled: !customsEditable, value: form.declarationType, onChange: (e) => setForm({ ...form, declarationType: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), DECLARATION_TYPE_OPTIONS.map((option) => (_jsx("option", { value: option, children: option }, option)))] })] }), _jsxs("label", { children: ["Declaration Number (2)", _jsx("input", { disabled: !customsEditable, maxLength: 120, value: form.declarationNumber2, onChange: (e) => setForm({ ...form, declarationNumber2: e.target.value }) })] }), _jsxs("label", { children: ["Declaration Type (2)", _jsxs("select", { disabled: !customsEditable, value: form.declarationType2, onChange: (e) => setForm({ ...form, declarationType2: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), DECLARATION_TYPE_OPTIONS.map((option) => (_jsx("option", { value: option, children: option }, option)))] })] }), _jsxs("label", { children: ["Port Type", _jsxs("select", { disabled: !customsEditable, value: form.portType, onChange: (e) => setForm({ ...form, portType: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), PORT_TYPE_OPTIONS.map((option) => (_jsx("option", { value: option, children: option }, option)))] })] })] })) : null, _jsx("h2", { className: "form-section-title full-row", children: "Shipment Core" }), _jsxs("label", { children: [t("form.airwayBill"), _jsx("input", { disabled: !prepEditable, value: form.airwayBill, onChange: (e) => setForm({ ...form, airwayBill: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { disabled: !prepEditable, value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, disabled: !prepEditable, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: ["Currency", _jsx("select", { value: form.invoiceCurrency, disabled: !prepEditable, onChange: (e) => setForm({ ...form, invoiceCurrency: e.target.value }), children: CURRENCY_OPTIONS.map((currency) => (_jsx("option", { value: currency, children: currency }, currency))) })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, disabled: !prepEditable, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), !isEdit ? (_jsx(_Fragment, { children: _jsxs("label", { children: [t("form.numberOfUnits"), _jsx("input", { type: "number", disabled: !storageEditable, min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] }) })) : null, _jsx("h2", { className: "form-section-title full-row", children: "Cargo & Containers" }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", disabled: !prepEditable, min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), placeholder: derivedWeight != null ? `${t("form.derivedWeight")}: ${derivedWeight.toFixed(3)}` : undefined })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", disabled: !prepEditable, min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerArrivalDate"), _jsx("input", { type: "date", disabled: !customsEditable, value: form.containerArrivalDate, onChange: (e) => setForm({ ...form, containerArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", disabled: !prepEditable, min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuality"), _jsxs("select", { value: form.goodsQuality, disabled: !prepEditable, onChange: (e) => setForm({ ...form, goodsQuality: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), QUALITY_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), isEdit ? (_jsxs(_Fragment, { children: [_jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { disabled: !prepEditable, value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.numberOfUnits"), _jsx("input", { type: "number", disabled: !storageEditable, min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] })] })) : null, _jsxs("label", { children: [t("form.documentArrivalDate"), _jsx("input", { type: "date", disabled: !customsEditable, value: form.documentArrivalDate, onChange: (e) => setForm({ ...form, documentArrivalDate: e.target.value }) })] }), _jsxs("label", { children: ["Container Numbers", _jsx("textarea", { value: form.containerNumbers, disabled: !storageEditable, onChange: (e) => setForm({ ...form, containerNumbers: e.target.value }), rows: 3, placeholder: "e.g. MSKU1234567, TGHU9876543" })] }), _jsx("h2", { className: "form-section-title full-row", children: "Workflow & Status" }), _jsxs("label", { children: ["Stop Transaction", _jsxs("select", { disabled: !storageEditable, value: form.isStopped, onChange: (e) => setForm({ ...form, isStopped: e.target.value }), children: [_jsx("option", { value: "no", children: "No" }), _jsx("option", { value: "yes", children: "Yes" })] })] }), form.isStopped === "yes" ? (_jsxs("label", { children: ["Stop Reason", _jsx("textarea", { value: form.stopReason, disabled: !storageEditable, onChange: (e) => setForm({ ...form, stopReason: e.target.value }), rows: 2, required: true })] })) : null, _jsxs("label", { children: [t("form.documentStatus"), _jsxs("select", { value: form.documentStatus, disabled: !customsEditable, onChange: (e) => setForm({ ...form, documentStatus: e.target.value }), children: [_jsx("option", { value: "copy_received", children: "copy_received" }), _jsx("option", { value: "original_received", children: "original_received" }), _jsx("option", { value: "telex_release", children: "telex_release" })] })] }), _jsxs("label", { children: [t("form.paymentStatus"), _jsxs("select", { value: form.paymentStatus, onChange: (e) => setForm({ ...form, paymentStatus: e.target.value }), disabled: !customsEditable || role === "employee" || role === "employee2", children: [_jsx("option", { value: "pending", children: "pending" }), _jsx("option", { value: "paid", children: "paid" })] })] }), _jsx("h2", { className: "form-section-title full-row", children: "Attachments" }), _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), isEdit && retainedDocs.length > 0 ? (_jsx("div", { className: "retained-docs", children: groupedRetainedDocs.map(([group, docs]) => (_jsxs("div", { style: { marginBottom: 10 }, children: [_jsx("p", { style: { margin: "0 0 6px 0", fontWeight: 600 }, children: group }), _jsx("ul", { className: "retained-docs", children: docs.map((d) => (_jsxs("li", { children: [_jsxs("span", { style: { display: "inline-flex", alignItems: "center", gap: 8 }, children: [isImageFile(d.originalName) ? (_jsx("a", { href: `${API_BASE}${d.path}`, target: "_blank", rel: "noreferrer", children: _jsx("img", { src: `${API_BASE}${d.path}`, alt: d.originalName, style: {
+                        }, suggestions: shippingSuggestions, disabled: !prepEditable, required: true, hint: t("form.typeToSearch") }), _jsxs("label", { children: [t("form.shippingCompanyId"), _jsx("input", { disabled: !prepEditable, value: form.shippingCompanyId ?? "", onChange: (e) => setForm({ ...form, shippingCompanyId: e.target.value }) })] }), showCustomsDeclarationSection ? (_jsxs(_Fragment, { children: [_jsx("h2", { className: "form-section-title full-row", children: t("form.customsDeclarationSection") }), _jsxs("label", { children: [t("form.declarationNumber1"), _jsx("input", { disabled: !customsEditable, maxLength: 120, value: form.declarationNumber, onChange: (e) => setForm({ ...form, declarationNumber: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationDate"), _jsx("input", { disabled: !customsEditable, type: "date", value: form.declarationDate, onChange: (e) => setForm({ ...form, declarationDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationType1"), _jsxs("select", { disabled: !customsEditable, value: form.declarationType, onChange: (e) => setForm({ ...form, declarationType: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), declarationTypeOptions.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }), _jsxs("label", { children: [t("form.declarationNumber2"), _jsx("input", { disabled: !customsEditable, maxLength: 120, value: form.declarationNumber2, onChange: (e) => setForm({ ...form, declarationNumber2: e.target.value }) })] }), _jsxs("label", { children: [t("form.declarationType2"), _jsxs("select", { disabled: !customsEditable, value: form.declarationType2, onChange: (e) => setForm({ ...form, declarationType2: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), declarationTypeOptions.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }), _jsxs("label", { children: [t("form.portType"), _jsxs("select", { disabled: !customsEditable, value: form.portType, onChange: (e) => setForm({ ...form, portType: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), PORT_TYPE_OPTIONS.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] })] })) : null, _jsx("h2", { className: "form-section-title full-row", children: t("form.shipmentCoreSection") }), _jsxs("label", { children: [t("form.airwayBill"), _jsx("input", { disabled: !prepEditable, value: form.airwayBill, onChange: (e) => setForm({ ...form, airwayBill: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.hsCode"), _jsx("input", { disabled: !prepEditable, value: form.hsCode, onChange: (e) => setForm({ ...form, hsCode: e.target.value }), required: true })] }), _jsxs("label", { children: [t("form.origin"), _jsx("input", { value: form.originCountry, disabled: !prepEditable, onChange: (e) => setForm({ ...form, originCountry: e.target.value }), minLength: 2, maxLength: 2, required: true })] }), _jsxs("label", { children: [t("form.currency"), _jsx("select", { value: form.invoiceCurrency, disabled: !prepEditable, onChange: (e) => setForm({ ...form, invoiceCurrency: e.target.value }), children: CURRENCY_OPTIONS.map((currency) => (_jsx("option", { value: currency, children: currency }, currency))) })] }), _jsxs("label", { className: "full-row", children: [t("form.goodsDescription"), _jsx("textarea", { value: form.goodsDescription, disabled: !prepEditable, onChange: (e) => setForm({ ...form, goodsDescription: e.target.value }), rows: 3, required: true })] }), !isEdit ? (_jsx(_Fragment, { children: _jsxs("label", { children: [t("form.numberOfUnits"), _jsx("input", { type: "number", disabled: !storageEditable, min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] }) })) : null, _jsx("h2", { className: "form-section-title full-row", children: t("form.cargoContainersSection") }), _jsxs("label", { children: [t("form.goodsWeightKg"), _jsx("input", { type: "number", disabled: !prepEditable, min: 0, step: "any", value: form.goodsWeightKg, onChange: (e) => setForm({ ...form, goodsWeightKg: e.target.value }), placeholder: derivedWeight != null ? `${t("form.derivedWeight")}: ${derivedWeight.toFixed(3)}` : undefined })] }), _jsxs("label", { children: [t("form.containerCount"), _jsx("input", { type: "number", disabled: !prepEditable, min: 0, step: 1, value: form.containerCount, onChange: (e) => setForm({ ...form, containerCount: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerArrivalDate"), _jsx("input", { type: "date", disabled: !customsEditable, value: form.containerArrivalDate, onChange: (e) => setForm({ ...form, containerArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuantity"), _jsx("input", { type: "number", disabled: !prepEditable, min: 0, step: "any", value: form.goodsQuantity, onChange: (e) => setForm({ ...form, goodsQuantity: e.target.value }) })] }), _jsxs("label", { children: [t("form.goodsQuality"), _jsxs("select", { value: form.goodsQuality, disabled: !prepEditable, onChange: (e) => setForm({ ...form, goodsQuality: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), QUALITY_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), isEdit ? (_jsxs(_Fragment, { children: [_jsxs("label", { children: [t("form.goodsUnit"), _jsxs("select", { disabled: !prepEditable, value: form.goodsUnit, onChange: (e) => setForm({ ...form, goodsUnit: e.target.value }), children: [_jsx("option", { value: "", children: t("form.optionalSelect") }), UNIT_OPTIONS.map((o) => (_jsx("option", { value: o.value, children: t(o.labelKey) }, o.value)))] })] }), _jsxs("label", { children: [t("form.numberOfUnits"), _jsx("input", { type: "number", disabled: !storageEditable, min: 0, step: 1, value: form.unitCount, onChange: (e) => setForm({ ...form, unitCount: e.target.value }) })] })] })) : null, _jsxs("label", { children: [t("form.documentArrivalDate"), _jsx("input", { type: "date", disabled: !customsEditable, value: form.documentArrivalDate, onChange: (e) => setForm({ ...form, documentArrivalDate: e.target.value }) })] }), _jsxs("label", { children: [t("form.containerNumbers"), _jsx("textarea", { value: form.containerNumbers, disabled: !storageEditable, onChange: (e) => setForm({ ...form, containerNumbers: e.target.value }), rows: 3, placeholder: t("form.containerNumbersPlaceholder") })] }), _jsx("h2", { className: "form-section-title full-row", children: t("form.workflowStatusSection") }), _jsxs("label", { children: [t("form.stopTransaction"), _jsxs("select", { disabled: !storageEditable, value: form.isStopped, onChange: (e) => setForm({ ...form, isStopped: e.target.value }), children: [_jsx("option", { value: "no", children: t("form.no") }), _jsx("option", { value: "yes", children: t("form.yes") })] })] }), form.isStopped === "yes" ? (_jsxs("label", { children: [t("form.stopReason"), _jsx("textarea", { value: form.stopReason, disabled: !storageEditable, onChange: (e) => setForm({ ...form, stopReason: e.target.value }), rows: 2, required: true })] })) : null, _jsxs("label", { children: [t("form.documentStatus"), _jsxs("select", { value: form.documentStatus, disabled: !customsEditable, onChange: (e) => setForm({ ...form, documentStatus: e.target.value }), children: [_jsx("option", { value: "copy_received", children: t("form.documentStatus.copy_received") }), _jsx("option", { value: "original_received", children: t("form.documentStatus.original_received") }), _jsx("option", { value: "telex_release", children: t("form.documentStatus.telex_release") })] })] }), _jsxs("label", { children: [t("form.paymentStatus"), _jsxs("select", { value: form.paymentStatus, onChange: (e) => setForm({ ...form, paymentStatus: e.target.value }), disabled: !customsEditable || role === "employee" || role === "employee2", children: [_jsx("option", { value: "pending", children: t("form.paymentStatus.pending") }), _jsx("option", { value: "paid", children: t("form.paymentStatus.paid") })] })] }), _jsx("h2", { className: "form-section-title full-row", children: t("form.attachmentsSection") }), _jsxs("div", { className: "full-row doc-upload-block doc-upload-prominent", children: [_jsx("h2", { className: "doc-upload-heading", children: t("form.documentPhotosSection") }), _jsx("p", { className: "muted", children: t("form.documentPhotosHelp") }), isEdit && retainedDocs.length > 0 ? (_jsx("div", { className: "retained-docs", children: groupedRetainedDocs.map(([group, docs]) => (_jsxs("div", { style: { marginBottom: 10 }, children: [_jsx("p", { style: { margin: "0 0 6px 0", fontWeight: 600 }, children: group }), _jsx("ul", { className: "retained-docs", children: docs.map((d) => (_jsxs("li", { children: [_jsxs("span", { style: { display: "inline-flex", alignItems: "center", gap: 8 }, children: [isImageFile(d.originalName) ? (_jsx("a", { href: `${API_BASE}${d.path}`, target: "_blank", rel: "noreferrer", children: _jsx("img", { src: `${API_BASE}${d.path}`, alt: d.originalName, style: {
                                                                         width: 56,
                                                                         height: 56,
                                                                         objectFit: "cover",
@@ -417,5 +511,5 @@ export default function TransactionForm({ role }) {
                                                                     } }) })) : (_jsx("span", { style: { fontSize: 12, color: "#64748b" }, children: "PDF" })), _jsx("span", { children: d.originalName })] }), _jsx("button", { type: "button", className: "link-button", disabled: !prepEditable, onClick: () => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path)), children: t("form.removeAttachment") })] }, d.path))) })] }, group))) })) : null, _jsx("input", { type: "file", accept: "image/*,application/pdf", multiple: true, disabled: !prepEditable, onChange: (e) => setNewDocFiles(Array.from(e.target.files ?? []).map((file) => ({
                                     file,
                                     category: "",
-                                }))) }), newDocFiles.length > 0 ? (_jsxs(_Fragment, { children: [_jsxs("p", { className: "muted", children: [newDocFiles.length, " ", t("form.filesSelected")] }), _jsx("div", { className: "full-row", children: newDocFiles.map((item, idx) => (_jsxs("label", { children: [item.file.name, _jsxs("select", { value: item.category, disabled: !prepEditable, onChange: (e) => setNewDocFiles((prev) => prev.map((p, i) => i === idx ? { ...p, category: e.target.value } : p)), required: true, children: [_jsx("option", { value: "", children: "Select document category" }), DOCUMENT_CATEGORY_OPTIONS.map((option) => (_jsx("option", { value: option.value, children: option.label }, option.value)))] })] }, `${item.file.name}-${idx}`))) })] })) : null] }), fullyLocked ? (_jsx("p", { className: "muted full-row", role: "status", children: t("form.saveLockedHint") })) : null, _jsx("button", { className: "primary-button", type: "submit", disabled: loading || fullyLocked, children: loading ? t("form.saving") : t("form.save") })] })] }));
+                                }))) }), newDocFiles.length > 0 ? (_jsxs(_Fragment, { children: [_jsxs("p", { className: "muted", children: [newDocFiles.length, " ", t("form.filesSelected")] }), _jsx("div", { className: "full-row", children: newDocFiles.map((item, idx) => (_jsxs("label", { children: [item.file.name, _jsxs("select", { value: item.category, disabled: !prepEditable, onChange: (e) => setNewDocFiles((prev) => prev.map((p, i) => i === idx ? { ...p, category: e.target.value } : p)), required: true, children: [_jsx("option", { value: "", children: t("form.selectDocumentCategory") }), DOCUMENT_CATEGORY_OPTIONS.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }, `${item.file.name}-${idx}`))) })] })) : null] }), fullyLocked ? (_jsx("p", { className: "muted full-row", role: "status", children: t("form.saveLockedHint") })) : null, _jsx("button", { className: "primary-button", type: "submit", disabled: loading || fullyLocked, children: loading ? t("form.saving") : t("form.save") })] })] }));
 }
