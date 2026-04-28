@@ -251,7 +251,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).languageCode;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -278,9 +277,7 @@ class _LoginPageState extends State<LoginPage> {
                           color: Colors.white, size: 26),
                       const SizedBox(height: 8),
                       Text(
-                        locale == 'ar'
-                            ? 'تتبع شحناتك بسهولة'
-                            : 'Track shipments with confidence',
+                        l10n.loginBannerTitle,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -364,14 +361,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _appBarTitle(AppLocalizations l10n) {
-    final isAr = Lang.locale.value.toLowerCase().startsWith('ar');
     switch (_index) {
       case 1:
         return l10n.transactions;
       case 2:
-        return isAr ? 'التحويل' : 'Transfers';
+        return l10n.transfers;
       case 3:
-        return isAr ? 'التصدير' : 'Exports';
+        return l10n.exports;
       case 4:
         return l10n.clients;
       case 5:
@@ -431,9 +427,9 @@ class _HomePageState extends State<HomePage> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: Lang.locale.value,
-                      items: const [
-                        DropdownMenuItem(value: 'ar', child: Text('العربية')),
-                        DropdownMenuItem(value: 'en', child: Text('English')),
+                      items: [
+                        DropdownMenuItem(value: 'ar', child: Text(l10n.languageAr)),
+                        DropdownMenuItem(value: 'en', child: Text(l10n.languageEn)),
                       ],
                       onChanged: (v) {
                         if (v != null) Lang.setLocale(v);
@@ -458,9 +454,9 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.receipt_long_outlined),
               label: l10n.transactions),
           BottomNavigationBarItem(
-              icon: const Icon(Icons.swap_horiz_outlined), label: isAr ? 'التحويل' : 'Transfers'),
+              icon: const Icon(Icons.swap_horiz_outlined), label: l10n.transfers),
           BottomNavigationBarItem(
-              icon: const Icon(Icons.outbox_outlined), label: isAr ? 'التصدير' : 'Exports'),
+              icon: const Icon(Icons.outbox_outlined), label: l10n.exports),
           BottomNavigationBarItem(
               icon: const Icon(Icons.groups_outlined), label: l10n.clients),
           BottomNavigationBarItem(
@@ -1042,6 +1038,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _saving = true;
       _error = '';
@@ -1050,8 +1047,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
       final latStr = _lat.text.trim();
       final lngStr = _lng.text.trim();
       if (latStr.isEmpty != lngStr.isEmpty) {
-        setState(() =>
-            _error = 'Enter both latitude and longitude, or leave both empty.');
+        setState(() => _error = l10n.shippingLatLngBothOrEmpty);
         return;
       }
       final body = <String, dynamic>{
@@ -1077,7 +1073,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
         final lat = double.tryParse(latStr);
         final lng = double.tryParse(lngStr);
         if (lat == null || lng == null) {
-          setState(() => _error = 'Invalid latitude or longitude.');
+          setState(() => _error = l10n.shippingInvalidLatLng);
           return;
         }
         body['latitude'] = lat;
@@ -1130,8 +1126,8 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
             controller: _dispatchTemplate,
             minLines: 3,
             maxLines: 5,
-            decoration: const InputDecoration(
-                labelText: 'Dispatch Template (optional)'),
+            decoration: InputDecoration(
+                labelText: l10n.shippingDispatchTemplateOptional),
           ),
           TextField(
             controller: _lat,

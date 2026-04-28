@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signingIn => 'Signing in...';
 
   @override
-  String get tracker => 'import';
+  String get tracker => 'Tracker';
 
   @override
   String get dashboardTab => 'Dashboard';
@@ -54,7 +54,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noMatch => 'No matching import records';
 
   @override
-  String get details => 'Transaction Details';
+  String get details => 'Import Details';
 
   @override
   String get client => 'Client';
@@ -288,7 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelEdit => 'Cancel edit';
 
   @override
-  String get goTracker => 'Go to transactions';
+  String get goTracker => 'Go to import';
 
   @override
   String get roleFromAccount => 'Your role is determined by your login account.';
@@ -429,5 +429,116 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountantNoTransactionForm => 'Accountant role cannot create or edit import records in this form.';
 
   @override
-  String get saveDisabledLocked => 'Save is disabled for Transportation and Storage stages.';
+  String get saveDisabledLocked => 'Save is disabled for transportation stages.';
+
+  @override
+  String get transfers => 'Transfers';
+
+  @override
+  String get exports => 'Exports';
+
+  @override
+  String get languageAr => 'Arabic';
+
+  @override
+  String get languageEn => 'English';
+
+  @override
+  String get dashboardWelcomePrefix => 'Hello, ';
+
+  @override
+  String get dashboardSearchHint => 'Search import records, clients, declarations...';
+
+  @override
+  String get dashboardRecentImports => 'Recent import records';
+
+  @override
+  String get dashboardViewAll => 'View all';
+
+  @override
+  String get dashboardNewImport => 'New Import';
+
+  @override
+  String get dashboardImport => 'Import';
+
+  @override
+  String get dashboardNewTransfer => 'New Transfer';
+
+  @override
+  String get dashboardNewExport => 'New Export';
+
+  @override
+  String get dashboardTrackImportRecords => 'Track import records';
+
+  @override
+  String get dashboardAddClient => 'Add client';
+
+  @override
+  String get dashboardShippingCo => 'Shipping co.';
+
+  @override
+  String get dashboardHelpSupport => 'Help & support';
+
+  @override
+  String get dashboardMessagesSoon => 'Messages coming soon';
+
+  @override
+  String get dashboardNoNewNotifications => 'No new notifications';
+
+  @override
+  String get dashboardNoImportRecordsYet => 'No import records yet. Create one from the grid above.';
+
+  @override
+  String get moduleImportSingular => 'Import';
+
+  @override
+  String get moduleTransferSingular => 'Transfer';
+
+  @override
+  String get moduleExportSingular => 'Export';
+
+  @override
+  String get optionYes => 'Yes';
+
+  @override
+  String get optionNo => 'No';
+
+  @override
+  String get selectCategory => 'Select category';
+
+  @override
+  String get transferDetails => 'Transfer Details';
+
+  @override
+  String get exportDetails => 'Export Details';
+
+  @override
+  String get uncategorized => 'Uncategorized';
+
+  @override
+  String get loginBannerTitle => 'Track shipments with confidence';
+
+  @override
+  String get shippingDispatchTemplateOptional => 'Dispatch Template (optional)';
+
+  @override
+  String get shippingLatLngBothOrEmpty => 'Enter both latitude and longitude, or leave both empty.';
+
+  @override
+  String get shippingInvalidLatLng => 'Invalid latitude or longitude.';
+
+  @override
+  String get containerNumbers => 'Container Numbers';
+
+  @override
+  String get stopTransaction => 'Stop Transaction';
+
+  @override
+  String get stopReason => 'Stop Reason';
+
+  @override
+  String get uploadCategoryRequired => 'Please select a category for each uploaded document.';
+
+  @override
+  String get pdfFontLoadErrorPrefix => 'Could not load PDF font';
 }

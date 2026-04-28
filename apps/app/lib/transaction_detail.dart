@@ -29,9 +29,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
   String get _modulePath => '/api/${widget.module}';
 
   String _moduleTitle(AppLocalizations l10n) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (widget.module == 'transfers') return isAr ? 'تفاصيل التحويل' : 'Transfer Details';
-    if (widget.module == 'exports') return isAr ? 'تفاصيل التصدير' : 'Export Details';
+    if (widget.module == 'transfers') return l10n.transferDetails;
+    if (widget.module == 'exports') return l10n.exportDetails;
     return l10n.details;
   }
 
@@ -49,7 +48,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final out = <String, List<Map<String, dynamic>>>{};
     for (final a in attachments) {
       final category = (a['category'] ?? '').toString();
-      final key = category.isEmpty ? 'Uncategorized' : _docCategoryLabel(category);
+      final key = category.isEmpty ? AppLocalizations.of(context)!.uncategorized : _docCategoryLabel(category);
       out.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(a);
     }
     return out;
@@ -126,7 +125,9 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       arabicFont = pw.Font.ttf(await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf'));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not load PDF font: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.pdfFontLoadErrorPrefix}: $e')),
+      );
       return;
     }
     final pdfTheme = pw.ThemeData.withFont(

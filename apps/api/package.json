@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "fix:exports:stage": "tsx src/scripts/fix-export-storage-stage.ts",
+    "audit:stages": "tsx src/scripts/audit-stages.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

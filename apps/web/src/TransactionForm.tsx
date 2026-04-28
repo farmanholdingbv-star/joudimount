@@ -543,6 +543,8 @@ export default function TransactionForm({
   const showCustomsDeclarationSection = isEdit && stage !== "PREPARATION";
   const isTransferOrExport = module === "transfers" || module === "exports";
   const declarationTypeOptions = DECLARATION_TYPE_OPTIONS_BY_MODULE[module];
+  const moduleStageOptions: TransactionStage[] =
+    module === "exports" ? ["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION"] : STAGE_OPTIONS;
 
   if (isTransferOrExport) {
     return (
@@ -571,7 +573,7 @@ export default function TransactionForm({
                 onChange={(e) => setTransactionStage(e.target.value as TransactionStage)}
                 disabled={!canSetStage}
               >
-                {STAGE_OPTIONS.map((s) => (
+                {moduleStageOptions.map((s) => (
                   <option key={s} value={s}>
                     {stageLabel(s)}
                   </option>
@@ -893,7 +895,7 @@ export default function TransactionForm({
                 onChange={(e) => setTransactionStage(e.target.value as TransactionStage)}
                 disabled={!canSetStage}
               >
-                {STAGE_OPTIONS.map((s) => (
+                {moduleStageOptions.map((s) => (
                   <option key={s} value={s}>
                     {stageLabel(s)}
                   </option>

@@ -955,7 +955,7 @@ app.post("/api/exports/:id/stage", authenticate, async (req: AuthRequest, res) =
   const denied = ensureRole(req, res, ["manager", "employee2"]);
   if (!denied) return;
   const schema = z.object({
-    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"]),
+    stage: z.enum(["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION"]),
   });
   const result = schema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });

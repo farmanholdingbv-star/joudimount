@@ -134,7 +134,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactions.
   ///
   /// In en, this message translates to:
-  /// **'Transactions'**
+  /// **'Import'**
   String get transactions;
 
   /// No description provided for @clients.
@@ -182,13 +182,13 @@ abstract class AppLocalizations {
   /// No description provided for @noMatch.
   ///
   /// In en, this message translates to:
-  /// **'No matching transactions'**
+  /// **'No matching import records'**
   String get noMatch;
 
   /// No description provided for @details.
   ///
   /// In en, this message translates to:
-  /// **'Transaction Details'**
+  /// **'Import Details'**
   String get details;
 
   /// No description provided for @client.
@@ -248,7 +248,7 @@ abstract class AppLocalizations {
   /// No description provided for @newTransaction.
   ///
   /// In en, this message translates to:
-  /// **'New Transaction'**
+  /// **'New Import'**
   String get newTransaction;
 
   /// No description provided for @save.
@@ -656,7 +656,7 @@ abstract class AppLocalizations {
   /// No description provided for @goTracker.
   ///
   /// In en, this message translates to:
-  /// **'Go to tracker'**
+  /// **'Go to import'**
   String get goTracker;
 
   /// No description provided for @roleFromAccount.
@@ -674,7 +674,7 @@ abstract class AppLocalizations {
   /// No description provided for @editTransaction.
   ///
   /// In en, this message translates to:
-  /// **'Edit transaction'**
+  /// **'Edit import'**
   String get editTransaction;
 
   /// No description provided for @documentStatus.
@@ -734,13 +734,13 @@ abstract class AppLocalizations {
   /// No description provided for @deleteTransaction.
   ///
   /// In en, this message translates to:
-  /// **'Delete transaction'**
+  /// **'Delete import'**
   String get deleteTransaction;
 
   /// No description provided for @confirmDeleteTransaction.
   ///
   /// In en, this message translates to:
-  /// **'Delete this transaction?'**
+  /// **'Delete this import record?'**
   String get confirmDeleteTransaction;
 
   /// No description provided for @shippingPaper.
@@ -932,14 +932,236 @@ abstract class AppLocalizations {
   /// No description provided for @accountantNoTransactionForm.
   ///
   /// In en, this message translates to:
-  /// **'Accountant role cannot create or edit transactions in this form.'**
+  /// **'Accountant role cannot create or edit import records in this form.'**
   String get accountantNoTransactionForm;
 
   /// No description provided for @saveDisabledLocked.
   ///
   /// In en, this message translates to:
-  /// **'Save is disabled for Transportation and Storage stages.'**
+  /// **'Save is disabled for transportation stages.'**
   String get saveDisabledLocked;
+
+  /// No description provided for @transfers.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers'**
+  String get transfers;
+
+  /// No description provided for @exports.
+  ///
+  /// In en, this message translates to:
+  /// **'Exports'**
+  String get exports;
+
+  /// No description provided for @languageAr.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get languageAr;
+
+  /// No description provided for @languageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEn;
+
+  /// No description provided for @dashboardWelcomePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, '**
+  String get dashboardWelcomePrefix;
+
+  /// No description provided for @dashboardSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search import records, clients, declarations...'**
+  String get dashboardSearchHint;
+
+  /// No description provided for @dashboardRecentImports.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent import records'**
+  String get dashboardRecentImports;
+
+  /// No description provided for @dashboardViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get dashboardViewAll;
+
+  /// No description provided for @dashboardNewImport.
+  ///
+  /// In en, this message translates to:
+  /// **'New Import'**
+  String get dashboardNewImport;
+
+  /// No description provided for @dashboardImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get dashboardImport;
+
+  /// No description provided for @dashboardNewTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'New Transfer'**
+  String get dashboardNewTransfer;
+
+  /// No description provided for @dashboardNewExport.
+  ///
+  /// In en, this message translates to:
+  /// **'New Export'**
+  String get dashboardNewExport;
+
+  /// No description provided for @dashboardTrackImportRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Track import records'**
+  String get dashboardTrackImportRecords;
+
+  /// No description provided for @dashboardAddClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add client'**
+  String get dashboardAddClient;
+
+  /// No description provided for @dashboardShippingCo.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping co.'**
+  String get dashboardShippingCo;
+
+  /// No description provided for @dashboardHelpSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & support'**
+  String get dashboardHelpSupport;
+
+  /// No description provided for @dashboardMessagesSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages coming soon'**
+  String get dashboardMessagesSoon;
+
+  /// No description provided for @dashboardNoNewNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No new notifications'**
+  String get dashboardNoNewNotifications;
+
+  /// No description provided for @dashboardNoImportRecordsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No import records yet. Create one from the grid above.'**
+  String get dashboardNoImportRecordsYet;
+
+  /// No description provided for @moduleImportSingular.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get moduleImportSingular;
+
+  /// No description provided for @moduleTransferSingular.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get moduleTransferSingular;
+
+  /// No description provided for @moduleExportSingular.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get moduleExportSingular;
+
+  /// No description provided for @optionYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get optionYes;
+
+  /// No description provided for @optionNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get optionNo;
+
+  /// No description provided for @selectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select category'**
+  String get selectCategory;
+
+  /// No description provided for @transferDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer Details'**
+  String get transferDetails;
+
+  /// No description provided for @exportDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Details'**
+  String get exportDetails;
+
+  /// No description provided for @uncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get uncategorized;
+
+  /// No description provided for @loginBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track shipments with confidence'**
+  String get loginBannerTitle;
+
+  /// No description provided for @shippingDispatchTemplateOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch Template (optional)'**
+  String get shippingDispatchTemplateOptional;
+
+  /// No description provided for @shippingLatLngBothOrEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both latitude and longitude, or leave both empty.'**
+  String get shippingLatLngBothOrEmpty;
+
+  /// No description provided for @shippingInvalidLatLng.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid latitude or longitude.'**
+  String get shippingInvalidLatLng;
+
+  /// No description provided for @containerNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Container Numbers'**
+  String get containerNumbers;
+
+  /// No description provided for @stopTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Transaction'**
+  String get stopTransaction;
+
+  /// No description provided for @stopReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Reason'**
+  String get stopReason;
+
+  /// No description provided for @uploadCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a category for each uploaded document.'**
+  String get uploadCategoryRequired;
+
+  /// No description provided for @pdfFontLoadErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load PDF font'**
+  String get pdfFontLoadErrorPrefix;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

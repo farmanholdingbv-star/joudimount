@@ -24,9 +24,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
   String get _modulePath => '/api/${widget.module}';
 
   String _moduleTitle(AppLocalizations l10n) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (widget.module == 'transfers') return isAr ? 'التحويل' : 'Transfers';
-    if (widget.module == 'exports') return isAr ? 'التصدير' : 'Exports';
+    if (widget.module == 'transfers') return l10n.transfers;
+    if (widget.module == 'exports') return l10n.exports;
     return l10n.transactions;
   }
 

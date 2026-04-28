@@ -21,7 +21,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signingIn => 'جاري تسجيل الدخول...';
 
   @override
-  String get tracker => 'الإستيراد';
+  String get tracker => 'المتتبع';
 
   @override
   String get dashboardTab => 'لوحة التحكم';
@@ -54,7 +54,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noMatch => 'لا توجد نتائج مطابقة لسجلات الإستيراد';
 
   @override
-  String get details => 'تفاصيل المعاملة';
+  String get details => 'تفاصيل الاستيراد';
 
   @override
   String get client => 'العميل';
@@ -288,7 +288,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cancelEdit => 'إلغاء التعديل';
 
   @override
-  String get goTracker => 'الذهاب إلى المعاملات';
+  String get goTracker => 'الذهاب إلى الاستيراد';
 
   @override
   String get roleFromAccount => 'يُحدَّد الدور من حساب تسجيل الدخول.';
@@ -430,4 +430,115 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get saveDisabledLocked => 'الحفظ معطل في مراحل التسليم الداخلي أو الخارجي.';
+
+  @override
+  String get transfers => 'التحويل';
+
+  @override
+  String get exports => 'التصدير';
+
+  @override
+  String get languageAr => 'العربية';
+
+  @override
+  String get languageEn => 'English';
+
+  @override
+  String get dashboardWelcomePrefix => 'مرحباً، ';
+
+  @override
+  String get dashboardSearchHint => 'ابحث عن الاستيراد والعملاء والإقرارات';
+
+  @override
+  String get dashboardRecentImports => 'آخر سجلات الاستيراد';
+
+  @override
+  String get dashboardViewAll => 'عرض الكل';
+
+  @override
+  String get dashboardNewImport => 'استيراد جديد';
+
+  @override
+  String get dashboardImport => 'الإستيراد';
+
+  @override
+  String get dashboardNewTransfer => 'تحويل جديد';
+
+  @override
+  String get dashboardNewExport => 'تصدير جديد';
+
+  @override
+  String get dashboardTrackImportRecords => 'متابعة الاستيراد';
+
+  @override
+  String get dashboardAddClient => 'إضافة عميل';
+
+  @override
+  String get dashboardShippingCo => 'شركة شحن';
+
+  @override
+  String get dashboardHelpSupport => 'الدعم والمساعدة';
+
+  @override
+  String get dashboardMessagesSoon => 'الرسائل قريباً';
+
+  @override
+  String get dashboardNoNewNotifications => 'لا إشعارات جديدة';
+
+  @override
+  String get dashboardNoImportRecordsYet => 'لا سجلات استيراد بعد. أنشئ سجلًا من الشبكة أعلاه.';
+
+  @override
+  String get moduleImportSingular => 'استيراد';
+
+  @override
+  String get moduleTransferSingular => 'تحويل';
+
+  @override
+  String get moduleExportSingular => 'تصدير';
+
+  @override
+  String get optionYes => 'نعم';
+
+  @override
+  String get optionNo => 'لا';
+
+  @override
+  String get selectCategory => 'اختر الفئة';
+
+  @override
+  String get transferDetails => 'تفاصيل التحويل';
+
+  @override
+  String get exportDetails => 'تفاصيل التصدير';
+
+  @override
+  String get uncategorized => 'غير مصنف';
+
+  @override
+  String get loginBannerTitle => 'تتبع شحناتك بسهولة';
+
+  @override
+  String get shippingDispatchTemplateOptional => 'قالب الإرسال (اختياري)';
+
+  @override
+  String get shippingLatLngBothOrEmpty => 'أدخل خط العرض وخط الطول معًا، أو اتركهما فارغين.';
+
+  @override
+  String get shippingInvalidLatLng => 'خط العرض أو خط الطول غير صالح.';
+
+  @override
+  String get containerNumbers => 'أرقام الحاويات';
+
+  @override
+  String get stopTransaction => 'إيقاف المعاملة';
+
+  @override
+  String get stopReason => 'سبب الإيقاف';
+
+  @override
+  String get uploadCategoryRequired => 'يرجى اختيار فئة لكل مستند مرفوع.';
+
+  @override
+  String get pdfFontLoadErrorPrefix => 'تعذر تحميل خط ملف PDF';
 }

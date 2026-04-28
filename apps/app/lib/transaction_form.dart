@@ -92,20 +92,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   String get _modulePath => '/api/${widget.module}';
 
   String _moduleNoun(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (widget.module == 'transfers') return isAr ? 'تحويل' : 'Transfer';
-    if (widget.module == 'exports') return isAr ? 'تصدير' : 'Export';
-    return isAr ? 'معاملة' : 'Transaction';
+    final l10n = AppLocalizations.of(context)!;
+    if (widget.module == 'transfers') return l10n.moduleTransferSingular;
+    if (widget.module == 'exports') return l10n.moduleExportSingular;
+    return l10n.moduleImportSingular;
   }
 
   String _newLabel(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    return isAr ? 'جديد' : 'New';
+    return AppLocalizations.of(context)!.newLabel;
   }
 
   String _editLabel(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    return isAr ? 'تعديل' : 'Edit';
+    return AppLocalizations.of(context)!.edit;
   }
 
   bool get _isEdit {
@@ -328,6 +326,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _saving = true;
       _error = '';
@@ -338,7 +337,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         fields['existingAttachments'] = jsonEncode(_retainedDocs);
         if (_picked.isNotEmpty) {
           if (_pickedCategories.any((c) => c == null || c.isEmpty)) {
-            throw Exception('Please select a category for each uploaded document.');
+            throw Exception(l10n.uploadCategoryRequired);
           }
           fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
         }
@@ -348,7 +347,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           await Api.post(_modulePath, _jsonBody());
         } else {
           if (_pickedCategories.any((c) => c == null || c.isEmpty)) {
-            throw Exception('Please select a category for each uploaded document.');
+            throw Exception(l10n.uploadCategoryRequired);
           }
           final fields = _multipartStringFields();
           fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
@@ -609,18 +608,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           _field(_containers, l10n.txContainerCount, keyboard: TextInputType.number, enabled: prepEditable),
           _field(_containerArrival, l10n.txContainerArrival, enabled: customsEditable),
           _field(_documentArrival, l10n.txDocumentArrival, enabled: customsEditable),
-          _field(_containerNumbers, 'Container Numbers', maxLines: 3, enabled: storageEditable),
+          _field(_containerNumbers, l10n.containerNumbers, maxLines: 3, enabled: storageEditable),
           DropdownButtonFormField<bool>(
             key: ValueKey('tx-stop-$_isStopped'),
-            decoration: const InputDecoration(labelText: 'Stop Transaction'),
+            decoration: InputDecoration(labelText: l10n.stopTransaction),
             initialValue: _isStopped,
-            items: const [
-              DropdownMenuItem(value: false, child: Text('No')),
-              DropdownMenuItem(value: true, child: Text('Yes')),
+            items: [
+              DropdownMenuItem(value: false, child: Text(l10n.optionNo)),
+              DropdownMenuItem(value: true, child: Text(l10n.optionYes)),
             ],
             onChanged: storageEditable ? (v) => setState(() => _isStopped = v ?? false) : null,
           ),
-          if (_isStopped) _field(_stopReason, 'Stop Reason', maxLines: 2, enabled: storageEditable),
+          if (_isStopped) _field(_stopReason, l10n.stopReason, maxLines: 2, enabled: storageEditable),
           _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: prepEditable),
           DropdownButtonFormField<String?>(
             key: ValueKey('tx-quality-${_quality ?? 'none'}'),
@@ -784,7 +783,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                   decoration: InputDecoration(labelText: '${f.name} - Category'),
                   initialValue: _pickedCategories[idx],
                   items: [
-                    const DropdownMenuItem<String?>(value: null, child: Text('Select category')),
+                    DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text(l10n.selectCategory),
+                    ),
                     ..._documentCategoryOptions.map(
                       (c) => DropdownMenuItem<String?>(value: c, child: Text(_docCategoryLabel(c))),
                     ),

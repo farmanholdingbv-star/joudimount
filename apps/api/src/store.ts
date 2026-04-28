@@ -512,23 +512,44 @@ async function createEntity(
 ) {
   const risk = assessRisk(input);
   const status: ClearanceStatus = risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
-  const nextCounter = await getNextDeclarationCounter(counterId, model, declarationPrefix);
   const { containerArrivalDate, documentArrivalDate, declarationDate, orderDate, declarationNumber, ...restInput } = input;
-  const created = await model.create({
-    ...restInput,
-    ...risk,
-    declarationNumber: declarationNumber ?? generateDeclarationNumber(nextCounter, declarationPrefix),
-    documentStatus: "copy_received",
-    paymentStatus: "pending",
-    xrayResult: risk.channel === "red" ? "manual_inspection" : "not_required",
-    clearanceStatus: status,
-    declarationDate: declarationDate ? new Date(declarationDate) : undefined,
-    orderDate: orderDate ? new Date(orderDate) : undefined,
-    containerArrivalDate: containerArrivalDate ? new Date(containerArrivalDate) : undefined,
-    documentArrivalDate: documentArrivalDate ? new Date(documentArrivalDate) : undefined,
-    transactionStage: documentArrivalDate ? "CUSTOMS_CLEARANCE" : "PREPARATION",
-  });
-  return mapTransaction(created.toObject());
+  const isDuplicateDeclarationError = (err: unknown): boolean => {
+    const asRecord = err as { code?: number; keyPattern?: Record<string, unknown>; message?: string };
+    if (asRecord?.code !== 11000) return false;
+    if (asRecord?.keyPattern?.declarationNumber) return true;
+    return typeof asRecord?.message === "string" && asRecord.message.includes("declarationNumber");
+  };
+
+  // Retry only when declaration number is auto-generated (counter drift safety).
+  const maxAttempts = declarationNumber ? 1 : 10;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      const nextCounter = declarationNumber ? undefined : await getNextDeclarationCounter(counterId, model, declarationPrefix);
+      const created = await model.create({
+        ...restInput,
+        ...risk,
+        declarationNumber: declarationNumber ?? generateDeclarationNumber(nextCounter!, declarationPrefix),
+        documentStatus: "copy_received",
+        paymentStatus: "pending",
+        xrayResult: risk.channel === "red" ? "manual_inspection" : "not_required",
+        clearanceStatus: status,
+        declarationDate: declarationDate ? new Date(declarationDate) : undefined,
+        orderDate: orderDate ? new Date(orderDate) : undefined,
+        containerArrivalDate: containerArrivalDate ? new Date(containerArrivalDate) : undefined,
+        documentArrivalDate: documentArrivalDate ? new Date(documentArrivalDate) : undefined,
+        transactionStage: documentArrivalDate ? "CUSTOMS_CLEARANCE" : "PREPARATION",
+      });
+      return mapTransaction(created.toObject());
+    } catch (err) {
+      if (!declarationNumber && isDuplicateDeclarationError(err)) {
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError ?? new Error("Could not allocate a unique declaration number");
 }
 
 async function setEntityStage(model: EntityModel, id: string, stage: TransactionStage) {
@@ -937,6 +958,7 @@ export async function createExport(input: CreateTransactionFields) {
 }
 
 export async function setExportStage(id: string, stage: TransactionStage) {
+  if (stage === "STORAGE") return false;
   return setEntityStage(ExportModel, id, stage);
 }
 

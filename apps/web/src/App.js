@@ -75,7 +75,7 @@ export default function App() {
         await logout();
         setUser(null);
     };
-    return (_jsxs(_Fragment, { children: [_jsxs("header", { className: "app-header", children: [_jsx("img", { src: "/logo.png", alt: "Project logo", className: "app-logo" }), _jsx("div", { className: "app-header-user-wrap", children: user ? _jsx("span", { className: "app-header-user", children: user.name }) : null }), _jsx(LanguageSwitcher, {})] }), !user ? (_jsx(Login, { onLogin: setUser })) : (_jsx(AuthenticatedRoutes, { user: user, onLogout: handleLogout }))] }));
+    return (_jsxs(_Fragment, { children: [_jsxs("header", { className: "app-header", children: [_jsx("img", { src: "/logo.png", alt: "Project logo", width: 66, height: 66, className: "app-logo" }), _jsx("div", { className: "app-header-user-wrap", children: user ? _jsx("span", { className: "app-header-user", children: user.name }) : null }), _jsx(LanguageSwitcher, {})] }), !user ? (_jsx(Login, { onLogin: setUser })) : (_jsx(AuthenticatedRoutes, { user: user, onLogout: handleLogout }))] }));
 }
 function NotFoundPage() {
     const { t } = useI18n();

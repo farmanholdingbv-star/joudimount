@@ -117,20 +117,16 @@ class _DashboardHomeState extends State<DashboardHome> {
     final canCreateTransaction =
         widget.role == 'manager' || widget.role == 'employee';
     final isRtl = Directionality.of(context) == TextDirection.rtl;
-    final locale = Localizations.localeOf(context).languageCode;
-    final welcomePrefix = locale == 'ar' ? 'مرحباً، ' : 'Hello, ';
-    final searchHint = locale == 'ar'
-        ? 'ابحث عن الاستيراد والعملاء والإقرارات'
-        : 'Search import records, clients, declarations…';
-    final sectionTitle =
-        locale == 'ar' ? 'آخر سجلات الاستيراد' : 'Recent import records';
-    final viewAll = locale == 'ar' ? 'عرض الكل' : 'View all';
+    final welcomePrefix = l10n.dashboardWelcomePrefix;
+    final searchHint = l10n.dashboardSearchHint;
+    final sectionTitle = l10n.dashboardRecentImports;
+    final viewAll = l10n.dashboardViewAll;
 
     final gridItems = <_GridItem>[
       _GridItem(
         label: canCreateTransaction
-            ? (locale == 'ar' ? 'معاملة جديدة' : 'New Transaction')
-            : (locale == 'ar' ? 'المعاملات' : 'Transactions'),
+            ? l10n.dashboardNewImport
+            : l10n.dashboardImport,
         icon: Icons.add_circle_outline,
         color: const Color(0xFFE8B339),
         onTap: canCreateTransaction
@@ -138,7 +134,7 @@ class _DashboardHomeState extends State<DashboardHome> {
             : () => widget.onSwitchTab(1),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'تحويل جديد' : 'New Transfer',
+        label: l10n.dashboardNewTransfer,
         icon: Icons.swap_horiz_outlined,
         color: const Color(0xFF22C55E),
         onTap: canCreateTransaction
@@ -146,7 +142,7 @@ class _DashboardHomeState extends State<DashboardHome> {
             : () => widget.onSwitchTab(2),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'تصدير جديد' : 'New Export',
+        label: l10n.dashboardNewExport,
         icon: Icons.outbox_outlined,
         color: const Color(0xFF0EA5E9),
         onTap: canCreateTransaction
@@ -166,31 +162,31 @@ class _DashboardHomeState extends State<DashboardHome> {
         onTap: () => widget.onSwitchTab(5),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'المعاملات' : 'Transactions',
+        label: l10n.dashboardImport,
         icon: Icons.receipt_long_outlined,
         color: const Color(0xFFF97316),
         onTap: () => widget.onSwitchTab(1),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'متابعة المعاملات' : 'Track records',
+        label: l10n.dashboardTrackImportRecords,
         icon: Icons.track_changes_outlined,
         color: const Color(0xFF14B8A6),
         onTap: () => widget.onSwitchTab(1),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'إضافة عميل' : 'Add client',
+        label: l10n.dashboardAddClient,
         icon: Icons.person_add_alt_1_outlined,
         color: const Color(0xFFEC4899),
         onTap: () => widget.onSwitchTab(4),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'شركة شحن' : 'Shipping co.',
+        label: l10n.dashboardShippingCo,
         icon: Icons.add_business_outlined,
         color: const Color(0xFF64748B),
         onTap: () => widget.onSwitchTab(5),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'الدعم والمساعدة' : 'Help & support',
+        label: l10n.dashboardHelpSupport,
         icon: Icons.support_agent_outlined,
         color: const Color(0xFFFB923C),
         onTap: () => widget.onSwitchTab(7),
@@ -227,11 +223,11 @@ class _DashboardHomeState extends State<DashboardHome> {
                             icon: const Icon(Icons.language,
                                 color: Color(0xFF1e3a8a)),
                             onSelected: Lang.setLocale,
-                            itemBuilder: (_) => const [
+                            itemBuilder: (_) => [
                               PopupMenuItem(
-                                  value: 'ar', child: Text('العربية')),
+                                  value: 'ar', child: Text(l10n.languageAr)),
                               PopupMenuItem(
-                                  value: 'en', child: Text('English')),
+                                  value: 'en', child: Text(l10n.languageEn)),
                             ],
                           ),
                           IconButton(
@@ -251,9 +247,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                             onPressed: () =>
                                 ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text(locale == 'ar'
-                                      ? 'الرسائل قريباً'
-                                      : 'Messages coming soon')),
+                                  content: Text(l10n.dashboardMessagesSoon)),
                             ),
                           ),
                         ],
@@ -267,9 +261,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     avatarLetter: _avatarLetter(),
                     onBell: () => ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content: Text(locale == 'ar'
-                              ? 'لا إشعارات جديدة'
-                              : 'No new notifications')),
+                          content: Text(l10n.dashboardNoNewNotifications)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -415,9 +407,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Center(
                   child: Text(
-                    locale == 'ar'
-                        ? 'لا سجلات استيراد بعد. أنشئ سجلًا من الشبكة أعلاه.'
-                        : 'No import records yet. Create one from the grid above.',
+                    l10n.dashboardNoImportRecordsYet,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
