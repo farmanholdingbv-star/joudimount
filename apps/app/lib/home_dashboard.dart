@@ -62,7 +62,36 @@ class _DashboardHomeState extends State<DashboardHome> {
 
   Future<void> _openNewTransaction() async {
     final ok = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => TransactionFormPage(role: widget.role)),
+      MaterialPageRoute(
+        builder: (_) => TransactionFormPage(
+          role: widget.role,
+          module: 'transactions',
+        ),
+      ),
+    );
+    if (ok == true && mounted) _loadRecent();
+  }
+
+  Future<void> _openNewTransfer() async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => TransactionFormPage(
+          role: widget.role,
+          module: 'transfers',
+        ),
+      ),
+    );
+    if (ok == true && mounted) _loadRecent();
+  }
+
+  Future<void> _openNewExport() async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => TransactionFormPage(
+          role: widget.role,
+          module: 'exports',
+        ),
+      ),
     );
     if (ok == true && mounted) _loadRecent();
   }
@@ -91,22 +120,38 @@ class _DashboardHomeState extends State<DashboardHome> {
     final locale = Localizations.localeOf(context).languageCode;
     final welcomePrefix = locale == 'ar' ? 'مرحباً، ' : 'Hello, ';
     final searchHint = locale == 'ar'
-        ? 'ابحث عن المعاملات والعملاء والإقرارات'
-        : 'Search transactions, clients, declarations…';
+        ? 'ابحث عن الاستيراد والعملاء والإقرارات'
+        : 'Search import records, clients, declarations…';
     final sectionTitle =
-        locale == 'ar' ? 'آخر المعاملات' : 'Recent transactions';
+        locale == 'ar' ? 'آخر سجلات الاستيراد' : 'Recent import records';
     final viewAll = locale == 'ar' ? 'عرض الكل' : 'View all';
 
     final gridItems = <_GridItem>[
       _GridItem(
         label: canCreateTransaction
-            ? l10n.newTransaction
+            ? (locale == 'ar' ? 'معاملة جديدة' : 'New Transaction')
             : (locale == 'ar' ? 'المعاملات' : 'Transactions'),
         icon: Icons.add_circle_outline,
         color: const Color(0xFFE8B339),
         onTap: canCreateTransaction
             ? _openNewTransaction
             : () => widget.onSwitchTab(1),
+      ),
+      _GridItem(
+        label: locale == 'ar' ? 'تحويل جديد' : 'New Transfer',
+        icon: Icons.swap_horiz_outlined,
+        color: const Color(0xFF22C55E),
+        onTap: canCreateTransaction
+            ? _openNewTransfer
+            : () => widget.onSwitchTab(2),
+      ),
+      _GridItem(
+        label: locale == 'ar' ? 'تصدير جديد' : 'New Export',
+        icon: Icons.outbox_outlined,
+        color: const Color(0xFF0EA5E9),
+        onTap: canCreateTransaction
+            ? _openNewExport
+            : () => widget.onSwitchTab(3),
       ),
       _GridItem(
         label: l10n.clients,
@@ -121,13 +166,13 @@ class _DashboardHomeState extends State<DashboardHome> {
         onTap: () => widget.onSwitchTab(5),
       ),
       _GridItem(
-        label: l10n.transactions,
+        label: locale == 'ar' ? 'المعاملات' : 'Transactions',
         icon: Icons.receipt_long_outlined,
         color: const Color(0xFFF97316),
         onTap: () => widget.onSwitchTab(1),
       ),
       _GridItem(
-        label: locale == 'ar' ? 'متابعة المعاملات' : 'Track transactions',
+        label: locale == 'ar' ? 'متابعة المعاملات' : 'Track records',
         icon: Icons.track_changes_outlined,
         color: const Color(0xFF14B8A6),
         onTap: () => widget.onSwitchTab(1),
@@ -371,8 +416,8 @@ class _DashboardHomeState extends State<DashboardHome> {
                 child: Center(
                   child: Text(
                     locale == 'ar'
-                        ? 'لا معاملات بعد. أنشئ معاملة من الشبكة أعلاه.'
-                        : 'No transactions yet. Create one from the grid above.',
+                        ? 'لا سجلات استيراد بعد. أنشئ سجلًا من الشبكة أعلاه.'
+                        : 'No import records yet. Create one from the grid above.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey.shade600),
                   ),

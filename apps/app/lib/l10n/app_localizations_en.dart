@@ -27,7 +27,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardTab => 'Dashboard';
 
   @override
-  String get transactions => 'Transactions';
+  String get transactions => 'Import';
 
   @override
   String get clients => 'Clients';
@@ -51,7 +51,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newLabel => 'New';
 
   @override
-  String get noMatch => 'No matching transactions';
+  String get noMatch => 'No matching import records';
 
   @override
   String get details => 'Transaction Details';
@@ -84,7 +84,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get release => 'Release';
 
   @override
-  String get newTransaction => 'New Transaction';
+  String get newTransaction => 'New Import';
 
   @override
   String get save => 'Save';
@@ -297,7 +297,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentRole => 'Current role';
 
   @override
-  String get editTransaction => 'Edit transaction';
+  String get editTransaction => 'Edit import';
 
   @override
   String get documentStatus => 'Document status';
@@ -327,10 +327,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get origin => 'Origin';
 
   @override
-  String get deleteTransaction => 'Delete transaction';
+  String get deleteTransaction => 'Delete import';
 
   @override
-  String get confirmDeleteTransaction => 'Delete this transaction?';
+  String get confirmDeleteTransaction => 'Delete this import record?';
 
   @override
   String get shippingPaper => 'Shipping paper form';
@@ -426,7 +426,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rememberMe => 'Remember me';
 
   @override
-  String get accountantNoTransactionForm => 'Accountant role cannot create or edit transactions in this form.';
+  String get accountantNoTransactionForm => 'Accountant role cannot create or edit import records in this form.';
 
   @override
   String get saveDisabledLocked => 'Save is disabled for Transportation and Storage stages.';

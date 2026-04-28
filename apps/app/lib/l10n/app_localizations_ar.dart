@@ -27,7 +27,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dashboardTab => 'لوحة التحكم';
 
   @override
-  String get transactions => 'المعاملات';
+  String get transactions => 'الإستيراد';
 
   @override
   String get clients => 'العملاء';
@@ -51,7 +51,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newLabel => 'جديد';
 
   @override
-  String get noMatch => 'لا توجد نتائج مطابقة';
+  String get noMatch => 'لا توجد نتائج مطابقة لسجلات الإستيراد';
 
   @override
   String get details => 'تفاصيل المعاملة';
@@ -84,7 +84,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get release => 'إصدار الإفراج';
 
   @override
-  String get newTransaction => 'معاملة جديدة';
+  String get newTransaction => 'استيراد جديد';
 
   @override
   String get save => 'حفظ';
@@ -297,7 +297,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get currentRole => 'الدور الحالي';
 
   @override
-  String get editTransaction => 'تعديل المعاملة';
+  String get editTransaction => 'تعديل الاستيراد';
 
   @override
   String get documentStatus => 'حالة المستند';
@@ -327,10 +327,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get origin => 'المنشأ';
 
   @override
-  String get deleteTransaction => 'حذف المعاملة';
+  String get deleteTransaction => 'حذف الاستيراد';
 
   @override
-  String get confirmDeleteTransaction => 'حذف هذه المعاملة؟';
+  String get confirmDeleteTransaction => 'حذف سجل الاستيراد هذا؟';
 
   @override
   String get shippingPaper => 'نموذج ورقي لشركة الشحن';
@@ -426,7 +426,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get rememberMe => 'تذكرني';
 
   @override
-  String get accountantNoTransactionForm => 'دور المحاسب لا يسمح بإنشاء أو تعديل المعاملات من هنا.';
+  String get accountantNoTransactionForm => 'دور المحاسب لا يسمح بإنشاء أو تعديل سجلات الاستيراد من هنا.';
 
   @override
   String get saveDisabledLocked => 'الحفظ معطل في مراحل التسليم الداخلي أو الخارجي.';
