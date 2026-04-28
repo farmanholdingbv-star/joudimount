@@ -7,7 +7,8 @@ import 'transaction_form.dart';
 
 class TransactionsTab extends StatefulWidget {
   final String role;
-  const TransactionsTab({super.key, required this.role});
+  final String module;
+  const TransactionsTab({super.key, required this.role, this.module = 'transactions'});
 
   @override
   State<TransactionsTab> createState() => _TransactionsTabState();
@@ -19,6 +20,15 @@ class _TransactionsTabState extends State<TransactionsTab> {
   String _error = '';
   String _query = '';
   String _status = 'all';
+
+  String get _modulePath => '/api/${widget.module}';
+
+  String _moduleTitle(AppLocalizations l10n) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (widget.module == 'transfers') return isAr ? 'التحويل' : 'Transfers';
+    if (widget.module == 'exports') return isAr ? 'التصدير' : 'Exports';
+    return l10n.transactions;
+  }
 
   @override
   void initState() {
@@ -32,7 +42,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
       _error = '';
     });
     try {
-      final data = await Api.get('/api/transactions') as List<dynamic>;
+      final data = await Api.get(_modulePath) as List<dynamic>;
       _items = data.cast<Map<String, dynamic>>();
     } catch (e) {
       _error = e.toString();
@@ -82,7 +92,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    l10n.transactions,
+                    _moduleTitle(l10n),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -107,7 +117,12 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 FilledButton.icon(
                   onPressed: () async {
                     final created = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(builder: (_) => TransactionFormPage(role: widget.role)),
+                      MaterialPageRoute(
+                        builder: (_) => TransactionFormPage(
+                          role: widget.role,
+                          module: widget.module,
+                        ),
+                      ),
                     );
                     if (created == true) _load();
                   },
@@ -143,7 +158,11 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 onTap: () async {
                   await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
-                      builder: (_) => TransactionDetailsPage(id: tx['id'] as String, role: widget.role),
+                      builder: (_) => TransactionDetailsPage(
+                        id: tx['id'] as String,
+                        role: widget.role,
+                        module: widget.module,
+                      ),
                     ),
                   );
                   _load();

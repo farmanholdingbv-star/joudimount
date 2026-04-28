@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signingIn => 'Signing in...';
 
   @override
-  String get tracker => 'Tracker';
+  String get tracker => 'import';
 
   @override
   String get dashboardTab => 'Dashboard';
@@ -288,7 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelEdit => 'Cancel edit';
 
   @override
-  String get goTracker => 'Go to tracker';
+  String get goTracker => 'Go to transactions';
 
   @override
   String get roleFromAccount => 'Your role is determined by your login account.';

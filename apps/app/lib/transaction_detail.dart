@@ -13,13 +13,28 @@ import 'transaction_form.dart';
 class TransactionDetailsPage extends StatefulWidget {
   final String id;
   final String role;
-  const TransactionDetailsPage({super.key, required this.id, required this.role});
+  final String module;
+  const TransactionDetailsPage({
+    super.key,
+    required this.id,
+    required this.role,
+    this.module = 'transactions',
+  });
 
   @override
   State<TransactionDetailsPage> createState() => _TransactionDetailsPageState();
 }
 
 class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
+  String get _modulePath => '/api/${widget.module}';
+
+  String _moduleTitle(AppLocalizations l10n) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (widget.module == 'transfers') return isAr ? 'تفاصيل التحويل' : 'Transfer Details';
+    if (widget.module == 'exports') return isAr ? 'تفاصيل التصدير' : 'Export Details';
+    return l10n.details;
+  }
+
   Map<String, dynamic>? tx;
   String error = '';
   bool loading = true;
@@ -46,7 +61,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       error = '';
     });
     try {
-      tx = await Api.get('/api/transactions/${widget.id}') as Map<String, dynamic>;
+      tx = await Api.get('$_modulePath/${widget.id}') as Map<String, dynamic>;
     } catch (e) {
       error = e.toString();
     } finally {
@@ -65,7 +80,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
 
   Future<void> _action(String name) async {
     try {
-      await Api.post('/api/transactions/${widget.id}/$name', {});
+      await Api.post('$_modulePath/${widget.id}/$name', {});
       await load();
     } catch (e) {
       if (mounted) {
@@ -89,7 +104,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     );
     if (ok != true) return;
     try {
-      await Api.delete('/api/transactions/${widget.id}');
+      await Api.delete('$_modulePath/${widget.id}');
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -231,7 +246,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.details),
+        title: Text(_moduleTitle(l10n)),
         actions: [
           if (tx != null && canEdit)
             IconButton(
@@ -239,7 +254,11 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
               onPressed: () async {
                 final r = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
-                    builder: (_) => TransactionFormPage(role: widget.role, transactionId: widget.id),
+                    builder: (_) => TransactionFormPage(
+                      role: widget.role,
+                      transactionId: widget.id,
+                      module: widget.module,
+                    ),
                   ),
                 );
                 if (r == true) {
@@ -381,7 +400,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                           ),
                     ],
                     const SizedBox(height: 12),
-                    if (widget.role == 'manager' || widget.role == 'employee')
+                    if (widget.module == 'transactions' &&
+                        (widget.role == 'manager' || widget.role == 'employee'))
                       FilledButton.tonal(
                         onPressed: () => _action('original-bl'),
                         child: Text(l10n.originalBl),

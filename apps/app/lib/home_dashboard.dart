@@ -112,13 +112,13 @@ class _DashboardHomeState extends State<DashboardHome> {
         label: l10n.clients,
         icon: Icons.groups_outlined,
         color: const Color(0xFF3B82F6),
-        onTap: () => widget.onSwitchTab(2),
+        onTap: () => widget.onSwitchTab(4),
       ),
       _GridItem(
         label: l10n.shipping,
         icon: Icons.local_shipping_outlined,
         color: const Color(0xFF8B5CF6),
-        onTap: () => widget.onSwitchTab(3),
+        onTap: () => widget.onSwitchTab(5),
       ),
       _GridItem(
         label: l10n.transactions,
@@ -136,19 +136,19 @@ class _DashboardHomeState extends State<DashboardHome> {
         label: locale == 'ar' ? 'إضافة عميل' : 'Add client',
         icon: Icons.person_add_alt_1_outlined,
         color: const Color(0xFFEC4899),
-        onTap: () => widget.onSwitchTab(2),
+        onTap: () => widget.onSwitchTab(4),
       ),
       _GridItem(
         label: locale == 'ar' ? 'شركة شحن' : 'Shipping co.',
         icon: Icons.add_business_outlined,
         color: const Color(0xFF64748B),
-        onTap: () => widget.onSwitchTab(3),
+        onTap: () => widget.onSwitchTab(5),
       ),
       _GridItem(
         label: locale == 'ar' ? 'الدعم والمساعدة' : 'Help & support',
         icon: Icons.support_agent_outlined,
         color: const Color(0xFFFB923C),
-        onTap: widget.onOpenProfile,
+        onTap: () => widget.onSwitchTab(7),
       ),
     ];
 

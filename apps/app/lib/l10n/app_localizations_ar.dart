@@ -21,7 +21,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signingIn => 'جاري تسجيل الدخول...';
 
   @override
-  String get tracker => 'المتتبع';
+  String get tracker => 'الإستيراد';
 
   @override
   String get dashboardTab => 'لوحة التحكم';
@@ -288,7 +288,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cancelEdit => 'إلغاء التعديل';
 
   @override
-  String get goTracker => 'الذهاب إلى المتتبع';
+  String get goTracker => 'الذهاب إلى المعاملات';
 
   @override
   String get roleFromAccount => 'يُحدَّد الدور من حساب تسجيل الدخول.';

@@ -9,8 +9,14 @@ import 'l10n/app_localizations.dart';
 class TransactionFormPage extends StatefulWidget {
   final String role;
   final String? transactionId;
+  final String module;
 
-  const TransactionFormPage({super.key, required this.role, this.transactionId});
+  const TransactionFormPage({
+    super.key,
+    required this.role,
+    this.transactionId,
+    this.module = 'transactions',
+  });
 
   @override
   State<TransactionFormPage> createState() => _TransactionFormPageState();
@@ -20,9 +26,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   static const List<String> _stageOptions = [
     'PREPARATION',
     'CUSTOMS_CLEARANCE',
+    'TRANSPORTATION',
     'STORAGE',
-    'INTERNAL_DELIVERY',
-    'EXTERNAL_TRANSFER',
   ];
   static const List<String> _documentCategoryOptions = [
     'bill_of_lading',
@@ -84,6 +89,24 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   String? _releaseCode;
   String? _clearanceStatus;
   String _stage = 'PREPARATION';
+  String get _modulePath => '/api/${widget.module}';
+
+  String _moduleNoun(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (widget.module == 'transfers') return isAr ? 'تحويل' : 'Transfer';
+    if (widget.module == 'exports') return isAr ? 'تصدير' : 'Export';
+    return isAr ? 'معاملة' : 'Transaction';
+  }
+
+  String _newLabel(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    return isAr ? 'جديد' : 'New';
+  }
+
+  String _editLabel(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    return isAr ? 'تعديل' : 'Edit';
+  }
 
   bool get _isEdit {
     final id = widget.transactionId?.trim();
@@ -123,7 +146,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _error = '';
     });
     try {
-      final tx = await Api.get('/api/transactions/${widget.transactionId}') as Map<String, dynamic>;
+      final tx = await Api.get('$_modulePath/${widget.transactionId}') as Map<String, dynamic>;
       _client.text = (tx['clientName'] ?? '').toString();
       _shippingName.text = (tx['shippingCompanyName'] ?? '').toString();
       _shippingId.text = (tx['shippingCompanyId'] ?? '').toString();
@@ -319,17 +342,17 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           }
           fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
         }
-        await Api.putMultipart('/api/transactions/${widget.transactionId}', fields, _picked);
+        await Api.putMultipart('$_modulePath/${widget.transactionId}', fields, _picked);
       } else {
         if (_picked.isEmpty) {
-          await Api.post('/api/transactions', _jsonBody());
+          await Api.post(_modulePath, _jsonBody());
         } else {
           if (_pickedCategories.any((c) => c == null || c.isEmpty)) {
             throw Exception('Please select a category for each uploaded document.');
           }
           final fields = _multipartStringFields();
           fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
-          await Api.postMultipart('/api/transactions', fields, _picked);
+          await Api.postMultipart(_modulePath, fields, _picked);
         }
       }
       if (mounted) Navigator.of(context).pop(true);
@@ -343,7 +366,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   Future<void> _changeStage(String value) async {
     if (!_isEdit) return;
     try {
-      await Api.post('/api/transactions/${widget.transactionId}/stage', {'stage': value});
+      await Api.post('$_modulePath/${widget.transactionId}/stage', {'stage': value});
       if (mounted) await _loadTransaction();
     } catch (e) {
       if (!mounted) return;
@@ -383,13 +406,13 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final cs = Theme.of(context).colorScheme;
     if (_loadingTx) {
       return Scaffold(
-        appBar: AppBar(title: Text(_isEdit ? l10n.editTransaction : l10n.newTransaction)),
+        appBar: AppBar(title: Text(_isEdit ? '${_editLabel(context)} ${_moduleNoun(context)}' : '${_newLabel(context)} ${_moduleNoun(context)}')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if ((widget.role == 'accountant' || widget.role == 'employee2') && !_isEdit) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.newTransaction)),
+        appBar: AppBar(title: Text('${_newLabel(context)} ${_moduleNoun(context)}')),
         body: Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(l10n.accountantNoTransactionForm, textAlign: TextAlign.center))),
       );
     }
@@ -405,13 +428,12 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         !_isEdit || _stage == 'PREPARATION' || _stage == 'CUSTOMS_CLEARANCE';
     final storageEditable =
         !_isEdit || _stage == 'PREPARATION' || _stage == 'STORAGE';
-    final fullyLocked = _isEdit && (_stage == 'INTERNAL_DELIVERY' || _stage == 'EXTERNAL_TRANSFER');
     final canSetStage = widget.role == 'manager' || widget.role == 'employee2';
     final showCustomsDeclarationSection = _isEdit && _stage != 'PREPARATION';
     final groupedRetained = _groupRetainedDocs();
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? l10n.editTransaction : l10n.newTransaction)),
+      appBar: AppBar(title: Text(_isEdit ? '${_editLabel(context)} ${_moduleNoun(context)}' : '${_newLabel(context)} ${_moduleNoun(context)}')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -434,7 +456,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    _isEdit ? l10n.editTransaction : l10n.newTransaction,
+                    _isEdit ? '${_editLabel(context)} ${_moduleNoun(context)}' : '${_newLabel(context)} ${_moduleNoun(context)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -781,16 +803,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               ),
             ),
           const SizedBox(height: 8),
-          if (fullyLocked)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                l10n.saveDisabledLocked,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.outline),
-              ),
-            ),
           FilledButton(
-            onPressed: (_saving || fullyLocked) ? null : _save,
+            onPressed: _saving ? null : _save,
             child: Text(_saving ? l10n.saving : l10n.save),
           ),
         ],

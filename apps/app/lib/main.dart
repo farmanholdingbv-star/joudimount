@@ -364,16 +364,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _appBarTitle(AppLocalizations l10n) {
+    final isAr = Lang.locale.value.toLowerCase().startsWith('ar');
     switch (_index) {
       case 1:
         return l10n.transactions;
       case 2:
-        return l10n.clients;
+        return isAr ? 'التحويل' : 'Transfers';
       case 3:
-        return l10n.shipping;
+        return isAr ? 'التصدير' : 'Exports';
       case 4:
-        return l10n.employees;
+        return l10n.clients;
       case 5:
+        return l10n.shipping;
+      case 6:
+        return l10n.employees;
+      case 7:
         return l10n.profile;
       default:
         return l10n.tracker;
@@ -383,15 +388,18 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isAr = Lang.locale.value.toLowerCase().startsWith('ar');
     final role = widget.user['role'] as String? ?? 'employee';
     final pages = [
       DashboardHome(
         user: widget.user,
         role: role,
         onSwitchTab: (i) => setState(() => _index = i),
-        onOpenProfile: () => setState(() => _index = 5),
+        onOpenProfile: () => setState(() => _index = 7),
       ),
-      TransactionsTab(role: role),
+      TransactionsTab(role: role, module: 'transactions'),
+      TransactionsTab(role: role, module: 'transfers'),
+      TransactionsTab(role: role, module: 'exports'),
       ClientsTab(role: role),
       ShippingTab(role: role),
       EmployeesTab(role: role),
@@ -450,6 +458,10 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.receipt_long_outlined),
               label: l10n.transactions),
           BottomNavigationBarItem(
+              icon: const Icon(Icons.swap_horiz_outlined), label: isAr ? 'التحويل' : 'Transfers'),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.outbox_outlined), label: isAr ? 'التصدير' : 'Exports'),
+          BottomNavigationBarItem(
               icon: const Icon(Icons.groups_outlined), label: l10n.clients),
           BottomNavigationBarItem(
               icon: const Icon(Icons.local_shipping_outlined),
@@ -459,6 +471,10 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
               icon: const Icon(Icons.person_outline), label: l10n.profile),
         ],
+        // Swap module labels to Arabic at runtime.
+        // We keep item count and order identical to web modules.
+        selectedLabelStyle: isAr ? const TextStyle(fontFamily: 'NotoSansArabic') : null,
+        unselectedLabelStyle: isAr ? const TextStyle(fontFamily: 'NotoSansArabic') : null,
       ),
     );
   }
