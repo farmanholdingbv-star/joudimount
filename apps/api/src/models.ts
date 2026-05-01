@@ -105,6 +105,15 @@ interface TransactionDoc {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  storageEntryDate?: Date;
+  storageWorkersWages?: number;
+  storageWorkersCompany?: string;
+  storageStoreName?: string;
+  storageSizeCbm?: number;
+  storageFreightVehicleNumbers?: string;
+  storageCrossPackaging?: string;
+  storageUnity?: string;
+  storageSealNumber?: string;
   transactionStage: "PREPARATION" | "CUSTOMS_CLEARANCE" | "TRANSPORTATION" | "STORAGE";
   createdAt: Date;
   updatedAt: Date;
@@ -211,6 +220,15 @@ const transactionSchema = new Schema<TransactionDoc>(
       type: String,
       enum: ["kg", "ton", "piece", "carton", "pallet", "cbm", "liter", "set"],
     },
+    storageEntryDate: { type: Date },
+    storageWorkersWages: { type: Number },
+    storageWorkersCompany: { type: String },
+    storageStoreName: { type: String },
+    storageSizeCbm: { type: Number },
+    storageFreightVehicleNumbers: { type: String },
+    storageCrossPackaging: { type: String },
+    storageUnity: { type: String },
+    storageSealNumber: { type: String },
     transactionStage: {
       type: String,
       enum: ["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"],

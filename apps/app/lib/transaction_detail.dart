@@ -380,6 +380,27 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     if (tx!['goodsQuantity'] != null) _kv(l10n.txGoodsQty, '${tx!['goodsQuantity']}'),
                     if (tx!['goodsQuality'] != null) _kv(l10n.txGoodsQuality, _qualityLabel('${tx!['goodsQuality']}', l10n)),
                     if (tx!['goodsUnit'] != null) _kv(l10n.txGoodsUnit, _unitLabel('${tx!['goodsUnit']}', l10n)),
+                    if (tx!['storageEntryDate'] != null && tx!['storageEntryDate'].toString().isNotEmpty)
+                      _kv(l10n.storageEntryDate, tx!['storageEntryDate'].toString()),
+                    if (tx!['storageWorkersWages'] != null)
+                      _kv(l10n.storageWorkersWages, '${tx!['storageWorkersWages']}'),
+                    if (tx!['storageWorkersCompany'] != null &&
+                        tx!['storageWorkersCompany'].toString().isNotEmpty)
+                      _kv(l10n.storageWorkersCompany, '${tx!['storageWorkersCompany']}'),
+                    if (tx!['storageStoreName'] != null && tx!['storageStoreName'].toString().isNotEmpty)
+                      _kv(l10n.storageStoreName, '${tx!['storageStoreName']}'),
+                    if (tx!['storageSizeCbm'] != null)
+                      _kv(l10n.storageSizeCbm, '${tx!['storageSizeCbm']}'),
+                    if (tx!['storageFreightVehicleNumbers'] != null &&
+                        tx!['storageFreightVehicleNumbers'].toString().isNotEmpty)
+                      _kv(l10n.storageFreightVehicleNumbers, '${tx!['storageFreightVehicleNumbers']}'),
+                    if (tx!['storageCrossPackaging'] != null &&
+                        tx!['storageCrossPackaging'].toString().isNotEmpty)
+                      _kv(l10n.storageCrossPackaging, '${tx!['storageCrossPackaging']}'),
+                    if (tx!['storageUnity'] != null && tx!['storageUnity'].toString().isNotEmpty)
+                      _kv(l10n.storageUnity, '${tx!['storageUnity']}'),
+                    if (tx!['storageSealNumber'] != null && tx!['storageSealNumber'].toString().isNotEmpty)
+                      _kv(l10n.storageSealNumber, '${tx!['storageSealNumber']}'),
                     _kv(l10n.createdAt, _formatDateTime('${tx!['createdAt']}', locale)),
                     const SizedBox(height: 12),
                     if ((tx!['documentAttachments'] as List?)?.isNotEmpty ?? false) ...[

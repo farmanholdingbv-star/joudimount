@@ -67,6 +67,15 @@ export interface Transaction {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  storageEntryDate?: string;
+  storageWorkersWages?: number;
+  storageWorkersCompany?: string;
+  storageStoreName?: string;
+  storageSizeCbm?: number;
+  storageFreightVehicleNumbers?: string;
+  storageCrossPackaging?: string;
+  storageUnity?: string;
+  storageSealNumber?: string;
   transactionStage: TransactionStage;
   createdAt: string;
   updatedAt: string;

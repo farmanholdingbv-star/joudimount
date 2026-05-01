@@ -1157,6 +1157,78 @@ abstract class AppLocalizations {
   /// **'Please select a category for each uploaded document.'**
   String get uploadCategoryRequired;
 
+  /// No description provided for @storageNoUploadAtStage.
+  ///
+  /// In en, this message translates to:
+  /// **'New document uploads are not allowed at Storage stage.'**
+  String get storageNoUploadAtStage;
+
+  /// No description provided for @storageSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage (entry / exit / seal)'**
+  String get storageSectionTitle;
+
+  /// No description provided for @storageEntryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry date'**
+  String get storageEntryDate;
+
+  /// No description provided for @storageWorkersWages.
+  ///
+  /// In en, this message translates to:
+  /// **'Workers wages'**
+  String get storageWorkersWages;
+
+  /// No description provided for @storageWorkersCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Workers company'**
+  String get storageWorkersCompany;
+
+  /// No description provided for @storageStoreName.
+  ///
+  /// In en, this message translates to:
+  /// **'Store name'**
+  String get storageStoreName;
+
+  /// No description provided for @storageSizeCbm.
+  ///
+  /// In en, this message translates to:
+  /// **'Size (CBM m³)'**
+  String get storageSizeCbm;
+
+  /// No description provided for @storageFreightVehicleNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Freight vehicle numbers'**
+  String get storageFreightVehicleNumbers;
+
+  /// No description provided for @storageCrossPackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross packaging'**
+  String get storageCrossPackaging;
+
+  /// No description provided for @storageUnity.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get storageUnity;
+
+  /// No description provided for @storageSealNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal / stamp number'**
+  String get storageSealNumber;
+
+  /// No description provided for @storageReadOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At Storage stage only the warehouse fields below can be edited.'**
+  String get storageReadOnlyHint;
+
   /// No description provided for @pdfFontLoadErrorPrefix.
   ///
   /// In en, this message translates to:

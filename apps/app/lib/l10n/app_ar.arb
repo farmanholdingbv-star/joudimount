@@ -177,5 +177,17 @@
   "stopTransaction": "إيقاف المعاملة",
   "stopReason": "سبب الإيقاف",
   "uploadCategoryRequired": "يرجى اختيار فئة لكل مستند مرفوع.",
+  "storageNoUploadAtStage": "لا يمكن رفع مرفقات جديدة في مرحلة التخزين.",
+  "storageSectionTitle": "التخزين (إدخال / إخراج / ختم)",
+  "storageEntryDate": "تاريخ الإدخال",
+  "storageWorkersWages": "أجور العمال",
+  "storageWorkersCompany": "شركة العمال",
+  "storageStoreName": "اسم المستودع",
+  "storageSizeCbm": "الحجم (م³ CBM)",
+  "storageFreightVehicleNumbers": "أرقام مركبات الشحن",
+  "storageCrossPackaging": "التعبئة المتقاطعة",
+  "storageUnity": "الوحدة",
+  "storageSealNumber": "رقم الختم / الطابع",
+  "storageReadOnlyHint": "في مرحلة التخزين يمكن تعديل حقول المستودع أدناه فقط.",
   "pdfFontLoadErrorPrefix": "تعذر تحميل خط ملف PDF"
 }

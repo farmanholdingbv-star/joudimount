@@ -115,6 +115,19 @@ export interface Transaction {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  /** Warehouse entry (Storage stage — imports & transfers). */
+  storageEntryDate?: string;
+  storageWorkersWages?: number;
+  storageWorkersCompany?: string;
+  storageStoreName?: string;
+  storageSizeCbm?: number;
+  /** Exit — freight vehicle identifiers. */
+  storageFreightVehicleNumbers?: string;
+  storageCrossPackaging?: string;
+  /** Exit — unit (e.g. cartons / grouping). */
+  storageUnity?: string;
+  /** Seal / stamp number. */
+  storageSealNumber?: string;
   transactionStage: TransactionStage;
   createdAt: string;
   updatedAt: string;

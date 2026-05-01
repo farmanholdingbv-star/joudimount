@@ -540,5 +540,41 @@ class AppLocalizationsAr extends AppLocalizations {
   String get uploadCategoryRequired => 'يرجى اختيار فئة لكل مستند مرفوع.';
 
   @override
+  String get storageNoUploadAtStage => 'لا يمكن رفع مرفقات جديدة في مرحلة التخزين.';
+
+  @override
+  String get storageSectionTitle => 'التخزين (إدخال / إخراج / ختم)';
+
+  @override
+  String get storageEntryDate => 'تاريخ الإدخال';
+
+  @override
+  String get storageWorkersWages => 'أجور العمال';
+
+  @override
+  String get storageWorkersCompany => 'شركة العمال';
+
+  @override
+  String get storageStoreName => 'اسم المستودع';
+
+  @override
+  String get storageSizeCbm => 'الحجم (م³ CBM)';
+
+  @override
+  String get storageFreightVehicleNumbers => 'أرقام مركبات الشحن';
+
+  @override
+  String get storageCrossPackaging => 'التعبئة المتقاطعة';
+
+  @override
+  String get storageUnity => 'الوحدة';
+
+  @override
+  String get storageSealNumber => 'رقم الختم / الطابع';
+
+  @override
+  String get storageReadOnlyHint => 'في مرحلة التخزين يمكن تعديل حقول المستودع أدناه فقط.';
+
+  @override
   String get pdfFontLoadErrorPrefix => 'تعذر تحميل خط ملف PDF';
 }

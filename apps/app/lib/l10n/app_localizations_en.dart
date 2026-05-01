@@ -540,5 +540,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uploadCategoryRequired => 'Please select a category for each uploaded document.';
 
   @override
+  String get storageNoUploadAtStage => 'New document uploads are not allowed at Storage stage.';
+
+  @override
+  String get storageSectionTitle => 'Storage (entry / exit / seal)';
+
+  @override
+  String get storageEntryDate => 'Entry date';
+
+  @override
+  String get storageWorkersWages => 'Workers wages';
+
+  @override
+  String get storageWorkersCompany => 'Workers company';
+
+  @override
+  String get storageStoreName => 'Store name';
+
+  @override
+  String get storageSizeCbm => 'Size (CBM m³)';
+
+  @override
+  String get storageFreightVehicleNumbers => 'Freight vehicle numbers';
+
+  @override
+  String get storageCrossPackaging => 'Cross packaging';
+
+  @override
+  String get storageUnity => 'Unit';
+
+  @override
+  String get storageSealNumber => 'Seal / stamp number';
+
+  @override
+  String get storageReadOnlyHint => 'At Storage stage only the warehouse fields below can be edited.';
+
+  @override
   String get pdfFontLoadErrorPrefix => 'Could not load PDF font';
 }

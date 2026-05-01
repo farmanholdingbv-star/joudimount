@@ -73,6 +73,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _unitCount = TextEditingController();
   final _stopReason = TextEditingController();
   final _qty = TextEditingController();
+  final _storageEntryDate = TextEditingController();
+  final _storageWorkersWages = TextEditingController();
+  final _storageWorkersCompany = TextEditingController();
+  final _storageStoreName = TextEditingController();
+  final _storageSizeCbm = TextEditingController();
+  final _storageFreightVehicleNumbers = TextEditingController();
+  final _storageCrossPackaging = TextEditingController();
+  final _storageUnity = TextEditingController();
+  final _storageSealNumber = TextEditingController();
   String? _quality;
   String? _unit = 'cbm';
   bool _isStopped = false;
@@ -182,6 +191,17 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _isStopped = tx['isStopped'] == true;
       _stopReason.text = (tx['stopReason'] ?? '').toString();
       if (tx['goodsQuantity'] != null) _qty.text = tx['goodsQuantity'].toString();
+      _storageEntryDate.text = _isoToDateInput(tx['storageEntryDate']);
+      if (tx['storageWorkersWages'] != null) {
+        _storageWorkersWages.text = tx['storageWorkersWages'].toString();
+      }
+      _storageWorkersCompany.text = (tx['storageWorkersCompany'] ?? '').toString();
+      _storageStoreName.text = (tx['storageStoreName'] ?? '').toString();
+      if (tx['storageSizeCbm'] != null) _storageSizeCbm.text = tx['storageSizeCbm'].toString();
+      _storageFreightVehicleNumbers.text = (tx['storageFreightVehicleNumbers'] ?? '').toString();
+      _storageCrossPackaging.text = (tx['storageCrossPackaging'] ?? '').toString();
+      _storageUnity.text = (tx['storageUnity'] ?? '').toString();
+      _storageSealNumber.text = (tx['storageSealNumber'] ?? '').toString();
       _quality = tx['goodsQuality']?.toString();
       if (_quality != null && _quality!.isEmpty) _quality = null;
       _unit = tx['goodsUnit']?.toString();
@@ -271,6 +291,40 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   }
 
   Map<String, String> _multipartStringFields() {
+    final storageOnly = _isEdit &&
+        _stage == 'STORAGE' &&
+        (widget.module == 'transactions' || widget.module == 'transfers');
+    if (storageOnly) {
+      final m = <String, String>{
+        'existingAttachments': jsonEncode(_retainedDocs),
+      };
+      if (_storageEntryDate.text.trim().isNotEmpty) {
+        m['storageEntryDate'] = _storageEntryDate.text.trim();
+      }
+      final wages = double.tryParse(_storageWorkersWages.text.trim());
+      if (wages != null) m['storageWorkersWages'] = wages.toString();
+      if (_storageWorkersCompany.text.trim().isNotEmpty) {
+        m['storageWorkersCompany'] = _storageWorkersCompany.text.trim();
+      }
+      if (_storageStoreName.text.trim().isNotEmpty) {
+        m['storageStoreName'] = _storageStoreName.text.trim();
+      }
+      final cbm = double.tryParse(_storageSizeCbm.text.trim());
+      if (cbm != null) m['storageSizeCbm'] = cbm.toString();
+      if (_storageFreightVehicleNumbers.text.trim().isNotEmpty) {
+        m['storageFreightVehicleNumbers'] = _storageFreightVehicleNumbers.text.trim();
+      }
+      if (_storageCrossPackaging.text.trim().isNotEmpty) {
+        m['storageCrossPackaging'] = _storageCrossPackaging.text.trim();
+      }
+      if (_storageUnity.text.trim().isNotEmpty) {
+        m['storageUnity'] = _storageUnity.text.trim();
+      }
+      if (_storageSealNumber.text.trim().isNotEmpty) {
+        m['storageSealNumber'] = _storageSealNumber.text.trim();
+      }
+      return m;
+    }
     final b = _jsonBody();
     return b.map((k, v) => MapEntry(k, v == null ? '' : v.toString()));
   }
@@ -333,6 +387,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     });
     try {
       if (_isEdit) {
+        final storageOnly = _stage == 'STORAGE' &&
+            (widget.module == 'transactions' || widget.module == 'transfers');
+        if (storageOnly && _picked.isNotEmpty) {
+          throw Exception(l10n.storageNoUploadAtStage);
+        }
         final fields = _multipartStringFields();
         fields['existingAttachments'] = jsonEncode(_retainedDocs);
         if (_picked.isNotEmpty) {
@@ -341,7 +400,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           }
           fields['documentPhotoCategories'] = jsonEncode(_pickedCategories);
         }
-        await Api.putMultipart('$_modulePath/${widget.transactionId}', fields, _picked);
+        await Api.putMultipart(
+          '$_modulePath/${widget.transactionId}',
+          fields,
+          storageOnly ? <PlatformFile>[] : _picked,
+        );
       } else {
         if (_picked.isEmpty) {
           await Api.post(_modulePath, _jsonBody());
@@ -396,6 +459,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _unitCount.dispose();
     _stopReason.dispose();
     _qty.dispose();
+    _storageEntryDate.dispose();
+    _storageWorkersWages.dispose();
+    _storageWorkersCompany.dispose();
+    _storageStoreName.dispose();
+    _storageSizeCbm.dispose();
+    _storageFreightVehicleNumbers.dispose();
+    _storageCrossPackaging.dispose();
+    _storageUnity.dispose();
+    _storageSealNumber.dispose();
     super.dispose();
   }
 
@@ -421,12 +493,21 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final invoice = double.tryParse(_value.text.trim());
     final rate = double.tryParse(_rate.text.trim());
     final derivedWeight = (invoice != null && rate != null && rate > 0) ? (invoice / rate) : null;
-    final prepEditable =
-        !_isEdit || _stage == 'PREPARATION' || _stage == 'CUSTOMS_CLEARANCE';
-    final customsEditable =
-        !_isEdit || _stage == 'PREPARATION' || _stage == 'CUSTOMS_CLEARANCE';
-    final storageEditable =
-        !_isEdit || _stage == 'PREPARATION' || _stage == 'STORAGE';
+    final storageWarehouseOnly = _isEdit &&
+        _stage == 'STORAGE' &&
+        (widget.module == 'transactions' || widget.module == 'transfers');
+    final prepEditable = (!_isEdit ||
+            _stage == 'PREPARATION' ||
+            _stage == 'CUSTOMS_CLEARANCE') &&
+        !storageWarehouseOnly;
+    final customsEditable = (!_isEdit ||
+            _stage == 'PREPARATION' ||
+            _stage == 'CUSTOMS_CLEARANCE') &&
+        !storageWarehouseOnly;
+    final storageEditable = (!_isEdit ||
+            _stage == 'PREPARATION' ||
+            _stage == 'STORAGE') &&
+        !storageWarehouseOnly;
     final canSetStage = widget.role == 'manager' || widget.role == 'employee2';
     final showCustomsDeclarationSection = _isEdit && _stage != 'PREPARATION';
     final groupedRetained = _groupRetainedDocs();
@@ -716,6 +797,24 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 ],
               ),
             ),
+          if (storageWarehouseOnly) ...[
+            const SizedBox(height: 8),
+            Text(l10n.storageReadOnlyHint, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 8),
+            Text(l10n.storageSectionTitle, style: Theme.of(context).textTheme.titleSmall),
+            _field(_storageEntryDate, l10n.storageEntryDate, enabled: true),
+            _field(_storageWorkersWages, l10n.storageWorkersWages,
+                keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: true),
+            _field(_storageWorkersCompany, l10n.storageWorkersCompany, enabled: true),
+            _field(_storageStoreName, l10n.storageStoreName, enabled: true),
+            _field(_storageSizeCbm, l10n.storageSizeCbm,
+                keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: true),
+            _field(_storageFreightVehicleNumbers, l10n.storageFreightVehicleNumbers,
+                maxLines: 3, enabled: true),
+            _field(_storageCrossPackaging, l10n.storageCrossPackaging, enabled: true),
+            _field(_storageUnity, l10n.storageUnity, enabled: true),
+            _field(_storageSealNumber, l10n.storageSealNumber, enabled: true),
+          ],
           const SizedBox(height: 12),
           Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
           Text(l10n.txAttachDocs, style: Theme.of(context).textTheme.bodySmall),

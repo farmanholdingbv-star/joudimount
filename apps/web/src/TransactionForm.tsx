@@ -138,6 +138,15 @@ type FormState = {
   goodsQuantity: string;
   goodsQuality: GoodsQuality | "";
   goodsUnit: GoodsUnit | "";
+  storageEntryDate: string;
+  storageWorkersWages: string;
+  storageWorkersCompany: string;
+  storageStoreName: string;
+  storageSizeCbm: string;
+  storageFreightVehicleNumbers: string;
+  storageCrossPackaging: string;
+  storageUnity: string;
+  storageSealNumber: string;
 };
 
 const emptyForm: FormState = {
@@ -185,6 +194,15 @@ const emptyForm: FormState = {
   goodsQuantity: "",
   goodsQuality: "",
   goodsUnit: "cbm",
+  storageEntryDate: "",
+  storageWorkersWages: "",
+  storageWorkersCompany: "",
+  storageStoreName: "",
+  storageSizeCbm: "",
+  storageFreightVehicleNumbers: "",
+  storageCrossPackaging: "",
+  storageUnity: "",
+  storageSealNumber: "",
 };
 
 type EditReadOnlyMeta = {
@@ -327,6 +345,15 @@ export default function TransactionForm({
           goodsQuantity: data.goodsQuantity != null ? String(data.goodsQuantity) : "",
           goodsQuality: data.goodsQuality ?? "",
           goodsUnit: data.goodsUnit ?? "cbm",
+          storageEntryDate: isoToDateInput(data.storageEntryDate),
+          storageWorkersWages: data.storageWorkersWages != null ? String(data.storageWorkersWages) : "",
+          storageWorkersCompany: data.storageWorkersCompany ?? "",
+          storageStoreName: data.storageStoreName ?? "",
+          storageSizeCbm: data.storageSizeCbm != null ? String(data.storageSizeCbm) : "",
+          storageFreightVehicleNumbers: data.storageFreightVehicleNumbers ?? "",
+          storageCrossPackaging: data.storageCrossPackaging ?? "",
+          storageUnity: data.storageUnity ?? "",
+          storageSealNumber: data.storageSealNumber ?? "",
         });
         setRetainedDocs(data.documentAttachments ?? []);
         setNewDocFiles([]);
@@ -399,6 +426,45 @@ export default function TransactionForm({
     setError("");
     setLoading(true);
     try {
+      const storageOnlySave =
+        isEdit && stage === "STORAGE" && (module === "transactions" || module === "transfers");
+      if (storageOnlySave) {
+        if (newDocFiles.length > 0) {
+          setError(t("form.storage.noUploadError" as MessageKey));
+          setLoading(false);
+          return;
+        }
+        const fdStorage = new FormData();
+        if (form.storageEntryDate.trim()) fdStorage.append("storageEntryDate", form.storageEntryDate.trim());
+        appendOptionalNumber(fdStorage, "storageWorkersWages", form.storageWorkersWages);
+        if (form.storageWorkersCompany.trim()) {
+          fdStorage.append("storageWorkersCompany", form.storageWorkersCompany.trim());
+        }
+        if (form.storageStoreName.trim()) fdStorage.append("storageStoreName", form.storageStoreName.trim());
+        appendOptionalNumber(fdStorage, "storageSizeCbm", form.storageSizeCbm);
+        if (form.storageFreightVehicleNumbers.trim()) {
+          fdStorage.append("storageFreightVehicleNumbers", form.storageFreightVehicleNumbers.trim());
+        }
+        if (form.storageCrossPackaging.trim()) {
+          fdStorage.append("storageCrossPackaging", form.storageCrossPackaging.trim());
+        }
+        if (form.storageUnity.trim()) fdStorage.append("storageUnity", form.storageUnity.trim());
+        if (form.storageSealNumber.trim()) fdStorage.append("storageSealNumber", form.storageSealNumber.trim());
+        fdStorage.append("existingAttachments", JSON.stringify(retainedDocs));
+        const resStorage = await apiFetch(`/api/${module}/${routeId}`, {
+          method: "PUT",
+          body: fdStorage,
+        });
+        if (!resStorage.ok) {
+          const detail = await parseApiErrorMessage(resStorage);
+          setError(detail ? `${t("form.saveError")} (${detail})` : t("form.saveError"));
+          return;
+        }
+        const dataStorage = (await resStorage.json()) as Transaction;
+        navigate(`/${module}/${dataStorage.id}`);
+        return;
+      }
+
       const fd = new FormData();
       fd.append("clientName", form.clientName);
       const effectiveShippingCompanyName =
@@ -536,6 +602,12 @@ export default function TransactionForm({
   const prepEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
   const customsEditable = !isEdit || stage === "PREPARATION" || stage === "CUSTOMS_CLEARANCE";
   const storageEditable = !isEdit || stage === "PREPARATION" || stage === "STORAGE";
+  /** Imports & transfers in Storage: only warehouse fields stay editable (API-enforced). */
+  const storageOnlyImportTransfer =
+    isEdit && stage === "STORAGE" && (module === "transactions" || module === "transfers");
+  const prepEditableEffective = prepEditable && !storageOnlyImportTransfer;
+  const customsEditableEffective = customsEditable && !storageOnlyImportTransfer;
+  const legacyStorageEditable = storageEditable && !storageOnlyImportTransfer;
   const fullyLocked = false;
   /** Stage can move forward or back; only manager and employee2 may call the API. */
   const canSetStage = role === "manager" || role === "employee2";
@@ -547,6 +619,7 @@ export default function TransactionForm({
     module === "exports" ? ["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION"] : STAGE_OPTIONS;
 
   if (isTransferOrExport) {
+    const transferWarehouseOnly = isEdit && stage === "STORAGE" && module === "transfers";
     return (
       <main className="container">
         <div className="page-actions">
@@ -590,53 +663,121 @@ export default function TransactionForm({
               if (c) setForm((f) => ({ ...f, clientName: c.companyName }));
             }}
             suggestions={clientSuggestions}
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             required
             hint={t("form.typeToSearch")}
           />
           <label>
             {t("form.orderDate")}
-            <input type="date" value={form.orderDate} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} required />
+            <input
+              type="date"
+              disabled={transferWarehouseOnly}
+              value={form.orderDate}
+              onChange={(e) => setForm({ ...form, orderDate: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.containerCount")}
-            <input type="number" min={0} step={1} value={form.containerCount} onChange={(e) => setForm({ ...form, containerCount: e.target.value })} required />
+            <input
+              type="number"
+              min={0}
+              step={1}
+              disabled={transferWarehouseOnly}
+              value={form.containerCount}
+              onChange={(e) => setForm({ ...form, containerCount: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.containerSize")}
-            <input value={form.containerSize} onChange={(e) => setForm({ ...form, containerSize: e.target.value })} required />
+            <input
+              disabled={transferWarehouseOnly}
+              value={form.containerSize}
+              onChange={(e) => setForm({ ...form, containerSize: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.portOfLading")}
-            <input value={form.portOfLading} onChange={(e) => setForm({ ...form, portOfLading: e.target.value })} required />
+            <input
+              disabled={transferWarehouseOnly}
+              value={form.portOfLading}
+              onChange={(e) => setForm({ ...form, portOfLading: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.portOfDischarge")}
-            <input value={form.portOfDischarge} onChange={(e) => setForm({ ...form, portOfDischarge: e.target.value })} required />
+            <input
+              disabled={transferWarehouseOnly}
+              value={form.portOfDischarge}
+              onChange={(e) => setForm({ ...form, portOfDischarge: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.destination")}
-            <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} required />
+            <input
+              disabled={transferWarehouseOnly}
+              value={form.destination}
+              onChange={(e) => setForm({ ...form, destination: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.goodsWeightKg")}
-            <input type="number" min={0} step="any" value={form.goodsWeightKg} onChange={(e) => setForm({ ...form, goodsWeightKg: e.target.value })} required />
+            <input
+              type="number"
+              min={0}
+              step="any"
+              disabled={transferWarehouseOnly}
+              value={form.goodsWeightKg}
+              onChange={(e) => setForm({ ...form, goodsWeightKg: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.origin")}
-            <input value={form.originCountry} onChange={(e) => setForm({ ...form, originCountry: e.target.value })} minLength={2} maxLength={2} required />
+            <input
+              disabled={transferWarehouseOnly}
+              value={form.originCountry}
+              onChange={(e) => setForm({ ...form, originCountry: e.target.value })}
+              minLength={2}
+              maxLength={2}
+              required
+            />
           </label>
           <label>
             {t("form.unitNumber")}
-            <input type="number" min={0} step={1} value={form.unitNumber} onChange={(e) => setForm({ ...form, unitNumber: e.target.value })} required />
+            <input
+              type="number"
+              min={0}
+              step={1}
+              disabled={transferWarehouseOnly}
+              value={form.unitNumber}
+              onChange={(e) => setForm({ ...form, unitNumber: e.target.value })}
+              required
+            />
           </label>
           <label className="full-row">
             {t("form.goodsDescription")}
-            <textarea value={form.goodsDescription} onChange={(e) => setForm({ ...form, goodsDescription: e.target.value })} rows={3} required />
+            <textarea
+              disabled={transferWarehouseOnly}
+              value={form.goodsDescription}
+              onChange={(e) => setForm({ ...form, goodsDescription: e.target.value })}
+              rows={3}
+              required
+            />
           </label>
           <label>
             {t("form.goodsUnit")}
-            <select value={form.goodsUnit} onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })} required>
+            <select
+              disabled={transferWarehouseOnly}
+              value={form.goodsUnit}
+              onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })}
+              required
+            >
               <option value="">{t("form.optionalSelect")}</option>
               {UNIT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -647,18 +788,32 @@ export default function TransactionForm({
           </label>
           <label>
             {t("form.stopTransaction")}
-            <select value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
+            <select
+              disabled={transferWarehouseOnly}
+              value={form.isStopped}
+              onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}
+            >
               <option value="no">{t("form.no")}</option>
               <option value="yes">{t("form.yes")}</option>
             </select>
           </label>
           <label>
             {t("form.hsCode")}
-            <input value={form.hsCode} onChange={(e) => setForm({ ...form, hsCode: e.target.value })} required />
+            <input
+              disabled={transferWarehouseOnly}
+              value={form.hsCode}
+              onChange={(e) => setForm({ ...form, hsCode: e.target.value })}
+              required
+            />
           </label>
           <label>
             {t("form.goodsQuality")}
-            <select value={form.goodsQuality} onChange={(e) => setForm({ ...form, goodsQuality: e.target.value as GoodsQuality | "" })} required>
+            <select
+              disabled={transferWarehouseOnly}
+              value={form.goodsQuality}
+              onChange={(e) => setForm({ ...form, goodsQuality: e.target.value as GoodsQuality | "" })}
+              required
+            >
               <option value="">{t("form.optionalSelect")}</option>
               {QUALITY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -669,7 +824,15 @@ export default function TransactionForm({
           </label>
           <label>
             {t("form.goodsQuantity")}
-            <input type="number" min={0} step="any" value={form.goodsQuantity} onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })} required />
+            <input
+              type="number"
+              min={0}
+              step="any"
+              disabled={transferWarehouseOnly}
+              value={form.goodsQuantity}
+              onChange={(e) => setForm({ ...form, goodsQuantity: e.target.value })}
+              required
+            />
           </label>
 
           {showCustomsDeclarationSection ? (
@@ -678,6 +841,7 @@ export default function TransactionForm({
               <label>
                 {t("form.fileNumber")}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.fileNumber}
                   onChange={(e) => setForm({ ...form, fileNumber: e.target.value })}
                 />
@@ -685,6 +849,7 @@ export default function TransactionForm({
               <label>
                 {t("form.declarationNumber1")}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.declarationNumber}
                   onChange={(e) => setForm({ ...form, declarationNumber: e.target.value })}
                 />
@@ -692,6 +857,7 @@ export default function TransactionForm({
               <label>
                 {t("form.declarationNumber2")}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.declarationNumber2}
                   onChange={(e) => setForm({ ...form, declarationNumber2: e.target.value })}
                 />
@@ -700,13 +866,18 @@ export default function TransactionForm({
                 {t("form.declarationDate")}
                 <input
                   type="date"
+                  disabled={transferWarehouseOnly}
                   value={form.declarationDate}
                   onChange={(e) => setForm({ ...form, declarationDate: e.target.value })}
                 />
               </label>
               <label>
                 {t("form.declarationType1")}
-                <select value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
+                <select
+                  disabled={transferWarehouseOnly}
+                  value={form.declarationType}
+                  onChange={(e) => setForm({ ...form, declarationType: e.target.value })}
+                >
                   <option value="">{t("form.optionalSelect")}</option>
                   {declarationTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -717,7 +888,11 @@ export default function TransactionForm({
               </label>
               <label>
                 {t("form.declarationType2")}
-                <select value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
+                <select
+                  disabled={transferWarehouseOnly}
+                  value={form.declarationType2}
+                  onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}
+                >
                   <option value="">{t("form.optionalSelect")}</option>
                   {declarationTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -728,7 +903,11 @@ export default function TransactionForm({
               </label>
               <label>
                 {t("form.portType")}
-                <select value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })}>
+                <select
+                  disabled={transferWarehouseOnly}
+                  value={form.portType}
+                  onChange={(e) => setForm({ ...form, portType: e.target.value })}
+                >
                   <option value="">{t("form.optionalSelect")}</option>
                   {PORT_TYPE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -740,23 +919,109 @@ export default function TransactionForm({
             </>
           ) : null}
 
+          {transferWarehouseOnly ? (
+            <>
+              <p className="muted full-row" role="status">
+                {t("form.storage.readOnlyHint" as MessageKey)}
+              </p>
+              <h2 className="form-section-title full-row">{t("form.storage.sectionTitle" as MessageKey)}</h2>
+              <label>
+                {t("form.storage.entryDate" as MessageKey)}
+                <input
+                  type="date"
+                  value={form.storageEntryDate}
+                  onChange={(e) => setForm({ ...form, storageEntryDate: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.storage.workersWages" as MessageKey)}
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={form.storageWorkersWages}
+                  onChange={(e) => setForm({ ...form, storageWorkersWages: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.storage.workersCompany" as MessageKey)}
+                <input
+                  value={form.storageWorkersCompany}
+                  onChange={(e) => setForm({ ...form, storageWorkersCompany: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.storage.storeName" as MessageKey)}
+                <input
+                  value={form.storageStoreName}
+                  onChange={(e) => setForm({ ...form, storageStoreName: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.storage.sizeCbm" as MessageKey)}
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={form.storageSizeCbm}
+                  onChange={(e) => setForm({ ...form, storageSizeCbm: e.target.value })}
+                />
+              </label>
+              <label className="full-row">
+                {t("form.storage.freightVehicleNumbers" as MessageKey)}
+                <textarea
+                  value={form.storageFreightVehicleNumbers}
+                  onChange={(e) => setForm({ ...form, storageFreightVehicleNumbers: e.target.value })}
+                  rows={2}
+                />
+              </label>
+              <label>
+                {t("form.storage.crossPackaging" as MessageKey)}
+                <input
+                  value={form.storageCrossPackaging}
+                  onChange={(e) => setForm({ ...form, storageCrossPackaging: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.storage.unity" as MessageKey)}
+                <input
+                  value={form.storageUnity}
+                  onChange={(e) => setForm({ ...form, storageUnity: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("form.storage.sealNumber" as MessageKey)}
+                <input
+                  value={form.storageSealNumber}
+                  onChange={(e) => setForm({ ...form, storageSealNumber: e.target.value })}
+                />
+              </label>
+            </>
+          ) : null}
+
           {isEdit && (stage === "TRANSPORTATION" || stage === "STORAGE") ? (
             <>
               <h2 className="form-section-title full-row">{t("transportation.sectionTitle" as MessageKey)}</h2>
               <label>
                 {t("transportation.toUpper" as MessageKey)}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.transportationTo}
                   onChange={(e) => setForm({ ...form, transportationTo: e.target.value })}
                 />
               </label>
               <label>
                 {t("transportation.trachNo" as MessageKey)}
-                <input value={form.trachNo} onChange={(e) => setForm({ ...form, trachNo: e.target.value })} />
+                <input
+                  disabled={transferWarehouseOnly}
+                  value={form.trachNo}
+                  onChange={(e) => setForm({ ...form, trachNo: e.target.value })}
+                />
               </label>
               <label>
                 {t("transportation.company" as MessageKey)}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.transportationCompany}
                   onChange={(e) => setForm({ ...form, transportationCompany: e.target.value })}
                 />
@@ -764,6 +1029,7 @@ export default function TransactionForm({
               <label>
                 {t("transportation.from" as MessageKey)}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.transportationFrom}
                   onChange={(e) => setForm({ ...form, transportationFrom: e.target.value })}
                 />
@@ -771,6 +1037,7 @@ export default function TransactionForm({
               <label>
                 {t("transportation.to" as MessageKey)}
                 <input
+                  disabled={transferWarehouseOnly}
                   value={form.transportationToLocation}
                   onChange={(e) => setForm({ ...form, transportationToLocation: e.target.value })}
                 />
@@ -781,6 +1048,7 @@ export default function TransactionForm({
                   type="number"
                   min={0}
                   step="any"
+                  disabled={transferWarehouseOnly}
                   value={form.tripCharge}
                   onChange={(e) => setForm({ ...form, tripCharge: e.target.value })}
                 />
@@ -791,6 +1059,7 @@ export default function TransactionForm({
                   type="number"
                   min={0}
                   step="any"
+                  disabled={transferWarehouseOnly}
                   value={form.waitingCharge}
                   onChange={(e) => setForm({ ...form, waitingCharge: e.target.value })}
                 />
@@ -801,6 +1070,7 @@ export default function TransactionForm({
                   type="number"
                   min={0}
                   step="any"
+                  disabled={transferWarehouseOnly}
                   value={form.maccrikCharge}
                   onChange={(e) => setForm({ ...form, maccrikCharge: e.target.value })}
                 />
@@ -811,7 +1081,13 @@ export default function TransactionForm({
           {form.isStopped === "yes" ? (
             <label className="full-row">
               {t("form.stopReason")}
-              <textarea value={form.stopReason} onChange={(e) => setForm({ ...form, stopReason: e.target.value })} rows={2} required />
+              <textarea
+                disabled={transferWarehouseOnly}
+                value={form.stopReason}
+                onChange={(e) => setForm({ ...form, stopReason: e.target.value })}
+                rows={2}
+                required
+              />
             </label>
           ) : null}
           <div className="full-row doc-upload-block doc-upload-prominent">
@@ -821,6 +1097,7 @@ export default function TransactionForm({
               type="file"
               accept="image/*,application/pdf"
               multiple
+              disabled={transferWarehouseOnly}
               onChange={(e) =>
                 setNewDocFiles(
                   Array.from(e.target.files ?? []).map((file) => ({
@@ -837,6 +1114,7 @@ export default function TransactionForm({
                     {item.file.name}
                     <select
                       value={item.category}
+                      disabled={transferWarehouseOnly}
                       onChange={(e) =>
                         setNewDocFiles((prev) =>
                           prev.map((p, i) => (i === idx ? { ...p, category: e.target.value as DocumentCategory | "" } : p)),
@@ -936,7 +1214,7 @@ export default function TransactionForm({
         {showCustomsDeclarationSection ? (
           <label>
             {t("form.fileNumber")}
-            <input value={form.fileNumber} disabled={!customsEditable} onChange={(e) => setForm({ ...form, fileNumber: e.target.value })} />
+            <input value={form.fileNumber} disabled={!customsEditableEffective} onChange={(e) => setForm({ ...form, fileNumber: e.target.value })} />
           </label>
         ) : null}
         <h2 className="form-section-title full-row">{t("form.partiesSection")}</h2>
@@ -949,7 +1227,7 @@ export default function TransactionForm({
             if (c) setForm((f) => ({ ...f, clientName: c.companyName }));
           }}
           suggestions={clientSuggestions}
-          disabled={!prepEditable}
+          disabled={!prepEditableEffective}
           required
           hint={t("form.typeToSearch")}
         />
@@ -962,14 +1240,14 @@ export default function TransactionForm({
             if (s) setForm((f) => ({ ...f, shippingCompanyName: s.companyName, shippingCompanyId: s.id }));
           }}
           suggestions={shippingSuggestions}
-          disabled={!prepEditable}
+          disabled={!prepEditableEffective}
           required
           hint={t("form.typeToSearch")}
         />
         <label>
           {t("form.shippingCompanyId")}
           <input
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             value={form.shippingCompanyId ?? ""}
             onChange={(e) => setForm({ ...form, shippingCompanyId: e.target.value })}
           />
@@ -981,7 +1259,7 @@ export default function TransactionForm({
             <label>
               {t("form.declarationNumber1")}
               <input
-                disabled={!customsEditable}
+                disabled={!customsEditableEffective}
                 maxLength={120}
                 value={form.declarationNumber}
                 onChange={(e) => setForm({ ...form, declarationNumber: e.target.value })}
@@ -990,7 +1268,7 @@ export default function TransactionForm({
             <label>
               {t("form.declarationDate")}
               <input
-                disabled={!customsEditable}
+                disabled={!customsEditableEffective}
                 type="date"
                 value={form.declarationDate}
                 onChange={(e) => setForm({ ...form, declarationDate: e.target.value })}
@@ -998,7 +1276,7 @@ export default function TransactionForm({
             </label>
             <label>
               {t("form.declarationType1")}
-              <select disabled={!customsEditable} value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
+              <select disabled={!customsEditableEffective} value={form.declarationType} onChange={(e) => setForm({ ...form, declarationType: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {declarationTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1010,7 +1288,7 @@ export default function TransactionForm({
             <label>
               {t("form.declarationNumber2")}
               <input
-                disabled={!customsEditable}
+                disabled={!customsEditableEffective}
                 maxLength={120}
                 value={form.declarationNumber2}
                 onChange={(e) => setForm({ ...form, declarationNumber2: e.target.value })}
@@ -1018,7 +1296,7 @@ export default function TransactionForm({
             </label>
             <label>
               {t("form.declarationType2")}
-              <select disabled={!customsEditable} value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
+              <select disabled={!customsEditableEffective} value={form.declarationType2} onChange={(e) => setForm({ ...form, declarationType2: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {declarationTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1029,7 +1307,7 @@ export default function TransactionForm({
             </label>
             <label>
               {t("form.portType")}
-              <select disabled={!customsEditable} value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })}>
+              <select disabled={!customsEditableEffective} value={form.portType} onChange={(e) => setForm({ ...form, portType: e.target.value })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {PORT_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1044,17 +1322,17 @@ export default function TransactionForm({
         <h2 className="form-section-title full-row">{t("form.shipmentCoreSection")}</h2>
         <label>
           {t("form.airwayBill")}
-          <input disabled={!prepEditable} value={form.airwayBill} onChange={(e) => setForm({ ...form, airwayBill: e.target.value })} required />
+          <input disabled={!prepEditableEffective} value={form.airwayBill} onChange={(e) => setForm({ ...form, airwayBill: e.target.value })} required />
         </label>
         <label>
           {t("form.hsCode")}
-          <input disabled={!prepEditable} value={form.hsCode} onChange={(e) => setForm({ ...form, hsCode: e.target.value })} required />
+          <input disabled={!prepEditableEffective} value={form.hsCode} onChange={(e) => setForm({ ...form, hsCode: e.target.value })} required />
         </label>
         <label>
           {t("form.origin")}
           <input
             value={form.originCountry}
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             onChange={(e) => setForm({ ...form, originCountry: e.target.value })}
             minLength={2}
             maxLength={2}
@@ -1065,7 +1343,7 @@ export default function TransactionForm({
           {t("form.currency")}
           <select
             value={form.invoiceCurrency}
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             onChange={(e) => setForm({ ...form, invoiceCurrency: e.target.value as InvoiceCurrency | "" })}
           >
             {CURRENCY_OPTIONS.map((currency) => (
@@ -1079,7 +1357,7 @@ export default function TransactionForm({
           {t("form.goodsDescription")}
           <textarea
             value={form.goodsDescription}
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             onChange={(e) => setForm({ ...form, goodsDescription: e.target.value })}
             rows={3}
             required
@@ -1091,7 +1369,7 @@ export default function TransactionForm({
               {t("form.numberOfUnits")}
               <input
                 type="number"
-                disabled={!storageEditable}
+                disabled={!legacyStorageEditable}
                 min={0}
                 step={1}
                 value={form.unitCount}
@@ -1106,7 +1384,7 @@ export default function TransactionForm({
           {t("form.goodsWeightKg")}
           <input
             type="number"
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             min={0}
             step="any"
             value={form.goodsWeightKg}
@@ -1118,7 +1396,7 @@ export default function TransactionForm({
           {t("form.containerCount")}
           <input
             type="number"
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             min={0}
             step={1}
             value={form.containerCount}
@@ -1129,7 +1407,7 @@ export default function TransactionForm({
           {t("form.containerArrivalDate")}
           <input
             type="date"
-            disabled={!customsEditable}
+            disabled={!customsEditableEffective}
             value={form.containerArrivalDate}
             onChange={(e) => setForm({ ...form, containerArrivalDate: e.target.value })}
           />
@@ -1138,7 +1416,7 @@ export default function TransactionForm({
           {t("form.goodsQuantity")}
           <input
             type="number"
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             min={0}
             step="any"
             value={form.goodsQuantity}
@@ -1149,7 +1427,7 @@ export default function TransactionForm({
           {t("form.goodsQuality")}
           <select
             value={form.goodsQuality}
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             onChange={(e) => setForm({ ...form, goodsQuality: e.target.value as GoodsQuality | "" })}
           >
             <option value="">{t("form.optionalSelect")}</option>
@@ -1164,7 +1442,7 @@ export default function TransactionForm({
           <>
             <label>
               {t("form.goodsUnit")}
-              <select disabled={!prepEditable} value={form.goodsUnit} onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })}>
+              <select disabled={!prepEditableEffective} value={form.goodsUnit} onChange={(e) => setForm({ ...form, goodsUnit: e.target.value as GoodsUnit | "" })}>
                 <option value="">{t("form.optionalSelect")}</option>
                 {UNIT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -1177,7 +1455,7 @@ export default function TransactionForm({
               {t("form.numberOfUnits")}
               <input
                 type="number"
-                disabled={!storageEditable}
+                disabled={!legacyStorageEditable}
                 min={0}
                 step={1}
                 value={form.unitCount}
@@ -1190,7 +1468,7 @@ export default function TransactionForm({
           {t("form.documentArrivalDate")}
           <input
             type="date"
-            disabled={!customsEditable}
+            disabled={!customsEditableEffective}
             value={form.documentArrivalDate}
             onChange={(e) => setForm({ ...form, documentArrivalDate: e.target.value })}
           />
@@ -1199,7 +1477,7 @@ export default function TransactionForm({
           {t("form.containerNumbers")}
           <textarea
             value={form.containerNumbers}
-            disabled={!storageEditable}
+            disabled={!legacyStorageEditable}
             onChange={(e) => setForm({ ...form, containerNumbers: e.target.value })}
             rows={3}
             placeholder={t("form.containerNumbersPlaceholder")}
@@ -1209,7 +1487,7 @@ export default function TransactionForm({
         <h2 className="form-section-title full-row">{t("form.workflowStatusSection")}</h2>
         <label>
           {t("form.stopTransaction")}
-          <select disabled={!storageEditable} value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
+          <select disabled={!legacyStorageEditable} value={form.isStopped} onChange={(e) => setForm({ ...form, isStopped: e.target.value as "no" | "yes" })}>
             <option value="no">{t("form.no")}</option>
             <option value="yes">{t("form.yes")}</option>
           </select>
@@ -1219,7 +1497,7 @@ export default function TransactionForm({
             {t("form.stopReason")}
             <textarea
               value={form.stopReason}
-              disabled={!storageEditable}
+              disabled={!legacyStorageEditable}
               onChange={(e) => setForm({ ...form, stopReason: e.target.value })}
               rows={2}
               required
@@ -1230,7 +1508,7 @@ export default function TransactionForm({
           {t("form.documentStatus")}
           <select
             value={form.documentStatus}
-            disabled={!customsEditable}
+            disabled={!customsEditableEffective}
             onChange={(e) => setForm({ ...form, documentStatus: e.target.value as typeof form.documentStatus })}
           >
             <option value="copy_received">{t("form.documentStatus.copy_received")}</option>
@@ -1243,12 +1521,92 @@ export default function TransactionForm({
           <select
             value={form.paymentStatus}
             onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as "pending" | "paid" })}
-            disabled={!customsEditable || role === "employee" || role === "employee2"}
+            disabled={!customsEditableEffective || role === "employee" || role === "employee2"}
           >
             <option value="pending">{t("form.paymentStatus.pending")}</option>
             <option value="paid">{t("form.paymentStatus.paid")}</option>
           </select>
         </label>
+
+        {storageOnlyImportTransfer ? (
+          <>
+            <p className="muted full-row" role="status">
+              {t("form.storage.readOnlyHint" as MessageKey)}
+            </p>
+            <h2 className="form-section-title full-row">{t("form.storage.sectionTitle" as MessageKey)}</h2>
+            <label>
+              {t("form.storage.entryDate" as MessageKey)}
+              <input
+                type="date"
+                value={form.storageEntryDate}
+                onChange={(e) => setForm({ ...form, storageEntryDate: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("form.storage.workersWages" as MessageKey)}
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={form.storageWorkersWages}
+                onChange={(e) => setForm({ ...form, storageWorkersWages: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("form.storage.workersCompany" as MessageKey)}
+              <input
+                value={form.storageWorkersCompany}
+                onChange={(e) => setForm({ ...form, storageWorkersCompany: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("form.storage.storeName" as MessageKey)}
+              <input
+                value={form.storageStoreName}
+                onChange={(e) => setForm({ ...form, storageStoreName: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("form.storage.sizeCbm" as MessageKey)}
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={form.storageSizeCbm}
+                onChange={(e) => setForm({ ...form, storageSizeCbm: e.target.value })}
+              />
+            </label>
+            <label className="full-row">
+              {t("form.storage.freightVehicleNumbers" as MessageKey)}
+              <textarea
+                value={form.storageFreightVehicleNumbers}
+                onChange={(e) => setForm({ ...form, storageFreightVehicleNumbers: e.target.value })}
+                rows={2}
+              />
+            </label>
+            <label>
+              {t("form.storage.crossPackaging" as MessageKey)}
+              <input
+                value={form.storageCrossPackaging}
+                onChange={(e) => setForm({ ...form, storageCrossPackaging: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("form.storage.unity" as MessageKey)}
+              <input
+                value={form.storageUnity}
+                onChange={(e) => setForm({ ...form, storageUnity: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("form.storage.sealNumber" as MessageKey)}
+              <input
+                value={form.storageSealNumber}
+                onChange={(e) => setForm({ ...form, storageSealNumber: e.target.value })}
+              />
+            </label>
+          </>
+        ) : null}
 
         <h2 className="form-section-title full-row">{t("form.attachmentsSection")}</h2>
         <div className="full-row doc-upload-block doc-upload-prominent">
@@ -1285,7 +1643,7 @@ export default function TransactionForm({
                         <button
                           type="button"
                           className="link-button"
-                          disabled={!prepEditable}
+                          disabled={!prepEditableEffective}
                           onClick={() => setRetainedDocs((prev) => prev.filter((x) => x.path !== d.path))}
                         >
                           {t("form.removeAttachment")}
@@ -1301,7 +1659,7 @@ export default function TransactionForm({
             type="file"
             accept="image/*,application/pdf"
             multiple
-            disabled={!prepEditable}
+            disabled={!prepEditableEffective}
             onChange={(e) =>
               setNewDocFiles(
                 Array.from(e.target.files ?? []).map((file) => ({
@@ -1322,7 +1680,7 @@ export default function TransactionForm({
                     {item.file.name}
                     <select
                       value={item.category}
-                      disabled={!prepEditable}
+                      disabled={!prepEditableEffective}
                       onChange={(e) =>
                         setNewDocFiles((prev) =>
                           prev.map((p, i) =>

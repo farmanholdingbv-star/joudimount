@@ -38,6 +38,10 @@ export const optionalFileNumber = z.preprocess(emptyToUndef, z.string().max(120)
 export const optionalStopReason = z.preprocess(emptyToUndef, z.string().max(500).optional());
 export const optionalHoldReason = z.preprocess(emptyToUndef, z.string().max(500).optional());
 
+const optionalStorageShort = z.preprocess(emptyToUndef, z.string().max(120).optional());
+const optionalStorageMedium = z.preprocess(emptyToUndef, z.string().max(200).optional());
+const optionalStorageLong = z.preprocess(emptyToUndef, z.string().max(500).optional());
+
 const parseOptionalStringArray = (v: unknown): string[] | undefined => {
   if (v == null || v === "") return undefined;
   if (Array.isArray(v)) {
@@ -144,6 +148,15 @@ export const createTransactionPayloadSchema = z.object({
   goodsQuantity: optionalNonNegativeNumber,
   goodsQuality: optionalGoodsQuality,
   goodsUnit: optionalGoodsUnit,
+  storageEntryDate: optionalDateIso,
+  storageWorkersWages: optionalNonNegativeNumber,
+  storageWorkersCompany: optionalStorageMedium,
+  storageStoreName: optionalStorageMedium,
+  storageSizeCbm: optionalNonNegativeNumber,
+  storageFreightVehicleNumbers: optionalStorageLong,
+  storageCrossPackaging: optionalStorageMedium,
+  storageUnity: optionalStorageShort,
+  storageSealNumber: optionalStorageShort,
 });
 
 export const updateTransactionPayloadSchema = z
@@ -212,5 +225,13 @@ export const updateTransactionPayloadSchema = z
     goodsQuantity: optionalNonNegativeNumber,
     goodsQuality: optionalGoodsQuality,
     goodsUnit: optionalGoodsUnit,
-  })
-  .refine((value) => Object.keys(value).length > 0, "At least one field is required");
+    storageEntryDate: optionalDateIso,
+    storageWorkersWages: optionalNonNegativeNumber,
+    storageWorkersCompany: optionalStorageMedium,
+    storageStoreName: optionalStorageMedium,
+    storageSizeCbm: optionalNonNegativeNumber,
+    storageFreightVehicleNumbers: optionalStorageLong,
+    storageCrossPackaging: optionalStorageMedium,
+    storageUnity: optionalStorageShort,
+    storageSealNumber: optionalStorageShort,
+  });

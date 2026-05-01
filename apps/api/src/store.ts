@@ -142,7 +142,13 @@ function normalizeDateOnly(value: unknown): string | undefined {
 }
 
 function sameTransactionField(key: keyof Transaction, nextValue: unknown, currentValue: unknown): boolean {
-  if (key === "declarationDate" || key === "orderDate" || key === "containerArrivalDate" || key === "documentArrivalDate") {
+  if (
+    key === "declarationDate" ||
+    key === "orderDate" ||
+    key === "containerArrivalDate" ||
+    key === "documentArrivalDate" ||
+    key === "storageEntryDate"
+  ) {
     return normalizeDateOnly(nextValue) === normalizeDateOnly(currentValue);
   }
   if (Array.isArray(nextValue) || Array.isArray(currentValue)) {
@@ -218,6 +224,15 @@ function mapTransaction(doc: any): Transaction {
     goodsQuantity: doc.goodsQuantity,
     goodsQuality: doc.goodsQuality,
     goodsUnit: doc.goodsUnit,
+    storageEntryDate: mapOptionalDate(doc.storageEntryDate),
+    storageWorkersWages: doc.storageWorkersWages,
+    storageWorkersCompany: doc.storageWorkersCompany,
+    storageStoreName: doc.storageStoreName,
+    storageSizeCbm: doc.storageSizeCbm,
+    storageFreightVehicleNumbers: doc.storageFreightVehicleNumbers,
+    storageCrossPackaging: doc.storageCrossPackaging,
+    storageUnity: doc.storageUnity,
+    storageSealNumber: doc.storageSealNumber,
     transactionStage: doc.transactionStage ?? "PREPARATION",
     createdAt: new Date(doc.createdAt).toISOString(),
     updatedAt: new Date(doc.updatedAt).toISOString(),
@@ -292,7 +307,87 @@ const transportationFields = new Set<keyof Transaction>([
   "maccrikCharge",
 ]);
 
-function getLockedFieldsForStage(stage: TransactionStage): Set<keyof Transaction> {
+/** Imports & transfers at STORAGE: only these transaction fields may be updated. */
+export const STORAGE_STAGE_EDITABLE_FIELDS = new Set<keyof Transaction>([
+  "storageEntryDate",
+  "storageWorkersWages",
+  "storageWorkersCompany",
+  "storageStoreName",
+  "storageSizeCbm",
+  "storageFreightVehicleNumbers",
+  "storageCrossPackaging",
+  "storageUnity",
+  "storageSealNumber",
+]);
+
+const TRANSACTION_PATCH_KEYS: (keyof Transaction)[] = [
+  "clientName",
+  "clientId",
+  "shippingCompanyId",
+  "shippingCompanyName",
+  "declarationNumber",
+  "declarationNumber2",
+  "declarationDate",
+  "orderDate",
+  "declarationType",
+  "declarationType2",
+  "portType",
+  "containerSize",
+  "portOfLading",
+  "portOfDischarge",
+  "destination",
+  "transportationTo",
+  "trachNo",
+  "transportationCompany",
+  "transportationFrom",
+  "transportationToLocation",
+  "tripCharge",
+  "waitingCharge",
+  "maccrikCharge",
+  "airwayBill",
+  "hsCode",
+  "goodsDescription",
+  "invoiceValue",
+  "invoiceCurrency",
+  "originCountry",
+  "documentStatus",
+  "clearanceStatus",
+  "paymentStatus",
+  "documentAttachments",
+  "containerCount",
+  "goodsWeightKg",
+  "invoiceToWeightRateAedPerKg",
+  "containerArrivalDate",
+  "documentArrivalDate",
+  "fileNumber",
+  "containerNumbers",
+  "unitCount",
+  "unitNumber",
+  "isStopped",
+  "holdReason",
+  "stopReason",
+  "documentPostalNumber",
+  "goodsQuantity",
+  "goodsQuality",
+  "goodsUnit",
+  "transactionStage",
+  "storageEntryDate",
+  "storageWorkersWages",
+  "storageWorkersCompany",
+  "storageStoreName",
+  "storageSizeCbm",
+  "storageFreightVehicleNumbers",
+  "storageCrossPackaging",
+  "storageUnity",
+  "storageSealNumber",
+];
+
+function getLockedFieldsForStage(stage: TransactionStage, model: typeof TransactionModel): Set<keyof Transaction> {
+  const importOrTransferAtStorage =
+    stage === "STORAGE" && (model === TransactionModel || model === TransferModel);
+  if (importOrTransferAtStorage) {
+    return new Set(TRANSACTION_PATCH_KEYS.filter((k) => !STORAGE_STAGE_EDITABLE_FIELDS.has(k)));
+  }
   if (stage === "PREPARATION") return new Set();
   if (stage === "CUSTOMS_CLEARANCE") return new Set();
   if (stage === "TRANSPORTATION") return new Set([...preparationFields, ...customsFields]);
@@ -501,6 +596,15 @@ type CreateTransactionFields = Pick<
       | "goodsQuantity"
       | "goodsQuality"
       | "goodsUnit"
+      | "storageEntryDate"
+      | "storageWorkersWages"
+      | "storageWorkersCompany"
+      | "storageStoreName"
+      | "storageSizeCbm"
+      | "storageFreightVehicleNumbers"
+      | "storageCrossPackaging"
+      | "storageUnity"
+      | "storageSealNumber"
     >
   >;
 
@@ -665,6 +769,15 @@ async function updateEntity(
       | "goodsQuantity"
       | "goodsQuality"
       | "goodsUnit"
+      | "storageEntryDate"
+      | "storageWorkersWages"
+      | "storageWorkersCompany"
+      | "storageStoreName"
+      | "storageSizeCbm"
+      | "storageFreightVehicleNumbers"
+      | "storageCrossPackaging"
+      | "storageUnity"
+      | "storageSealNumber"
       | "transactionStage"
     >
   >,
@@ -674,7 +787,7 @@ async function updateEntity(
 
   const currentStage = current.transactionStage ?? "PREPARATION";
   const targetStage = nextStageOnArrival(currentStage, input.documentArrivalDate);
-  const lockedFields = getLockedFieldsForStage(targetStage);
+  const lockedFields = getLockedFieldsForStage(targetStage, model);
   const attemptedLocked = Object.entries(input)
     .filter(([key, nextValue]) => {
       const field = key as keyof Transaction;
@@ -693,7 +806,7 @@ async function updateEntity(
   const suggestedStatus: ClearanceStatus =
     risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
 
-  const { containerArrivalDate, documentArrivalDate, declarationDate, orderDate, ...rest } = input;
+  const { containerArrivalDate, documentArrivalDate, declarationDate, orderDate, storageEntryDate, ...rest } = input;
   const datePatch: Record<string, unknown> = { ...rest };
   if (declarationDate !== undefined) {
     datePatch.declarationDate = declarationDate ? new Date(declarationDate) : null;
@@ -706,6 +819,9 @@ async function updateEntity(
   }
   if (documentArrivalDate !== undefined) {
     datePatch.documentArrivalDate = documentArrivalDate ? new Date(documentArrivalDate) : null;
+  }
+  if (storageEntryDate !== undefined) {
+    datePatch.storageEntryDate = storageEntryDate ? new Date(storageEntryDate) : null;
   }
 
   const updated = await model.findByIdAndUpdate(
@@ -818,6 +934,15 @@ export async function updateTransaction(
       | "goodsQuantity"
       | "goodsQuality"
       | "goodsUnit"
+      | "storageEntryDate"
+      | "storageWorkersWages"
+      | "storageWorkersCompany"
+      | "storageStoreName"
+      | "storageSizeCbm"
+      | "storageFreightVehicleNumbers"
+      | "storageCrossPackaging"
+      | "storageUnity"
+      | "storageSealNumber"
       | "transactionStage"
     >
   >,
@@ -907,6 +1032,15 @@ export async function updateTransfer(
       | "goodsQuantity"
       | "goodsQuality"
       | "goodsUnit"
+      | "storageEntryDate"
+      | "storageWorkersWages"
+      | "storageWorkersCompany"
+      | "storageStoreName"
+      | "storageSizeCbm"
+      | "storageFreightVehicleNumbers"
+      | "storageCrossPackaging"
+      | "storageUnity"
+      | "storageSealNumber"
       | "transactionStage"
     >
   >,
@@ -1002,6 +1136,15 @@ export async function updateExport(
       | "goodsQuantity"
       | "goodsQuality"
       | "goodsUnit"
+      | "storageEntryDate"
+      | "storageWorkersWages"
+      | "storageWorkersCompany"
+      | "storageStoreName"
+      | "storageSizeCbm"
+      | "storageFreightVehicleNumbers"
+      | "storageCrossPackaging"
+      | "storageUnity"
+      | "storageSealNumber"
       | "transactionStage"
     >
   >,

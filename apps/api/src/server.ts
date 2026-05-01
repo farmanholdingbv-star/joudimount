@@ -48,6 +48,7 @@ import {
   updateShippingCompany,
   updateTransfer,
   updateClient,
+  STORAGE_STAGE_EDITABLE_FIELDS,
   updateTransaction,
 } from "./store.js";
 import type { DocumentAttachment, Transaction } from "./types.js";
@@ -152,6 +153,14 @@ function maybeUpload(req: Request, res: Response, next: () => void) {
   } else {
     next();
   }
+}
+
+function attachmentPathSetsEqual(prev: DocumentAttachment[] | undefined, retained: DocumentAttachment[]): boolean {
+  const a = new Set((prev ?? []).map((x) => x.path));
+  const b = new Set(retained.map((x) => x.path));
+  if (a.size !== b.size) return false;
+  for (const p of a) if (!b.has(p)) return false;
+  return true;
 }
 
 function parseExistingAttachmentsJson(raw: unknown): DocumentAttachment[] {
@@ -661,6 +670,22 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
       return res.status(400).json({ error: result.error.flatten() });
     }
 
+    const hasMultipartEarly = (req.headers["content-type"] || "").includes("multipart/form-data");
+    const prev = await getTransaction(req.params.id);
+    if (!prev) return res.status(404).json({ error: "Transaction not found" });
+    const atStorage = prev.transactionStage === "STORAGE";
+
+    if (Object.keys(result.data).length === 0) {
+      if (
+        atStorage &&
+        hasMultipartEarly &&
+        attachmentPathSetsEqual(prev.documentAttachments, parseExistingAttachmentsJson(existingRaw))
+      ) {
+        return res.json(prev);
+      }
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
     if (role === "employee" && result.data.paymentStatus !== undefined) {
       return res.status(403).json({ error: "Employee cannot manage accounting fields" });
     }
@@ -669,15 +694,37 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
     }
 
     if (role === "employee") {
-      const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
-      if (invalidFields.length > 0) {
-        return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+      if (atStorage) {
+        const invalidFields = Object.keys(result.data).filter(
+          (key) => !STORAGE_STAGE_EDITABLE_FIELDS.has(key as keyof Transaction),
+        );
+        if (invalidFields.length > 0) {
+          return res.status(403).json({
+            error: `At Storage stage, employee may only edit warehouse fields: ${invalidFields.join(", ")}`,
+          });
+        }
+      } else {
+        const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
+        if (invalidFields.length > 0) {
+          return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+        }
       }
     }
     if (role === "employee2") {
-      const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
-      if (invalidFields.length > 0) {
-        return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+      if (atStorage) {
+        const invalidFields = Object.keys(result.data).filter(
+          (key) => !STORAGE_STAGE_EDITABLE_FIELDS.has(key as keyof Transaction),
+        );
+        if (invalidFields.length > 0) {
+          return res.status(403).json({
+            error: `At Storage stage, employee2 may only edit warehouse fields: ${invalidFields.join(", ")}`,
+          });
+        }
+      } else {
+        const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
+        if (invalidFields.length > 0) {
+          return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+        }
       }
     }
 
@@ -688,7 +735,7 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
       }
     }
 
-    const hasMultipart = (req.headers["content-type"] || "").includes("multipart/form-data");
+    const hasMultipart = hasMultipartEarly;
     if (role === "employee2" && hasMultipart) {
       return res.status(403).json({ error: "Employee2 cannot upload attachments" });
     }
@@ -699,27 +746,35 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
     };
 
     if (hasMultipart) {
-      const prev = await getTransaction(req.params.id);
-      if (!prev) return res.status(404).json({ error: "Transaction not found" });
       const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
-      const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
-      if (files.length > 0 && categories.length !== files.length) {
-        return res.status(400).json({ error: "Each uploaded document must have a category" });
-      }
-      for (const c of categories) {
-        if (!documentCategoryEnum.safeParse(c).success) {
-          return res.status(400).json({ error: "Invalid document category" });
+      if (atStorage) {
+        if (files.length > 0) {
+          return res.status(400).json({ error: "Cannot upload new documents while the transaction is in Storage stage" });
         }
+        const retained = parseExistingAttachmentsJson(existingRaw);
+        if (!attachmentPathSetsEqual(prev.documentAttachments, retained)) {
+          return res.status(400).json({ error: "Cannot add or remove document attachments in Storage stage" });
+        }
+      } else {
+        const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
+        if (files.length > 0 && categories.length !== files.length) {
+          return res.status(400).json({ error: "Each uploaded document must have a category" });
+        }
+        for (const c of categories) {
+          if (!documentCategoryEnum.safeParse(c).success) {
+            return res.status(400).json({ error: "Invalid document category" });
+          }
+        }
+        const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
+          path: publicPathForUploadedFile(f.filename),
+          originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+          category: categories[idx] as DocumentAttachment["category"],
+        }));
+        const retained = parseExistingAttachmentsJson(existingRaw);
+        const merged = [...retained, ...uploaded];
+        await removeOrphanFiles(prev.documentAttachments, merged);
+        payload = { ...payload, documentAttachments: merged };
       }
-      const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
-        path: publicPathForUploadedFile(f.filename),
-        originalName: attachmentDisplayNameFromStoredFilename(f.filename),
-        category: categories[idx] as DocumentAttachment["category"],
-      }));
-      const retained = parseExistingAttachmentsJson(existingRaw);
-      const merged = [...retained, ...uploaded];
-      await removeOrphanFiles(prev.documentAttachments, merged);
-      payload = { ...payload, documentAttachments: merged };
     }
 
     const tx = await updateTransaction(req.params.id, payload);
@@ -829,45 +884,91 @@ app.put("/api/transfers/:id", authenticate, maybeUpload, async (req: AuthRequest
     const result = updateTransactionPayloadSchema.safeParse(bodyForZod);
     if (!result.success) return res.status(400).json({ error: result.error.flatten() });
 
+    const hasMultipartTransferEarly = (req.headers["content-type"] || "").includes("multipart/form-data");
+    const prev = await getTransfer(req.params.id);
+    if (!prev) return res.status(404).json({ error: "Transfer not found" });
+    const atStorage = prev.transactionStage === "STORAGE";
+
+    if (Object.keys(result.data).length === 0) {
+      if (
+        atStorage &&
+        hasMultipartTransferEarly &&
+        attachmentPathSetsEqual(prev.documentAttachments, parseExistingAttachmentsJson(existingRaw))
+      ) {
+        return res.json(prev);
+      }
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
     if ((role === "employee" || role === "employee2") && result.data.paymentStatus !== undefined) {
       return res.status(403).json({ error: "Employee cannot manage accounting fields" });
     }
     if (role === "employee") {
-      const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
-      if (invalidFields.length > 0) return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+      if (atStorage) {
+        const invalidFields = Object.keys(result.data).filter(
+          (key) => !STORAGE_STAGE_EDITABLE_FIELDS.has(key as keyof Transaction),
+        );
+        if (invalidFields.length > 0) {
+          return res.status(403).json({
+            error: `At Storage stage, employee may only edit warehouse fields: ${invalidFields.join(", ")}`,
+          });
+        }
+      } else {
+        const invalidFields = Object.keys(result.data).filter((key) => !stage1EmployeeFields.has(key));
+        if (invalidFields.length > 0) return res.status(403).json({ error: `Employee can only edit stage 1 fields: ${invalidFields.join(", ")}` });
+      }
     }
     if (role === "employee2") {
-      const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
-      if (invalidFields.length > 0) return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+      if (atStorage) {
+        const invalidFields = Object.keys(result.data).filter(
+          (key) => !STORAGE_STAGE_EDITABLE_FIELDS.has(key as keyof Transaction),
+        );
+        if (invalidFields.length > 0) {
+          return res.status(403).json({
+            error: `At Storage stage, employee2 may only edit warehouse fields: ${invalidFields.join(", ")}`,
+          });
+        }
+      } else {
+        const invalidFields = Object.keys(result.data).filter((key) => !stage2EmployeeFields.has(key));
+        if (invalidFields.length > 0) return res.status(403).json({ error: `Employee2 can only edit stage 2 fields: ${invalidFields.join(", ")}` });
+      }
     }
     if (role === "accountant") {
       const nonAccountingFieldProvided = Object.keys(result.data).some((key) => key !== "paymentStatus");
       if (nonAccountingFieldProvided) return res.status(403).json({ error: "Accountant can only update paymentStatus via edit endpoint" });
     }
 
-    const hasMultipart = (req.headers["content-type"] || "").includes("multipart/form-data");
+    const hasMultipart = hasMultipartTransferEarly;
     let payload: Parameters<typeof updateTransfer>[1] = {
       ...result.data,
       originCountry: result.data.originCountry ? result.data.originCountry.toUpperCase() : undefined,
     };
     if (hasMultipart) {
-      const prev = await getTransfer(req.params.id);
-      if (!prev) return res.status(404).json({ error: "Transfer not found" });
       const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
-      const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
-      if (files.length > 0 && categories.length !== files.length) return res.status(400).json({ error: "Each uploaded document must have a category" });
-      for (const c of categories) {
-        if (!documentCategoryEnum.safeParse(c).success) return res.status(400).json({ error: "Invalid document category" });
+      if (atStorage) {
+        if (files.length > 0) {
+          return res.status(400).json({ error: "Cannot upload new documents while the transfer is in Storage stage" });
+        }
+        const retained = parseExistingAttachmentsJson(existingRaw);
+        if (!attachmentPathSetsEqual(prev.documentAttachments, retained)) {
+          return res.status(400).json({ error: "Cannot add or remove document attachments in Storage stage" });
+        }
+      } else {
+        const categories = parseDocumentPhotoCategories(body.documentPhotoCategories, files.length);
+        if (files.length > 0 && categories.length !== files.length) return res.status(400).json({ error: "Each uploaded document must have a category" });
+        for (const c of categories) {
+          if (!documentCategoryEnum.safeParse(c).success) return res.status(400).json({ error: "Invalid document category" });
+        }
+        const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
+          path: publicPathForUploadedFile(f.filename),
+          originalName: attachmentDisplayNameFromStoredFilename(f.filename),
+          category: categories[idx] as DocumentAttachment["category"],
+        }));
+        const retained = parseExistingAttachmentsJson(existingRaw);
+        const merged = [...retained, ...uploaded];
+        await removeOrphanFiles(prev.documentAttachments, merged);
+        payload = { ...payload, documentAttachments: merged };
       }
-      const uploaded: DocumentAttachment[] = files.map((f, idx) => ({
-        path: publicPathForUploadedFile(f.filename),
-        originalName: attachmentDisplayNameFromStoredFilename(f.filename),
-        category: categories[idx] as DocumentAttachment["category"],
-      }));
-      const retained = parseExistingAttachmentsJson(existingRaw);
-      const merged = [...retained, ...uploaded];
-      await removeOrphanFiles(prev.documentAttachments, merged);
-      payload = { ...payload, documentAttachments: merged };
     }
     const tx = await updateTransfer(req.params.id, payload);
     if (!tx) return res.status(404).json({ error: "Transfer not found" });
@@ -975,6 +1076,7 @@ app.put("/api/exports/:id", authenticate, maybeUpload, async (req: AuthRequest, 
     delete bodyForZod.existingAttachments;
     const result = updateTransactionPayloadSchema.safeParse(bodyForZod);
     if (!result.success) return res.status(400).json({ error: result.error.flatten() });
+    if (Object.keys(result.data).length === 0) return res.status(400).json({ error: "No fields to update" });
 
     if ((role === "employee" || role === "employee2") && result.data.paymentStatus !== undefined) {
       return res.status(403).json({ error: "Employee cannot manage accounting fields" });

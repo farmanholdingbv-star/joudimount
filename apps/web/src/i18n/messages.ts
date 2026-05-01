@@ -79,6 +79,18 @@ export type MessageKey =
   | "form.saveError"
   | "form.validationError"
   | "form.saveLockedHint"
+  | "form.storage.sectionTitle"
+  | "form.storage.entryDate"
+  | "form.storage.workersWages"
+  | "form.storage.workersCompany"
+  | "form.storage.storeName"
+  | "form.storage.sizeCbm"
+  | "form.storage.freightVehicleNumbers"
+  | "form.storage.crossPackaging"
+  | "form.storage.unity"
+  | "form.storage.sealNumber"
+  | "form.storage.readOnlyHint"
+  | "form.storage.noUploadError"
   | "form.clientName"
   | "form.shippingCompanyName"
   | "form.shippingCompanyId"
@@ -403,6 +415,18 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.saveError": "تعذر حفظ المعاملة",
     "form.validationError": "يرجى إكمال جميع الحقول المطلوبة. ستُظهر المتصفح الحقول غير الصالحة.",
     "form.saveLockedHint": "الحفظ معطل في مراحل التسليم الداخلي أو الخارجي.",
+    "form.storage.sectionTitle": "التخزين (الإدخال / الإخراج / الختم)",
+    "form.storage.entryDate": "تاريخ الإدخال",
+    "form.storage.workersWages": "أجور العمال",
+    "form.storage.workersCompany": "شركة العمال",
+    "form.storage.storeName": "اسم المستودع",
+    "form.storage.sizeCbm": "الحجم (م³ CBM)",
+    "form.storage.freightVehicleNumbers": "أرقام مركبات الشحن",
+    "form.storage.crossPackaging": "التعبئة المتقاطعة",
+    "form.storage.unity": "الوحدة",
+    "form.storage.sealNumber": "رقم الختم / الطابع",
+    "form.storage.readOnlyHint": "في مرحلة التخزين تكون جميع الحقول للقراءة فقط باستثناء بيانات التخزين أدناه.",
+    "form.storage.noUploadError": "لا يمكن رفع مرفقات جديدة في مرحلة التخزين.",
     "form.clientName": "اسم العميل",
     "form.shippingCompanyName": "اسم شركة الشحن",
     "form.shippingCompanyId": "معرف شركة الشحن",
@@ -724,6 +748,18 @@ const messages: Record<Locale, Record<MessageKey, string>> = {
     "form.saveError": "Could not save transaction",
     "form.validationError": "Please complete all required fields. The browser will highlight invalid fields.",
     "form.saveLockedHint": "Save is disabled at Transportation and Storage stages.",
+    "form.storage.sectionTitle": "Storage (entry / exit / seal)",
+    "form.storage.entryDate": "Entry date",
+    "form.storage.workersWages": "Workers' wages",
+    "form.storage.workersCompany": "Workers company",
+    "form.storage.storeName": "Store name",
+    "form.storage.sizeCbm": "Size (CBM m³)",
+    "form.storage.freightVehicleNumbers": "Freight vehicle numbers",
+    "form.storage.crossPackaging": "Cross packaging",
+    "form.storage.unity": "Unit",
+    "form.storage.sealNumber": "Seal / stamp number",
+    "form.storage.readOnlyHint": "At Storage stage all fields are read-only except the warehouse data below (imports & transfers).",
+    "form.storage.noUploadError": "New document uploads are not allowed at Storage stage.",
     "form.clientName": "Client Name",
     "form.shippingCompanyName": "Shipping Company Name",
     "form.shippingCompanyId": "Shipping Company ID",
