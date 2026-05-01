@@ -273,8 +273,11 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.track_changes_outlined,
-                          color: Colors.white, size: 26),
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: 56,
+                        fit: BoxFit.contain,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         l10n.loginBannerTitle,
