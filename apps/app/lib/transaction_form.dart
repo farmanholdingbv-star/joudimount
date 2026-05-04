@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'api.dart';
+import 'date_field.dart';
 import 'l10n/app_localizations.dart';
+import 'transaction_storage_page.dart';
 
 /// New or edit transaction — aligned with web TransactionForm.
 class TransactionFormPage extends StatefulWidget {
@@ -73,15 +75,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final _unitCount = TextEditingController();
   final _stopReason = TextEditingController();
   final _qty = TextEditingController();
-  final _storageEntryDate = TextEditingController();
-  final _storageWorkersWages = TextEditingController();
-  final _storageWorkersCompany = TextEditingController();
-  final _storageStoreName = TextEditingController();
-  final _storageSizeCbm = TextEditingController();
-  final _storageFreightVehicleNumbers = TextEditingController();
-  final _storageCrossPackaging = TextEditingController();
-  final _storageUnity = TextEditingController();
-  final _storageSealNumber = TextEditingController();
   String? _quality;
   String? _unit = 'cbm';
   bool _isStopped = false;
@@ -191,17 +184,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _isStopped = tx['isStopped'] == true;
       _stopReason.text = (tx['stopReason'] ?? '').toString();
       if (tx['goodsQuantity'] != null) _qty.text = tx['goodsQuantity'].toString();
-      _storageEntryDate.text = _isoToDateInput(tx['storageEntryDate']);
-      if (tx['storageWorkersWages'] != null) {
-        _storageWorkersWages.text = tx['storageWorkersWages'].toString();
-      }
-      _storageWorkersCompany.text = (tx['storageWorkersCompany'] ?? '').toString();
-      _storageStoreName.text = (tx['storageStoreName'] ?? '').toString();
-      if (tx['storageSizeCbm'] != null) _storageSizeCbm.text = tx['storageSizeCbm'].toString();
-      _storageFreightVehicleNumbers.text = (tx['storageFreightVehicleNumbers'] ?? '').toString();
-      _storageCrossPackaging.text = (tx['storageCrossPackaging'] ?? '').toString();
-      _storageUnity.text = (tx['storageUnity'] ?? '').toString();
-      _storageSealNumber.text = (tx['storageSealNumber'] ?? '').toString();
       _quality = tx['goodsQuality']?.toString();
       if (_quality != null && _quality!.isEmpty) _quality = null;
       _unit = tx['goodsUnit']?.toString();
@@ -291,40 +273,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   }
 
   Map<String, String> _multipartStringFields() {
-    final storageOnly = _isEdit &&
-        _stage == 'STORAGE' &&
-        (widget.module == 'transactions' || widget.module == 'transfers');
-    if (storageOnly) {
-      final m = <String, String>{
-        'existingAttachments': jsonEncode(_retainedDocs),
-      };
-      if (_storageEntryDate.text.trim().isNotEmpty) {
-        m['storageEntryDate'] = _storageEntryDate.text.trim();
-      }
-      final wages = double.tryParse(_storageWorkersWages.text.trim());
-      if (wages != null) m['storageWorkersWages'] = wages.toString();
-      if (_storageWorkersCompany.text.trim().isNotEmpty) {
-        m['storageWorkersCompany'] = _storageWorkersCompany.text.trim();
-      }
-      if (_storageStoreName.text.trim().isNotEmpty) {
-        m['storageStoreName'] = _storageStoreName.text.trim();
-      }
-      final cbm = double.tryParse(_storageSizeCbm.text.trim());
-      if (cbm != null) m['storageSizeCbm'] = cbm.toString();
-      if (_storageFreightVehicleNumbers.text.trim().isNotEmpty) {
-        m['storageFreightVehicleNumbers'] = _storageFreightVehicleNumbers.text.trim();
-      }
-      if (_storageCrossPackaging.text.trim().isNotEmpty) {
-        m['storageCrossPackaging'] = _storageCrossPackaging.text.trim();
-      }
-      if (_storageUnity.text.trim().isNotEmpty) {
-        m['storageUnity'] = _storageUnity.text.trim();
-      }
-      if (_storageSealNumber.text.trim().isNotEmpty) {
-        m['storageSealNumber'] = _storageSealNumber.text.trim();
-      }
-      return m;
-    }
     final b = _jsonBody();
     return b.map((k, v) => MapEntry(k, v == null ? '' : v.toString()));
   }
@@ -387,9 +335,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     });
     try {
       if (_isEdit) {
-        final storageOnly = _stage == 'STORAGE' &&
+        final storageWarehouseOnly = _stage == 'STORAGE' &&
             (widget.module == 'transactions' || widget.module == 'transfers');
-        if (storageOnly && _picked.isNotEmpty) {
+        if (storageWarehouseOnly && _picked.isNotEmpty) {
           throw Exception(l10n.storageNoUploadAtStage);
         }
         final fields = _multipartStringFields();
@@ -403,7 +351,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         await Api.putMultipart(
           '$_modulePath/${widget.transactionId}',
           fields,
-          storageOnly ? <PlatformFile>[] : _picked,
+          storageWarehouseOnly ? <PlatformFile>[] : _picked,
         );
       } else {
         if (_picked.isEmpty) {
@@ -459,15 +407,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _unitCount.dispose();
     _stopReason.dispose();
     _qty.dispose();
-    _storageEntryDate.dispose();
-    _storageWorkersWages.dispose();
-    _storageWorkersCompany.dispose();
-    _storageStoreName.dispose();
-    _storageSizeCbm.dispose();
-    _storageFreightVehicleNumbers.dispose();
-    _storageCrossPackaging.dispose();
-    _storageUnity.dispose();
-    _storageSealNumber.dispose();
     super.dispose();
   }
 
@@ -625,7 +564,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ),
             _field(_declarationNumberInput, 'Declaration Number (1)',
                 enabled: customsEditable, maxLength: 120),
-            _field(_declarationDateInput, 'Declaration Date (YYYY-MM-DD)', enabled: customsEditable),
+            ApiDateField(
+              controller: _declarationDateInput,
+              label: 'Declaration Date',
+              enabled: customsEditable,
+            ),
             DropdownButtonFormField<String>(
               key: ValueKey('tx-declaration-type-${_declarationType.isEmpty ? 'none' : _declarationType}'),
               decoration: const InputDecoration(labelText: 'Declaration Type (1)'),
@@ -687,8 +630,16 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               child: Text('${l10n.weightKg}: ${derivedWeight.toStringAsFixed(3)}', style: Theme.of(context).textTheme.bodySmall),
             ),
           _field(_containers, l10n.txContainerCount, keyboard: TextInputType.number, enabled: prepEditable),
-          _field(_containerArrival, l10n.txContainerArrival, enabled: customsEditable),
-          _field(_documentArrival, l10n.txDocumentArrival, enabled: customsEditable),
+          ApiDateField(
+            controller: _containerArrival,
+            label: l10n.txContainerArrival,
+            enabled: customsEditable,
+          ),
+          ApiDateField(
+            controller: _documentArrival,
+            label: l10n.txDocumentArrival,
+            enabled: customsEditable,
+          ),
           _field(_containerNumbers, l10n.containerNumbers, maxLines: 3, enabled: storageEditable),
           DropdownButtonFormField<bool>(
             key: ValueKey('tx-stop-$_isStopped'),
@@ -797,23 +748,24 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 ],
               ),
             ),
-          if (storageWarehouseOnly) ...[
+          if (storageWarehouseOnly && widget.transactionId != null) ...[
             const SizedBox(height: 8),
             Text(l10n.storageReadOnlyHint, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
-            Text(l10n.storageSectionTitle, style: Theme.of(context).textTheme.titleSmall),
-            _field(_storageEntryDate, l10n.storageEntryDate, enabled: true),
-            _field(_storageWorkersWages, l10n.storageWorkersWages,
-                keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: true),
-            _field(_storageWorkersCompany, l10n.storageWorkersCompany, enabled: true),
-            _field(_storageStoreName, l10n.storageStoreName, enabled: true),
-            _field(_storageSizeCbm, l10n.storageSizeCbm,
-                keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: true),
-            _field(_storageFreightVehicleNumbers, l10n.storageFreightVehicleNumbers,
-                maxLines: 3, enabled: true),
-            _field(_storageCrossPackaging, l10n.storageCrossPackaging, enabled: true),
-            _field(_storageUnity, l10n.storageUnity, enabled: true),
-            _field(_storageSealNumber, l10n.storageSealNumber, enabled: true),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => TransactionStoragePage(
+                      role: widget.role,
+                      transactionId: widget.transactionId!,
+                      module: widget.module,
+                    ),
+                  ),
+                );
+              },
+              child: Text(l10n.storageOpenDedicatedPage),
+            ),
           ],
           const SizedBox(height: 12),
           Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
@@ -905,7 +857,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ),
           const SizedBox(height: 8),
           FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed: (_saving || storageWarehouseOnly) ? null : _save,
             child: Text(_saving ? l10n.saving : l10n.save),
           ),
         ],

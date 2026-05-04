@@ -28,24 +28,48 @@ export default function Login({ onLogin }: { onLogin: (user: AuthUser) => void }
   };
 
   return (
-    <main className="container">
-      <h1>{t("login.title")}</h1>
+    <main className="container py-4">
+      <h1 className="display-6 fw-bold">{t("login.title")}</h1>
       <p className="section-subtitle">{t("login.subtitle")}</p>
-      {error ? <p className="error">{error}</p> : null}
-      <form className="details-card form-grid" onSubmit={onSubmit}>
-        <label className="full-row">
-          {t("login.email")}
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label className="full-row">
-          {t("login.password")}
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        <button className="primary-button" type="submit" disabled={loading}>
-          {loading ? t("login.submitting") : t("login.submit")}
-        </button>
+      {error ? <p className="error alert alert-danger">{error}</p> : null}
+      <form className="card shadow-sm" style={{ maxWidth: 480 }} onSubmit={onSubmit}>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-12">
+              <label className="form-label mb-0" htmlFor="login-email">
+                {t("login.email")}
+              </label>
+              <input
+                id="login-email"
+                className="form-control mt-1"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-12">
+              <label className="form-label mb-0" htmlFor="login-password">
+                {t("login.password")}
+              </label>
+              <input
+                id="login-password"
+                className="form-control mt-1"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-12">
+              <button className="btn btn-primary" type="submit" disabled={loading}>
+                {loading ? t("login.submitting") : t("login.submit")}
+              </button>
+            </div>
+          </div>
+        </div>
       </form>
-      <p className="muted">{t("login.demoHint")}</p>
+      <p className="muted mt-3">{t("login.demoHint")}</p>
     </main>
   );
 }

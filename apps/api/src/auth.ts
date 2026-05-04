@@ -12,7 +12,8 @@ export interface AuthPayload {
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-me";
 
 export function signAuthToken(payload: AuthPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "8h" });
+  // Intentionally no JWT expiry to keep login sessions persistent.
+  return jwt.sign(payload, JWT_SECRET);
 }
 
 export function verifyAuthToken(token: string): AuthPayload | null {

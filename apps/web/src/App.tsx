@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import TransactionDetails from "./TransactionDetails";
 import TransactionForm from "./TransactionForm";
+import TransactionStoragePage from "./TransactionStoragePage";
 import ClientsPage from "./ClientsPage";
 import ClientDetailPage from "./ClientDetailPage";
 import ShippingCompaniesPage from "./ShippingCompaniesPage";
@@ -80,137 +81,182 @@ function TransactionsList({
   const currentPage = Math.min(page, totalPages);
   const pagedTransactions = filteredTransactions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  const moduleTitle = t((module === "transactions" ? "app.title" : module === "transfers" ? "transfer.app.title" : "export.app.title") as MessageKey);
+  const moduleTagline = t((module === "transactions" ? "app.tagline" : module === "transfers" ? "transfer.app.tagline" : "export.app.tagline") as MessageKey);
+
   return (
-    <main className="container">
-      <h1>{t((module === "transactions" ? "app.title" : module === "transfers" ? "transfer.app.title" : "export.app.title") as MessageKey)}</h1>
-      <p className="section-subtitle">{t((module === "transactions" ? "app.tagline" : module === "transfers" ? "transfer.app.tagline" : "export.app.tagline") as MessageKey)}</p>
-      <div className="menu-bar">
-        <div className="menu-row">
-          <span>
-            {t("app.loggedInAs")}: {user.name} ({roleLabel(role, t)})
-          </span>
-          <div className="menu-links">
-            <Link to="/employees" className="link-button">
-              {t("nav.employeeSection")}
-            </Link>
-            <Link to="/clients" className="link-button">
-              {t("nav.clients")}
-            </Link>
-            <Link to="/shipping-companies" className="link-button">
-              {t("nav.shippingCompanies")}
-            </Link>
-            <Link to="/transfers" className="link-button">
-              {t("nav.transfers" as MessageKey)}
-            </Link>
-            <Link to="/exports" className="link-button">
-              {t("nav.exports" as MessageKey)}
-            </Link>
+    <main className="dashboard-page py-3 px-2 px-md-3">
+      <div className="dashboard-page-header mx-auto mb-3 px-1">
+        <h1 className="display-6 fw-bold mb-1 text-body">{moduleTitle}</h1>
+        <p className="section-subtitle mb-0">{moduleTagline}</p>
+      </div>
+
+      <div className="dashboard-shell mx-auto">
+        {error ? <p className="error alert alert-danger mb-3">{error}</p> : null}
+
+        <section className="dashboard-top-tools card shadow-sm border-0 mb-3 p-3 p-md-4">
+          <h2 className="h6 small text-uppercase text-secondary fw-semibold mb-3 dashboard-tools-heading">{t("dashboard.toolsHeading" as MessageKey)}</h2>
+          <div className="module-cards dashboard-top-module-cards">
+            {MODULES.map((item) => (
+              <Link
+                key={item.id}
+                to={item.route}
+                className={`module-card card text-decoration-none ${module === item.id ? "module-card-active" : ""}`}
+              >
+                <span className="module-card-title">{t(item.titleKey)}</span>
+                <span className="module-card-desc">{t(item.descKey)}</span>
+              </Link>
+            ))}
+          </div>
+          <hr className="my-3 text-secondary opacity-25" />
+          <div className="row g-2 g-lg-3">
+            <div className="col-12 col-lg-6">
+              <label className="form-label small text-secondary mb-1 d-none d-md-block">{t("list.searchPlaceholder")}</label>
+              <input
+                className="form-control"
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("list.searchPlaceholder")}
+              />
+            </div>
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label small text-secondary mb-1 d-none d-md-block">{t("list.filterAllStatuses")}</label>
+              <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">{t("list.filterAllStatuses")}</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label small text-secondary mb-1 d-none d-md-block">{t("list.filterAllStages")}</label>
+              <select className="form-select" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}>
+                <option value="all">{t("list.filterAllStages")}</option>
+                {stageOptions.map((stage) => (
+                  <option key={stage} value={stage}>
+                    {t(`stage.${stage}` as MessageKey)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <div className="dashboard-layout-split">
+          <aside className="sidebar-panel card shadow-sm border-0">
+            <div className="sidebar-user">
+              <span className="muted">{t("app.loggedInAs")}</span>
+              <strong>{user.name}</strong>
+              <span className="muted">{roleLabel(role, t)}</span>
+            </div>
+            <nav className="sidebar-links list-group">
+              <Link to="/employees" className="list-group-item list-group-item-action sidebar-link">
+                {t("nav.employeeSection")}
+              </Link>
+              <Link to="/clients" className="list-group-item list-group-item-action sidebar-link">
+                {t("nav.clients")}
+              </Link>
+              <Link to="/shipping-companies" className="list-group-item list-group-item-action sidebar-link">
+                {t("nav.shippingCompanies")}
+              </Link>
+              <Link to="/transfers" className="list-group-item list-group-item-action sidebar-link">
+                {t("nav.transfers" as MessageKey)}
+              </Link>
+              <Link to="/exports" className="list-group-item list-group-item-action sidebar-link">
+                {t("nav.exports" as MessageKey)}
+              </Link>
+            </nav>
             {role === "manager" || role === "employee" ? (
-              <Link to={`/${module}/new`} className="primary-button">
+              <Link to={`/${module}/new`} className="btn btn-primary sidebar-cta">
                 {t((module === "transactions" ? "nav.addTransaction" : module === "transfers" ? "nav.addTransfer" : "nav.addExport") as MessageKey)}
               </Link>
             ) : null}
-            <button className="danger-button" onClick={onLogout}>
+            <button className="btn btn-outline-danger sidebar-logout" onClick={onLogout}>
               {t("nav.logout")}
             </button>
-          </div>
-        </div>
-        <div className="module-cards">
-          {MODULES.map((item) => (
-            <Link
-              key={item.id}
-              to={item.route}
-              className={`module-card ${module === item.id ? "module-card-active" : ""}`}
-            >
-              <span className="module-card-title">{t(item.titleKey)}</span>
-              <span className="module-card-desc">{t(item.descKey)}</span>
-            </Link>
-          ))}
-        </div>
+          </aside>
 
-        <div className="filter-row">
-          <input
-            className="filter-input"
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("list.searchPlaceholder")}
-          />
-          <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="all">{t("list.filterAllStatuses")}</option>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-          <select className="filter-select" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}>
-            <option value="all">{t("list.filterAllStages")}</option>
-            {stageOptions.map((stage) => (
-              <option key={stage} value={stage}>
-                {t(`stage.${stage}` as MessageKey)}
-              </option>
-            ))}
-          </select>
+          <section className="dashboard-list-column card shadow-sm border-0">
+            <div className="dashboard-list-toolbar d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-body-tertiary">
+              <span className="small fw-semibold text-secondary text-truncate me-2">{moduleTitle}</span>
+              <span className="badge rounded-pill text-bg-primary">{filteredTransactions.length}</span>
+            </div>
+            <div className="dashboard-table-scroll">
+              <table className="table table-hover align-middle mb-0 sticky-table-head">
+                <thead>
+                  <tr>
+                    <th>{t("list.col.client")}</th>
+                    <th>{t("list.col.shippingCompany")}</th>
+                    <th>{t("list.col.status")}</th>
+                    <th>{t("list.col.storage" as MessageKey)}</th>
+                    <th>{t("list.col.createdAt")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedTransactions.map((tx) => (
+                    <tr key={tx.id} className="clickable-row" onClick={() => navigate(`/${module}/${tx.id}`)}>
+                      <td>{tx.clientName}</td>
+                      <td>{tx.shippingCompanyName}</td>
+                      <td>
+                        <span className="badge rounded-pill text-bg-light border status-badge-pill">
+                          {t(`stage.${tx.transactionStage ?? "PREPARATION"}` as MessageKey)} · {tx.clearanceStatus}
+                        </span>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {tx.transactionStage === "STORAGE" && (module === "transactions" || module === "transfers") ? (
+                          <Link to={`/${module}/${tx.id}/storage`} className="btn btn-sm btn-outline-primary">
+                            {t("storagePage.openCard" as MessageKey)}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="text-nowrap small">{new Date(tx.createdAt).toLocaleString(numberLocale)}</td>
+                    </tr>
+                  ))}
+                  {!filteredTransactions.length && (
+                    <tr>
+                      <td colSpan={5} className="text-center text-muted py-5">
+                        {t("list.noResults")}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {filteredTransactions.length > 0 ? (
+              <div className="dashboard-list-footer border-top px-3 py-2 bg-body-tertiary">
+                <div className="d-flex flex-wrap gap-2 align-items-center justify-content-center">
+                  <button type="button" className="btn btn-sm btn-primary" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}>
+                    {t("list.paginationPrev")}
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      type="button"
+                      key={p}
+                      className={p === currentPage ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-secondary"}
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary"
+                    onClick={() => setPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    {t("list.paginationNext")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </section>
         </div>
       </div>
-      {error ? <p className="error">{error}</p> : null}
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>{t("list.col.client")}</th>
-              <th>{t("list.col.shippingCompany")}</th>
-              <th>{t("list.col.status")}</th>
-              <th>{t("list.col.createdAt")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedTransactions.map((tx) => (
-              <tr key={tx.id} className="clickable-row" onClick={() => navigate(`/${module}/${tx.id}`)}>
-                <td>{tx.clientName}</td>
-                <td>{tx.shippingCompanyName}</td>
-                <td>
-                  <span className="status-badge">
-                    {t(`stage.${tx.transactionStage ?? "PREPARATION"}` as MessageKey)} • {tx.clearanceStatus}
-                  </span>
-                </td>
-                <td>{new Date(tx.createdAt).toLocaleString(numberLocale)}</td>
-              </tr>
-            ))}
-            {!filteredTransactions.length && (
-              <tr>
-                <td colSpan={4}>{t("list.noResults")}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {filteredTransactions.length > 0 && (
-        <div className="page-actions">
-          <button type="button" className="primary-button" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}>
-            {t("list.paginationPrev")}
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              type="button"
-              key={p}
-              className={p === currentPage ? "primary-button" : "link-button"}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => setPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            {t("list.paginationNext")}
-          </button>
-        </div>
-      )}
     </main>
   );
 }
@@ -231,12 +277,16 @@ export default function App() {
 
   return (
     <>
-      <header className="app-header">
-        <img src="/logo.png" alt="Project logo" width={66} height={66} className="app-logo" />
-        <div className="app-header-user-wrap">
-          {user ? <span className="app-header-user">{user.name}</span> : null}
+      <header className="app-header container py-3">
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <img src="/logo.png" alt="Project logo" width={66} height={66} className="app-logo flex-shrink-0" />
+          <div className="d-flex align-items-center flex-wrap gap-3 justify-content-end ms-auto">
+            <div className="app-header-user-wrap min-w-0">
+              {user ? <span className="app-header-user badge text-bg-light border">{user.name}</span> : null}
+            </div>
+            <LanguageSwitcher />
+          </div>
         </div>
-        <LanguageSwitcher />
       </header>
       {!user ? (
         <Login onLogin={setUser} />
@@ -251,8 +301,8 @@ function NotFoundPage() {
   const { t } = useI18n();
   return (
     <main className="container">
-      <h1>{t("notFound.title")}</h1>
-      <Link to="/" className="link-button">
+      <h1 className="display-6 fw-bold mb-3">{t("notFound.title")}</h1>
+      <Link to="/" className="btn btn-outline-primary">
         {t("notFound.dashboard")}
       </Link>
     </main>
@@ -274,9 +324,11 @@ function AuthenticatedRoutes({ user, onLogout }: { user: AuthUser; onLogout: () 
       <Route path="/transactions/new" element={<TransactionForm role={role} module="transactions" />} />
       <Route path="/transactions/:id/edit" element={<TransactionForm role={role} module="transactions" />} />
       <Route path="/transactions/:id" element={<TransactionDetails role={role} module="transactions" />} />
+      <Route path="/transactions/:id/storage" element={<TransactionStoragePage role={role} module="transactions" />} />
       <Route path="/transfers/new" element={<TransactionForm role={role} module="transfers" />} />
       <Route path="/transfers/:id/edit" element={<TransactionForm role={role} module="transfers" />} />
       <Route path="/transfers/:id" element={<TransactionDetails role={role} module="transfers" />} />
+      <Route path="/transfers/:id/storage" element={<TransactionStoragePage role={role} module="transfers" />} />
       <Route path="/exports/new" element={<TransactionForm role={role} module="exports" />} />
       <Route path="/exports/:id/edit" element={<TransactionForm role={role} module="exports" />} />
       <Route path="/exports/:id" element={<TransactionDetails role={role} module="exports" />} />

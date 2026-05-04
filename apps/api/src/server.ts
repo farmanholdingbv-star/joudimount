@@ -740,10 +740,10 @@ app.put("/api/transactions/:id", authenticate, maybeUpload, async (req: AuthRequ
       return res.status(403).json({ error: "Employee2 cannot upload attachments" });
     }
 
-    let payload: Parameters<typeof updateTransaction>[1] = {
-      ...result.data,
-      originCountry: result.data.originCountry ? result.data.originCountry.toUpperCase() : undefined,
-    };
+    let payload: Parameters<typeof updateTransaction>[1] = { ...result.data };
+    if (result.data.originCountry !== undefined) {
+      payload.originCountry = result.data.originCountry.toUpperCase();
+    }
 
     if (hasMultipart) {
       const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
@@ -939,10 +939,10 @@ app.put("/api/transfers/:id", authenticate, maybeUpload, async (req: AuthRequest
     }
 
     const hasMultipart = hasMultipartTransferEarly;
-    let payload: Parameters<typeof updateTransfer>[1] = {
-      ...result.data,
-      originCountry: result.data.originCountry ? result.data.originCountry.toUpperCase() : undefined,
-    };
+    let payload: Parameters<typeof updateTransfer>[1] = { ...result.data };
+    if (result.data.originCountry !== undefined) {
+      payload.originCountry = result.data.originCountry.toUpperCase();
+    }
     if (hasMultipart) {
       const files = ((req as Request & { files?: Express.Multer.File[] }).files ?? []) as Express.Multer.File[];
       if (atStorage) {
@@ -1095,10 +1095,10 @@ app.put("/api/exports/:id", authenticate, maybeUpload, async (req: AuthRequest, 
     }
 
     const hasMultipart = (req.headers["content-type"] || "").includes("multipart/form-data");
-    let payload: Parameters<typeof updateExport>[1] = {
-      ...result.data,
-      originCountry: result.data.originCountry ? result.data.originCountry.toUpperCase() : undefined,
-    };
+    let payload: Parameters<typeof updateExport>[1] = { ...result.data };
+    if (result.data.originCountry !== undefined) {
+      payload.originCountry = result.data.originCountry.toUpperCase();
+    }
     if (hasMultipart) {
       const prev = await getExport(req.params.id);
       if (!prev) return res.status(404).json({ error: "Export not found" });

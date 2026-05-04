@@ -47,7 +47,7 @@ export default function LocationMapPicker({ latitude, longitude, onChange, hint,
   const mapKey = hasPin ? `${latitude.toFixed(5)},${longitude.toFixed(5)}` : "no-marker";
 
   return (
-    <div className="location-map-picker">
+    <div className="location-map-picker col-12">
       <p className="muted map-hint">{hint}</p>
       <MapContainer
         key={mapKey}
@@ -64,7 +64,7 @@ export default function LocationMapPicker({ latitude, longitude, onChange, hint,
         {hasPin ? <Marker position={[latitude, longitude]} /> : null}
       </MapContainer>
       {hasPin ? (
-        <button type="button" className="link-button map-clear" onClick={() => onChange(null, null)}>
+        <button type="button" className="btn btn-outline-secondary btn-sm map-clear" onClick={() => onChange(null, null)}>
           {clearLabel}
         </button>
       ) : null}

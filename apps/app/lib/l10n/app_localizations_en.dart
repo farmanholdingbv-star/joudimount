@@ -573,7 +573,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storageSealNumber => 'Seal / stamp number';
 
   @override
-  String get storageReadOnlyHint => 'At Storage stage only the warehouse fields below can be edited.';
+  String get storageReadOnlyHint => 'At Storage stage use the storage card for warehouse data. Fields here are read-only.';
+
+  @override
+  String get storageCardTitle => 'Storage card';
+
+  @override
+  String get storageBackToTransaction => 'Back to transaction';
+
+  @override
+  String get storageSubInput => 'Input';
+
+  @override
+  String get storageSubOutput => 'Output';
+
+  @override
+  String get storageSubSeal => 'Seal';
+
+  @override
+  String get storageSectionInput => 'A — Input (entry) data';
+
+  @override
+  String get storageSectionExit => 'B — Exit data';
+
+  @override
+  String get storageSectionSeal => 'C — Seal';
+
+  @override
+  String get storageLoadingEquipmentFare => 'Loading equipment fare';
+
+  @override
+  String get storageReplaceContainers => 'Replace containers';
+
+  @override
+  String get storageSwitchDate => 'Switch date';
+
+  @override
+  String get storageEntryContainerNumbers => 'Entry container numbers';
+
+  @override
+  String get storageSealUnitCount => 'Number of units';
+
+  @override
+  String get storageOpenCard => 'Storage';
+
+  @override
+  String get storageWrongStage => 'This record is not in the Storage stage.';
+
+  @override
+  String get storageAccountantReadOnly => 'Accountants can view this screen only.';
+
+  @override
+  String get storageOpenDedicatedPage => 'Open storage card (input / output / seal)';
+
+  @override
+  String get storageLinkFromDetails => 'Storage card';
 
   @override
   String get pdfFontLoadErrorPrefix => 'Could not load PDF font';

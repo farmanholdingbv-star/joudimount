@@ -4,6 +4,7 @@ import 'api.dart';
 import 'l10n/app_localizations.dart';
 import 'transaction_detail.dart';
 import 'transaction_form.dart';
+import 'transaction_storage_page.dart';
 
 class TransactionsTab extends StatefulWidget {
   final String role;
@@ -150,24 +151,47 @@ class _TransactionsTabState extends State<TransactionsTab> {
               ),
             ),
           ...filtered.map(
-            (tx) => Card(
-              child: ListTile(
-                title: Text('${tx['clientName']}'),
-                subtitle: Text('${tx['shippingCompanyName']} • ${tx['transactionStage'] ?? 'PREPARATION'} • ${tx['clearanceStatus']}'),
-                onTap: () async {
-                  await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (_) => TransactionDetailsPage(
-                        id: tx['id'] as String,
-                        role: widget.role,
-                        module: widget.module,
+            (tx) {
+              final stage = (tx['transactionStage'] ?? 'PREPARATION').toString();
+              final showStorage = stage == 'STORAGE' &&
+                  (widget.module == 'transactions' || widget.module == 'transfers');
+              return Card(
+                child: ListTile(
+                  title: Text('${tx['clientName']}'),
+                  subtitle: Text(
+                      '${tx['shippingCompanyName']} • $stage • ${tx['clearanceStatus']}'),
+                  trailing: showStorage
+                      ? IconButton(
+                          icon: const Icon(Icons.warehouse_outlined),
+                          tooltip: AppLocalizations.of(context)!.storageOpenCard,
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => TransactionStoragePage(
+                                  role: widget.role,
+                                  transactionId: tx['id'] as String,
+                                  module: widget.module,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : null,
+                  onTap: () async {
+                    await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => TransactionDetailsPage(
+                          id: tx['id'] as String,
+                          role: widget.role,
+                          module: widget.module,
+                        ),
                       ),
-                    ),
-                  );
-                  _load();
-                },
-              ),
-            ),
+                    );
+                    _load();
+                  },
+                ),
+              );
+            },
           ),
           if (!_loading && filtered.isEmpty)
             Card(

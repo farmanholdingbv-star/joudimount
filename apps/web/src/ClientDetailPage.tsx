@@ -25,7 +25,7 @@ export default function ClientDetailPage() {
   return (
     <main className="container">
       <div className="page-actions">
-        <Link to="/clients" className="link-button">
+        <Link to="/clients" className="btn btn-outline-secondary btn-sm">
           {t("clients.back")}
         </Link>
       </div>
@@ -33,30 +33,32 @@ export default function ClientDetailPage() {
       {error ? <p className="error">{error}</p> : null}
       {!client && !error ? <p>{t("details.loading")}</p> : null}
       {client ? (
-        <section className="details-card">
-          <div className="details-grid">
-            <p className="details-item">
+        <section className="details-card card shadow-sm">
+          <div className="card-body">
+          <div className="row row-cols-1 row-cols-md-2 g-3">
+            <p className="details-item mb-0">
               <strong>{t("clients.companyName")}:</strong> {client.companyName}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("clients.trn")}:</strong> {client.trn}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("clients.immigrationCode")}:</strong> {client.immigrationCode ?? "—"}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("clients.clientEmail")}:</strong> {client.email ?? "—"}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("clients.country")}:</strong> {client.country ?? "—"}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("clients.creditLimit")}:</strong> {client.creditLimit.toLocaleString(numberLocale)}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("clients.status")}:</strong>{" "}
               <span className="status-badge">{client.status === "active" ? t("clients.active") : t("clients.suspended")}</span>
             </p>
+          </div>
           </div>
         </section>
       ) : null}

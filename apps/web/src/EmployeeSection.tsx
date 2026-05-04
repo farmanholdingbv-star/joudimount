@@ -126,9 +126,9 @@ export default function EmployeeSection({ role }: Props) {
   };
 
   return (
-    <main className="container">
+    <main className="container py-2">
       <div className="page-actions">
-        <Link to="/" className="link-button">
+        <Link to="/" className="btn btn-outline-secondary btn-sm">
           {t("employees.back")}
         </Link>
       </div>
@@ -159,64 +159,75 @@ export default function EmployeeSection({ role }: Props) {
 
       <p className="section-subtitle">{t("employees.managerOnly")}</p>
       {!isManager ? <p className="muted">{t("employees.managerOnly")}</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {error ? <p className="error alert alert-danger">{error}</p> : null}
 
       {isManager ? (
-        <form className="details-card form-grid" onSubmit={onSubmit}>
-          <label>
-            {t("employees.name")}
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-              minLength={2}
-            />
-          </label>
-          <label>
-            {t("employees.email")}
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
-          </label>
-          <label>
-            {t("employees.password")}
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              autoComplete={editingId ? "new-password" : "new-password"}
-              required={!editingId}
-              minLength={editingId ? undefined : 4}
-              placeholder={editingId ? t("employees.passwordHintEdit") : undefined}
-            />
-          </label>
-          <label>
-            {t("employees.role")}
-            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-              <option value="manager">{t("role.manager")}</option>
-              <option value="employee">{t("role.employee")}</option>
-              <option value="employee2">Employee 2</option>
-              <option value="accountant">{t("role.accountant")}</option>
-            </select>
-          </label>
-          <div className="full-row page-actions">
-            <button className="primary-button" type="submit">
-              {editingId ? t("employees.update") : t("employees.create")}
-            </button>
-            {editingId ? (
-              <button type="button" className="link-button" onClick={onCancelEdit}>
-                {t("employees.cancelEdit")}
-              </button>
-            ) : null}
+        <form className="card shadow-sm mb-4" onSubmit={onSubmit}>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("employees.name")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                  minLength={2}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("employees.email")}</label>
+                <input
+                  className="form-control mt-1"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("employees.password")}</label>
+                <input
+                  className="form-control mt-1"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  autoComplete={editingId ? "new-password" : "new-password"}
+                  required={!editingId}
+                  minLength={editingId ? undefined : 4}
+                  placeholder={editingId ? t("employees.passwordHintEdit") : undefined}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("employees.role")}</label>
+                <select
+                  className="form-select mt-1"
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
+                >
+                  <option value="manager">{t("role.manager")}</option>
+                  <option value="employee">{t("role.employee")}</option>
+                  <option value="employee2">Employee 2</option>
+                  <option value="accountant">{t("role.accountant")}</option>
+                </select>
+              </div>
+              <div className="col-12 d-flex flex-wrap gap-2 align-items-center">
+                <button className="btn btn-primary" type="submit">
+                  {editingId ? t("employees.update") : t("employees.create")}
+                </button>
+                {editingId ? (
+                  <button type="button" className="btn btn-outline-secondary" onClick={onCancelEdit}>
+                    {t("employees.cancelEdit")}
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
         </form>
       ) : null}
 
-      <div className="table-wrap">
-        <table>
+      <div className="table-wrap card shadow-sm">
+        <table className="table table-hover align-middle mb-0">
           <thead>
             <tr>
               <th>{t("employees.name")}</th>
@@ -233,12 +244,12 @@ export default function EmployeeSection({ role }: Props) {
                 <td>{roleLabel(emp.role, t)}</td>
                 {isManager ? (
                   <td>
-                    <button type="button" className="primary-button" onClick={() => onEdit(emp)}>
+                    <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => onEdit(emp)}>
                       {t("employees.edit")}
                     </button>{" "}
                     <button
                       type="button"
-                      className="danger-button"
+                      className="btn btn-sm btn-outline-danger"
                       disabled={emp.id === currentUserId}
                       onClick={() => onDelete(emp.id)}
                       title={emp.id === currentUserId ? t("employees.deleteSelfError") : undefined}
@@ -259,7 +270,7 @@ export default function EmployeeSection({ role }: Props) {
       </div>
 
       <div className="page-actions">
-        <Link to="/" className="primary-button">
+        <Link to="/" className="btn btn-primary">
           {t("employees.goTracker")}
         </Link>
       </div>

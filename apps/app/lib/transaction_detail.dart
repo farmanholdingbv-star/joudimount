@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'api.dart';
 import 'l10n/app_localizations.dart';
 import 'transaction_form.dart';
+import 'transaction_storage_page.dart';
 
 class TransactionDetailsPage extends StatefulWidget {
   final String id;
@@ -333,6 +334,25 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     const SizedBox(height: 10),
                     _kv(l10n.client, '${tx!['clientName']}'),
                     _kv('Stage', _stageLabel('${tx!['transactionStage'] ?? 'PREPARATION'}')),
+                    if ('${tx!['transactionStage'] ?? ''}' == 'STORAGE' &&
+                        (widget.module == 'transactions' || widget.module == 'transfers'))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => TransactionStoragePage(
+                                  role: widget.role,
+                                  transactionId: widget.id,
+                                  module: widget.module,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(l10n.storageLinkFromDetails),
+                        ),
+                      ),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
                     if ('${tx!['transactionStage'] ?? 'PREPARATION'}' != 'PREPARATION') ...[
                       _kv('${l10n.declaration} (1)', '${tx!['declarationNumber']}'),

@@ -25,7 +25,7 @@ export default function ShippingCompanyDetailPage() {
   return (
     <main className="container">
       <div className="page-actions">
-        <Link to="/shipping-companies" className="link-button">
+        <Link to="/shipping-companies" className="btn btn-outline-secondary btn-sm">
           {t("shipping.back")}
         </Link>
       </div>
@@ -33,29 +33,30 @@ export default function ShippingCompanyDetailPage() {
       {error ? <p className="error">{error}</p> : null}
       {!item && !error ? <p>{t("details.loading")}</p> : null}
       {item ? (
-        <section className="details-card">
-          <div className="details-grid">
-            <p className="details-item">
+        <section className="details-card card shadow-sm">
+          <div className="card-body">
+          <div className="row row-cols-1 row-cols-md-2 g-3">
+            <p className="details-item mb-0">
               <strong>{t("shipping.companyName")}:</strong> {item.companyName}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("shipping.code")}:</strong> {item.code}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("shipping.contactName")}:</strong> {item.contactName ?? "—"}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("shipping.phone")}:</strong> {item.phone ?? "—"}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("shipping.email")}:</strong> {item.email ?? "—"}
             </p>
-            <p className="details-item full-row">
+            <p className="details-item col-12 mb-0">
               <strong>{t("shipping.dispatchFormTemplate")}:</strong>
               <br />
               <span style={{ whiteSpace: "pre-wrap" }}>{item.dispatchFormTemplate?.trim() ? item.dispatchFormTemplate : "—"}</span>
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("shipping.location")}:</strong>{" "}
               {item.latitude != null && item.longitude != null ? (
                 <a
@@ -69,10 +70,11 @@ export default function ShippingCompanyDetailPage() {
                 "—"
               )}
             </p>
-            <p className="details-item">
+            <p className="details-item mb-0">
               <strong>{t("shipping.status")}:</strong>{" "}
               <span className="status-badge">{item.status === "active" ? t("shipping.active") : t("shipping.inactive")}</span>
             </p>
+          </div>
           </div>
         </section>
       ) : null}

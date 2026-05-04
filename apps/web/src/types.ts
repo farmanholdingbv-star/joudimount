@@ -9,6 +9,8 @@ export type TransactionStage =
   | "TRANSPORTATION"
   | "STORAGE";
 
+export type StorageSubStage = "INPUT" | "OUTPUT" | "SEAL";
+
 export interface DocumentAttachment {
   path: string;
   originalName: string;
@@ -67,6 +69,7 @@ export interface Transaction {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  storageSubStage?: StorageSubStage;
   storageEntryDate?: string;
   storageWorkersWages?: number;
   storageWorkersCompany?: string;
@@ -76,6 +79,27 @@ export interface Transaction {
   storageCrossPackaging?: string;
   storageUnity?: string;
   storageSealNumber?: string;
+  storageInputEntryDate?: string;
+  storageInputWorkersWages?: number;
+  storageInputWorkersCompany?: string;
+  storageInputStoreName?: string;
+  storageInputVolumeCbm?: number;
+  storageInputLoadingEquipmentFare?: number;
+  storageExitEntryDate?: string;
+  storageExitWorkersWages?: number;
+  storageExitWorkersCompany?: string;
+  storageExitStoreName?: string;
+  storageExitVolumeCbm?: number;
+  storageExitLoadingEquipmentFare?: number;
+  storageExitFreightVehicleNumbers?: string;
+  storageExitCrossPackaging?: string;
+  storageExitUnity?: string;
+  storageSealReplaceContainers?: string;
+  storageSealSwitchDate?: string;
+  storageSealEntryContainerNumbers?: string;
+  storageSealUnitCount?: number;
+  storageSealWorkersCompany?: string;
+  storageSealWorkersWages?: number;
   transactionStage: TransactionStage;
   createdAt: string;
   updatedAt: string;

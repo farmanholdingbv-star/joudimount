@@ -41,6 +41,7 @@ export const optionalHoldReason = z.preprocess(emptyToUndef, z.string().max(500)
 const optionalStorageShort = z.preprocess(emptyToUndef, z.string().max(120).optional());
 const optionalStorageMedium = z.preprocess(emptyToUndef, z.string().max(200).optional());
 const optionalStorageLong = z.preprocess(emptyToUndef, z.string().max(500).optional());
+const optionalStorageSubStage = z.preprocess(emptyToUndef, z.enum(["INPUT", "OUTPUT", "SEAL"]).optional());
 
 const parseOptionalStringArray = (v: unknown): string[] | undefined => {
   if (v == null || v === "") return undefined;
@@ -157,6 +158,28 @@ export const createTransactionPayloadSchema = z.object({
   storageCrossPackaging: optionalStorageMedium,
   storageUnity: optionalStorageShort,
   storageSealNumber: optionalStorageShort,
+  storageSubStage: optionalStorageSubStage,
+  storageInputEntryDate: optionalDateIso,
+  storageInputWorkersWages: optionalNonNegativeNumber,
+  storageInputWorkersCompany: optionalStorageMedium,
+  storageInputStoreName: optionalStorageMedium,
+  storageInputVolumeCbm: optionalNonNegativeNumber,
+  storageInputLoadingEquipmentFare: optionalNonNegativeNumber,
+  storageExitEntryDate: optionalDateIso,
+  storageExitWorkersWages: optionalNonNegativeNumber,
+  storageExitWorkersCompany: optionalStorageMedium,
+  storageExitStoreName: optionalStorageMedium,
+  storageExitVolumeCbm: optionalNonNegativeNumber,
+  storageExitLoadingEquipmentFare: optionalNonNegativeNumber,
+  storageExitFreightVehicleNumbers: optionalStorageLong,
+  storageExitCrossPackaging: optionalStorageMedium,
+  storageExitUnity: optionalStorageShort,
+  storageSealReplaceContainers: optionalStorageLong,
+  storageSealSwitchDate: optionalDateIso,
+  storageSealEntryContainerNumbers: optionalStorageLong,
+  storageSealUnitCount: optionalNonNegativeInt,
+  storageSealWorkersCompany: optionalStorageMedium,
+  storageSealWorkersWages: optionalNonNegativeNumber,
 });
 
 export const updateTransactionPayloadSchema = z
@@ -218,7 +241,7 @@ export const updateTransactionPayloadSchema = z
     containerNumbers: optionalContainerNumbers,
     unitCount: optionalNonNegativeInt,
     unitNumber: optionalNonNegativeInt,
-    isStopped: requiredBoolean,
+    isStopped: optionalBoolean,
     holdReason: optionalHoldReason,
     stopReason: optionalStopReason,
     documentPostalNumber: optionalPostal,
@@ -234,4 +257,26 @@ export const updateTransactionPayloadSchema = z
     storageCrossPackaging: optionalStorageMedium,
     storageUnity: optionalStorageShort,
     storageSealNumber: optionalStorageShort,
+    storageSubStage: optionalStorageSubStage,
+    storageInputEntryDate: optionalDateIso,
+    storageInputWorkersWages: optionalNonNegativeNumber,
+    storageInputWorkersCompany: optionalStorageMedium,
+    storageInputStoreName: optionalStorageMedium,
+    storageInputVolumeCbm: optionalNonNegativeNumber,
+    storageInputLoadingEquipmentFare: optionalNonNegativeNumber,
+    storageExitEntryDate: optionalDateIso,
+    storageExitWorkersWages: optionalNonNegativeNumber,
+    storageExitWorkersCompany: optionalStorageMedium,
+    storageExitStoreName: optionalStorageMedium,
+    storageExitVolumeCbm: optionalNonNegativeNumber,
+    storageExitLoadingEquipmentFare: optionalNonNegativeNumber,
+    storageExitFreightVehicleNumbers: optionalStorageLong,
+    storageExitCrossPackaging: optionalStorageMedium,
+    storageExitUnity: optionalStorageShort,
+    storageSealReplaceContainers: optionalStorageLong,
+    storageSealSwitchDate: optionalDateIso,
+    storageSealEntryContainerNumbers: optionalStorageLong,
+    storageSealUnitCount: optionalNonNegativeInt,
+    storageSealWorkersCompany: optionalStorageMedium,
+    storageSealWorkersWages: optionalNonNegativeNumber,
   });

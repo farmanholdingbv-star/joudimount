@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.example.judi_mount"
-    compileSdk = flutter.compileSdkVersion
+    // Required for Android 12+ splash screen attrs like `postSplashScreenTheme`.
+    compileSdk = 36
     // Use installed NDK; Flutter's default (28.2.x) may fail to download or unzip on some setups.
     ndkVersion = "30.0.14904198"
 
@@ -26,7 +27,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -42,4 +43,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Provides `postSplashScreenTheme` used by values-v31 splash styles.
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }

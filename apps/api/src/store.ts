@@ -147,7 +147,10 @@ function sameTransactionField(key: keyof Transaction, nextValue: unknown, curren
     key === "orderDate" ||
     key === "containerArrivalDate" ||
     key === "documentArrivalDate" ||
-    key === "storageEntryDate"
+    key === "storageEntryDate" ||
+    key === "storageInputEntryDate" ||
+    key === "storageExitEntryDate" ||
+    key === "storageSealSwitchDate"
   ) {
     return normalizeDateOnly(nextValue) === normalizeDateOnly(currentValue);
   }
@@ -224,6 +227,7 @@ function mapTransaction(doc: any): Transaction {
     goodsQuantity: doc.goodsQuantity,
     goodsQuality: doc.goodsQuality,
     goodsUnit: doc.goodsUnit,
+    storageSubStage: doc.storageSubStage,
     storageEntryDate: mapOptionalDate(doc.storageEntryDate),
     storageWorkersWages: doc.storageWorkersWages,
     storageWorkersCompany: doc.storageWorkersCompany,
@@ -233,6 +237,27 @@ function mapTransaction(doc: any): Transaction {
     storageCrossPackaging: doc.storageCrossPackaging,
     storageUnity: doc.storageUnity,
     storageSealNumber: doc.storageSealNumber,
+    storageInputEntryDate: mapOptionalDate(doc.storageInputEntryDate ?? doc.storageEntryDate),
+    storageInputWorkersWages: doc.storageInputWorkersWages ?? doc.storageWorkersWages,
+    storageInputWorkersCompany: doc.storageInputWorkersCompany ?? doc.storageWorkersCompany,
+    storageInputStoreName: doc.storageInputStoreName ?? doc.storageStoreName,
+    storageInputVolumeCbm: doc.storageInputVolumeCbm ?? doc.storageSizeCbm,
+    storageInputLoadingEquipmentFare: doc.storageInputLoadingEquipmentFare,
+    storageExitEntryDate: mapOptionalDate(doc.storageExitEntryDate),
+    storageExitWorkersWages: doc.storageExitWorkersWages,
+    storageExitWorkersCompany: doc.storageExitWorkersCompany,
+    storageExitStoreName: doc.storageExitStoreName,
+    storageExitVolumeCbm: doc.storageExitVolumeCbm,
+    storageExitLoadingEquipmentFare: doc.storageExitLoadingEquipmentFare,
+    storageExitFreightVehicleNumbers: doc.storageExitFreightVehicleNumbers ?? doc.storageFreightVehicleNumbers,
+    storageExitCrossPackaging: doc.storageExitCrossPackaging ?? doc.storageCrossPackaging,
+    storageExitUnity: doc.storageExitUnity ?? doc.storageUnity,
+    storageSealReplaceContainers: doc.storageSealReplaceContainers,
+    storageSealSwitchDate: mapOptionalDate(doc.storageSealSwitchDate),
+    storageSealEntryContainerNumbers: doc.storageSealEntryContainerNumbers,
+    storageSealUnitCount: doc.storageSealUnitCount,
+    storageSealWorkersCompany: doc.storageSealWorkersCompany,
+    storageSealWorkersWages: doc.storageSealWorkersWages,
     transactionStage: doc.transactionStage ?? "PREPARATION",
     createdAt: new Date(doc.createdAt).toISOString(),
     updatedAt: new Date(doc.updatedAt).toISOString(),
@@ -309,6 +334,7 @@ const transportationFields = new Set<keyof Transaction>([
 
 /** Imports & transfers at STORAGE: only these transaction fields may be updated. */
 export const STORAGE_STAGE_EDITABLE_FIELDS = new Set<keyof Transaction>([
+  "storageSubStage",
   "storageEntryDate",
   "storageWorkersWages",
   "storageWorkersCompany",
@@ -318,6 +344,27 @@ export const STORAGE_STAGE_EDITABLE_FIELDS = new Set<keyof Transaction>([
   "storageCrossPackaging",
   "storageUnity",
   "storageSealNumber",
+  "storageInputEntryDate",
+  "storageInputWorkersWages",
+  "storageInputWorkersCompany",
+  "storageInputStoreName",
+  "storageInputVolumeCbm",
+  "storageInputLoadingEquipmentFare",
+  "storageExitEntryDate",
+  "storageExitWorkersWages",
+  "storageExitWorkersCompany",
+  "storageExitStoreName",
+  "storageExitVolumeCbm",
+  "storageExitLoadingEquipmentFare",
+  "storageExitFreightVehicleNumbers",
+  "storageExitCrossPackaging",
+  "storageExitUnity",
+  "storageSealReplaceContainers",
+  "storageSealSwitchDate",
+  "storageSealEntryContainerNumbers",
+  "storageSealUnitCount",
+  "storageSealWorkersCompany",
+  "storageSealWorkersWages",
 ]);
 
 const TRANSACTION_PATCH_KEYS: (keyof Transaction)[] = [
@@ -380,6 +427,28 @@ const TRANSACTION_PATCH_KEYS: (keyof Transaction)[] = [
   "storageCrossPackaging",
   "storageUnity",
   "storageSealNumber",
+  "storageSubStage",
+  "storageInputEntryDate",
+  "storageInputWorkersWages",
+  "storageInputWorkersCompany",
+  "storageInputStoreName",
+  "storageInputVolumeCbm",
+  "storageInputLoadingEquipmentFare",
+  "storageExitEntryDate",
+  "storageExitWorkersWages",
+  "storageExitWorkersCompany",
+  "storageExitStoreName",
+  "storageExitVolumeCbm",
+  "storageExitLoadingEquipmentFare",
+  "storageExitFreightVehicleNumbers",
+  "storageExitCrossPackaging",
+  "storageExitUnity",
+  "storageSealReplaceContainers",
+  "storageSealSwitchDate",
+  "storageSealEntryContainerNumbers",
+  "storageSealUnitCount",
+  "storageSealWorkersCompany",
+  "storageSealWorkersWages",
 ];
 
 function getLockedFieldsForStage(stage: TransactionStage, model: typeof TransactionModel): Set<keyof Transaction> {
@@ -605,6 +674,28 @@ type CreateTransactionFields = Pick<
       | "storageCrossPackaging"
       | "storageUnity"
       | "storageSealNumber"
+      | "storageSubStage"
+      | "storageInputEntryDate"
+      | "storageInputWorkersWages"
+      | "storageInputWorkersCompany"
+      | "storageInputStoreName"
+      | "storageInputVolumeCbm"
+      | "storageInputLoadingEquipmentFare"
+      | "storageExitEntryDate"
+      | "storageExitWorkersWages"
+      | "storageExitWorkersCompany"
+      | "storageExitStoreName"
+      | "storageExitVolumeCbm"
+      | "storageExitLoadingEquipmentFare"
+      | "storageExitFreightVehicleNumbers"
+      | "storageExitCrossPackaging"
+      | "storageExitUnity"
+      | "storageSealReplaceContainers"
+      | "storageSealSwitchDate"
+      | "storageSealEntryContainerNumbers"
+      | "storageSealUnitCount"
+      | "storageSealWorkersCompany"
+      | "storageSealWorkersWages"
     >
   >;
 
@@ -666,11 +757,12 @@ async function setEntityStage(model: EntityModel, id: string, stage: Transaction
   const toIdx = stageOrder.indexOf(stage);
   if (fromIdx < 0 || toIdx < 0) return false;
 
-  const updated = await model.findByIdAndUpdate(
-    id,
-    { transactionStage: stage },
-    { new: true },
-  ).lean();
+  const $set: Record<string, unknown> = { transactionStage: stage };
+  if (stage === "STORAGE" && currentStage !== "STORAGE") {
+    $set.storageSubStage = "INPUT";
+  }
+
+  const updated = await model.findByIdAndUpdate(id, { $set }, { new: true }).lean();
   return updated ? mapTransaction(updated) : null;
 }
 
@@ -778,6 +870,28 @@ async function updateEntity(
       | "storageCrossPackaging"
       | "storageUnity"
       | "storageSealNumber"
+      | "storageSubStage"
+      | "storageInputEntryDate"
+      | "storageInputWorkersWages"
+      | "storageInputWorkersCompany"
+      | "storageInputStoreName"
+      | "storageInputVolumeCbm"
+      | "storageInputLoadingEquipmentFare"
+      | "storageExitEntryDate"
+      | "storageExitWorkersWages"
+      | "storageExitWorkersCompany"
+      | "storageExitStoreName"
+      | "storageExitVolumeCbm"
+      | "storageExitLoadingEquipmentFare"
+      | "storageExitFreightVehicleNumbers"
+      | "storageExitCrossPackaging"
+      | "storageExitUnity"
+      | "storageSealReplaceContainers"
+      | "storageSealSwitchDate"
+      | "storageSealEntryContainerNumbers"
+      | "storageSealUnitCount"
+      | "storageSealWorkersCompany"
+      | "storageSealWorkersWages"
       | "transactionStage"
     >
   >,
@@ -806,7 +920,17 @@ async function updateEntity(
   const suggestedStatus: ClearanceStatus =
     risk.channel === "green" ? "GREEN_CHANNEL" : risk.channel === "yellow" ? "YELLOW_CHANNEL" : "RED_CHANNEL";
 
-  const { containerArrivalDate, documentArrivalDate, declarationDate, orderDate, storageEntryDate, ...rest } = input;
+  const {
+    containerArrivalDate,
+    documentArrivalDate,
+    declarationDate,
+    orderDate,
+    storageEntryDate,
+    storageInputEntryDate,
+    storageExitEntryDate,
+    storageSealSwitchDate,
+    ...rest
+  } = input;
   const datePatch: Record<string, unknown> = { ...rest };
   if (declarationDate !== undefined) {
     datePatch.declarationDate = declarationDate ? new Date(declarationDate) : null;
@@ -822,6 +946,15 @@ async function updateEntity(
   }
   if (storageEntryDate !== undefined) {
     datePatch.storageEntryDate = storageEntryDate ? new Date(storageEntryDate) : null;
+  }
+  if (storageInputEntryDate !== undefined) {
+    datePatch.storageInputEntryDate = storageInputEntryDate ? new Date(storageInputEntryDate) : null;
+  }
+  if (storageExitEntryDate !== undefined) {
+    datePatch.storageExitEntryDate = storageExitEntryDate ? new Date(storageExitEntryDate) : null;
+  }
+  if (storageSealSwitchDate !== undefined) {
+    datePatch.storageSealSwitchDate = storageSealSwitchDate ? new Date(storageSealSwitchDate) : null;
   }
 
   const updated = await model.findByIdAndUpdate(
@@ -943,6 +1076,28 @@ export async function updateTransaction(
       | "storageCrossPackaging"
       | "storageUnity"
       | "storageSealNumber"
+      | "storageSubStage"
+      | "storageInputEntryDate"
+      | "storageInputWorkersWages"
+      | "storageInputWorkersCompany"
+      | "storageInputStoreName"
+      | "storageInputVolumeCbm"
+      | "storageInputLoadingEquipmentFare"
+      | "storageExitEntryDate"
+      | "storageExitWorkersWages"
+      | "storageExitWorkersCompany"
+      | "storageExitStoreName"
+      | "storageExitVolumeCbm"
+      | "storageExitLoadingEquipmentFare"
+      | "storageExitFreightVehicleNumbers"
+      | "storageExitCrossPackaging"
+      | "storageExitUnity"
+      | "storageSealReplaceContainers"
+      | "storageSealSwitchDate"
+      | "storageSealEntryContainerNumbers"
+      | "storageSealUnitCount"
+      | "storageSealWorkersCompany"
+      | "storageSealWorkersWages"
       | "transactionStage"
     >
   >,
@@ -1041,6 +1196,28 @@ export async function updateTransfer(
       | "storageCrossPackaging"
       | "storageUnity"
       | "storageSealNumber"
+      | "storageSubStage"
+      | "storageInputEntryDate"
+      | "storageInputWorkersWages"
+      | "storageInputWorkersCompany"
+      | "storageInputStoreName"
+      | "storageInputVolumeCbm"
+      | "storageInputLoadingEquipmentFare"
+      | "storageExitEntryDate"
+      | "storageExitWorkersWages"
+      | "storageExitWorkersCompany"
+      | "storageExitStoreName"
+      | "storageExitVolumeCbm"
+      | "storageExitLoadingEquipmentFare"
+      | "storageExitFreightVehicleNumbers"
+      | "storageExitCrossPackaging"
+      | "storageExitUnity"
+      | "storageSealReplaceContainers"
+      | "storageSealSwitchDate"
+      | "storageSealEntryContainerNumbers"
+      | "storageSealUnitCount"
+      | "storageSealWorkersCompany"
+      | "storageSealWorkersWages"
       | "transactionStage"
     >
   >,
@@ -1145,6 +1322,28 @@ export async function updateExport(
       | "storageCrossPackaging"
       | "storageUnity"
       | "storageSealNumber"
+      | "storageSubStage"
+      | "storageInputEntryDate"
+      | "storageInputWorkersWages"
+      | "storageInputWorkersCompany"
+      | "storageInputStoreName"
+      | "storageInputVolumeCbm"
+      | "storageInputLoadingEquipmentFare"
+      | "storageExitEntryDate"
+      | "storageExitWorkersWages"
+      | "storageExitWorkersCompany"
+      | "storageExitStoreName"
+      | "storageExitVolumeCbm"
+      | "storageExitLoadingEquipmentFare"
+      | "storageExitFreightVehicleNumbers"
+      | "storageExitCrossPackaging"
+      | "storageExitUnity"
+      | "storageSealReplaceContainers"
+      | "storageSealSwitchDate"
+      | "storageSealEntryContainerNumbers"
+      | "storageSealUnitCount"
+      | "storageSealWorkersCompany"
+      | "storageSealWorkersWages"
       | "transactionStage"
     >
   >,

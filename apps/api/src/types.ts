@@ -11,6 +11,9 @@ export type TransactionStage =
   | "TRANSPORTATION"
   | "STORAGE";
 
+/** Sub-steps within main Storage stage (warehouse card). */
+export type StorageSubStage = "INPUT" | "OUTPUT" | "SEAL";
+
 export type ClearanceStatus =
   | "DRAFT"
   | "SUBMITTED_TO_CUSTOMS"
@@ -115,19 +118,42 @@ export interface Transaction {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
-  /** Warehouse entry (Storage stage — imports & transfers). */
+  /** Active tab within Storage (defaults to INPUT when entering Storage). */
+  storageSubStage?: StorageSubStage;
+  /** @deprecated Legacy flat storage; mapped from DB for older records. */
   storageEntryDate?: string;
   storageWorkersWages?: number;
   storageWorkersCompany?: string;
   storageStoreName?: string;
   storageSizeCbm?: number;
-  /** Exit — freight vehicle identifiers. */
   storageFreightVehicleNumbers?: string;
   storageCrossPackaging?: string;
-  /** Exit — unit (e.g. cartons / grouping). */
   storageUnity?: string;
-  /** Seal / stamp number. */
   storageSealNumber?: string;
+  /** A — Input (entry) data */
+  storageInputEntryDate?: string;
+  storageInputWorkersWages?: number;
+  storageInputWorkersCompany?: string;
+  storageInputStoreName?: string;
+  storageInputVolumeCbm?: number;
+  storageInputLoadingEquipmentFare?: number;
+  /** B — Exit data */
+  storageExitEntryDate?: string;
+  storageExitWorkersWages?: number;
+  storageExitWorkersCompany?: string;
+  storageExitStoreName?: string;
+  storageExitVolumeCbm?: number;
+  storageExitLoadingEquipmentFare?: number;
+  storageExitFreightVehicleNumbers?: string;
+  storageExitCrossPackaging?: string;
+  storageExitUnity?: string;
+  /** C — Seal */
+  storageSealReplaceContainers?: string;
+  storageSealSwitchDate?: string;
+  storageSealEntryContainerNumbers?: string;
+  storageSealUnitCount?: number;
+  storageSealWorkersCompany?: string;
+  storageSealWorkersWages?: number;
   transactionStage: TransactionStage;
   createdAt: string;
   updatedAt: string;

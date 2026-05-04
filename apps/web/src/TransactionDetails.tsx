@@ -138,9 +138,9 @@ export default function TransactionDetails({
   };
 
   return (
-    <main className="container">
+    <main className="container py-2">
       <div className="page-actions">
-        <Link to={`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/"} className="link-button">
+        <Link to={`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/"} className="btn btn-outline-secondary btn-sm">
           {t("details.back")}
         </Link>
         {id ? (
@@ -148,11 +148,11 @@ export default function TransactionDetails({
             {" | "}
             {role !== "accountant" ? (
               <>
-                <Link to={`/${module}/${id}/edit`} className="link-button">
+                <Link to={`/${module}/${id}/edit`} className="btn btn-outline-primary btn-sm">
                   {t("details.edit")}
                 </Link>
                 {" | "}
-                <button className="danger-button" onClick={onDelete} disabled={deleting}>
+                <button className="btn btn-outline-danger btn-sm" onClick={onDelete} disabled={deleting}>
                   {deleting ? t("details.deleting") : t("details.delete")}
                 </button>
               </>
@@ -161,7 +161,7 @@ export default function TransactionDetails({
               <>
                 {" | "}
                 <button
-                  className="primary-button"
+                  className="btn btn-primary btn-sm"
                   onClick={() => onAccountingAction("pay")}
                   disabled={processing || transaction?.paymentStatus === "paid"}
                 >
@@ -169,7 +169,7 @@ export default function TransactionDetails({
                 </button>
                 {" "}
                 <button
-                  className="primary-button"
+                  className="btn btn-primary btn-sm"
                   onClick={() => onAccountingAction("release")}
                   disabled={
                     processing ||
@@ -184,7 +184,7 @@ export default function TransactionDetails({
             {transaction ? (
               <>
                 {" | "}
-                <button type="button" className="primary-button" onClick={() => setShippingPaperOpen(true)}>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setShippingPaperOpen(true)}>
                   {t("details.shippingPaperButton")}
                 </button>
               </>
@@ -192,19 +192,20 @@ export default function TransactionDetails({
           </>
         ) : null}
       </div>
-      <h1>
+      <h1 className="display-6 fw-bold mb-3">
         {module === "transactions"
           ? t("details.title")
           : module === "transfers"
             ? t("transfer.details.title" as MessageKey)
             : t("export.details.title" as MessageKey)}
       </h1>
-      {error ? <p className="error">{error}</p> : null}
+      {error ? <p className="error alert alert-danger">{error}</p> : null}
       {!transaction && !error ? <p>{t("details.loading")}</p> : null}
       {transaction && (
-        <section className="details-card">
-          <div className="details-grid">
-          <h2 className="form-section-title full-row">{t("form.snapshotReadOnly")}</h2>
+        <section className="details-card card shadow-sm">
+          <div className="card-body">
+          <div className="row row-cols-1 row-cols-md-2 g-3">
+          <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("form.snapshotReadOnly")}</h2>
           <p className="details-item">
             <strong>{t("details.createdAt")}:</strong> {new Date(transaction.createdAt).toLocaleString(numberLocale)}
           </p>
@@ -222,13 +223,20 @@ export default function TransactionDetails({
           <p className="details-item">
             <strong>{t("form.stage")}:</strong> {stageLabel(transaction.transactionStage, t)}
           </p>
+          {transaction.transactionStage === "STORAGE" && (module === "transactions" || module === "transfers") ? (
+            <p className="details-item col-12">
+              <Link className="btn btn-primary btn-sm" style={{ display: "inline-block" }} to={`/${module}/${transaction.id}/storage`}>
+                {t("details.linkStorage" as MessageKey)}
+              </Link>
+            </p>
+          ) : null}
           {transaction.releaseCode ? (
-            <p className="details-item full-row">
+            <p className="details-item col-12">
               <strong>{t("details.releaseCode")}:</strong> {transaction.releaseCode}
             </p>
           ) : null}
 
-          <h2 className="form-section-title full-row">{t("form.partiesSection")}</h2>
+          <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("form.partiesSection")}</h2>
           <p className="details-item">
             <strong>{t("details.client")}:</strong> {transaction.clientName}
           </p>
@@ -243,7 +251,7 @@ export default function TransactionDetails({
 
           {showCustomsDeclarationSection ? (
             <>
-              <h2 className="form-section-title full-row">{t("form.customsDeclarationSection")}</h2>
+              <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("form.customsDeclarationSection")}</h2>
               <p className="details-item">
                   <strong>{t("form.declarationNumber1")}:</strong> {transaction.declarationNumber}
               </p>
@@ -275,7 +283,7 @@ export default function TransactionDetails({
             </>
           ) : null}
 
-          <h2 className="form-section-title full-row">{t("form.shipmentCoreSection")}</h2>
+          <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("form.shipmentCoreSection")}</h2>
           <p className="details-item">
             <strong>{t("details.airwayBill")}:</strong> {transaction.airwayBill}
           </p>
@@ -293,7 +301,7 @@ export default function TransactionDetails({
             {transaction.invoiceCurrency ?? t("details.currencySuffix")}
           </p>
 
-          <h2 className="form-section-title full-row">{t("form.cargoContainersSection")}</h2>
+          <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("form.cargoContainersSection")}</h2>
           {transaction.containerCount != null ? (
             <p className="details-item">
               <strong>{t("details.containerCount")}:</strong> {transaction.containerCount}
@@ -347,7 +355,7 @@ export default function TransactionDetails({
             transaction.waitingCharge != null ||
             transaction.maccrikCharge != null) ? (
             <>
-              <h2 className="form-section-title full-row">{t("transportation.sectionTitle" as MessageKey)}</h2>
+              <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("transportation.sectionTitle" as MessageKey)}</h2>
               {transaction.transportationTo ? (
                 <p className="details-item">
                   <strong>{t("transportation.toUpper" as MessageKey)}:</strong> {transaction.transportationTo}
@@ -391,7 +399,7 @@ export default function TransactionDetails({
             </>
           ) : null}
 
-          <h2 className="form-section-title full-row">{t("form.workflowStatusSection")}</h2>
+          <h2 className="form-section-title col-12 h5 border-bottom pb-2 mt-2 mb-0">{t("form.workflowStatusSection")}</h2>
           <p className="details-item">
             <strong>{t("details.document")}:</strong> {transaction.documentStatus}
           </p>
@@ -422,7 +430,7 @@ export default function TransactionDetails({
             </p>
           ) : null}
           {transaction.documentAttachments && transaction.documentAttachments.length > 0 ? (
-            <div className="details-item full-row">
+            <div className="details-item col-12">
               <p>
                 <strong>{t("details.documentPhotos")}</strong>
               </p>
@@ -451,6 +459,7 @@ export default function TransactionDetails({
               ))}
             </div>
           ) : null}
+          </div>
           </div>
         </section>
       )}

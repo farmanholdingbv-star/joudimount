@@ -16,6 +16,8 @@ type Props = {
   hint?: string;
   minChars?: number;
   disabled?: boolean;
+  /** Bootstrap column classes for the field wrapper (default: half width on md+). */
+  colClassName?: string;
 };
 
 export default function AutocompleteField({
@@ -28,9 +30,10 @@ export default function AutocompleteField({
   hint,
   minChars = 1,
   disabled = false,
+  colClassName = "col-12 col-md-6",
 }: Props) {
   const id = useId();
-  const wrapRef = useRef<HTMLLabelElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
 
@@ -56,9 +59,12 @@ export default function AutocompleteField({
   };
 
   return (
-    <label ref={wrapRef} className="autocomplete-field">
-      {label}
+    <div ref={wrapRef} className={`autocomplete-field ${colClassName}`.trim()}>
+      <label htmlFor={id} className="form-label mb-0">
+        {label}
+      </label>
       <input
+        className="form-control mt-1"
         id={id}
         value={value}
         disabled={disabled}
@@ -90,7 +96,7 @@ export default function AutocompleteField({
         aria-expanded={showList}
         aria-controls={`${id}-listbox`}
       />
-      {hint ? <span className="autocomplete-hint muted">{hint}</span> : null}
+      {hint ? <span className="autocomplete-hint muted small d-block mt-1">{hint}</span> : null}
       {showList ? (
         <ul id={`${id}-listbox`} className="autocomplete-dropdown" role="listbox">
           {suggestions.map((s, i) => (
@@ -108,6 +114,6 @@ export default function AutocompleteField({
           ))}
         </ul>
       ) : null}
-    </label>
+    </div>
   );
 }

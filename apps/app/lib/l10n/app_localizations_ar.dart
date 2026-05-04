@@ -573,7 +573,61 @@ class AppLocalizationsAr extends AppLocalizations {
   String get storageSealNumber => 'رقم الختم / الطابع';
 
   @override
-  String get storageReadOnlyHint => 'في مرحلة التخزين يمكن تعديل حقول المستودع أدناه فقط.';
+  String get storageReadOnlyHint => 'في مرحلة التخزين استخدم بطاقة التخزين لبيانات المستودع. الحقول هنا للقراءة فقط.';
+
+  @override
+  String get storageCardTitle => 'بطاقة التخزين';
+
+  @override
+  String get storageBackToTransaction => 'العودة إلى المعاملة';
+
+  @override
+  String get storageSubInput => 'إدخال';
+
+  @override
+  String get storageSubOutput => 'إخراج';
+
+  @override
+  String get storageSubSeal => 'ختم';
+
+  @override
+  String get storageSectionInput => 'أ — بيانات الإدخال';
+
+  @override
+  String get storageSectionExit => 'ب — بيانات الإخراج';
+
+  @override
+  String get storageSectionSeal => 'ج — الختم';
+
+  @override
+  String get storageLoadingEquipmentFare => 'أجرة معدات التحميل';
+
+  @override
+  String get storageReplaceContainers => 'استبدال الحاويات';
+
+  @override
+  String get storageSwitchDate => 'تاريخ التبديل';
+
+  @override
+  String get storageEntryContainerNumbers => 'أرقام حاويات الإدخال';
+
+  @override
+  String get storageSealUnitCount => 'عدد الوحدات';
+
+  @override
+  String get storageOpenCard => 'التخزين';
+
+  @override
+  String get storageWrongStage => 'هذه المعاملة ليست في مرحلة التخزين.';
+
+  @override
+  String get storageAccountantReadOnly => 'عرض فقط لدور المحاسب.';
+
+  @override
+  String get storageOpenDedicatedPage => 'فتح بطاقة التخزين (إدخال / إخراج / ختم)';
+
+  @override
+  String get storageLinkFromDetails => 'بطاقة التخزين';
 
   @override
   String get pdfFontLoadErrorPrefix => 'تعذر تحميل خط ملف PDF';

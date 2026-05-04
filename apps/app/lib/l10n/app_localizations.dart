@@ -1226,8 +1226,116 @@ abstract class AppLocalizations {
   /// No description provided for @storageReadOnlyHint.
   ///
   /// In en, this message translates to:
-  /// **'At Storage stage only the warehouse fields below can be edited.'**
+  /// **'At Storage stage use the storage card for warehouse data. Fields here are read-only.'**
   String get storageReadOnlyHint;
+
+  /// No description provided for @storageCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage card'**
+  String get storageCardTitle;
+
+  /// No description provided for @storageBackToTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to transaction'**
+  String get storageBackToTransaction;
+
+  /// No description provided for @storageSubInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Input'**
+  String get storageSubInput;
+
+  /// No description provided for @storageSubOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Output'**
+  String get storageSubOutput;
+
+  /// No description provided for @storageSubSeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal'**
+  String get storageSubSeal;
+
+  /// No description provided for @storageSectionInput.
+  ///
+  /// In en, this message translates to:
+  /// **'A — Input (entry) data'**
+  String get storageSectionInput;
+
+  /// No description provided for @storageSectionExit.
+  ///
+  /// In en, this message translates to:
+  /// **'B — Exit data'**
+  String get storageSectionExit;
+
+  /// No description provided for @storageSectionSeal.
+  ///
+  /// In en, this message translates to:
+  /// **'C — Seal'**
+  String get storageSectionSeal;
+
+  /// No description provided for @storageLoadingEquipmentFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading equipment fare'**
+  String get storageLoadingEquipmentFare;
+
+  /// No description provided for @storageReplaceContainers.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace containers'**
+  String get storageReplaceContainers;
+
+  /// No description provided for @storageSwitchDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch date'**
+  String get storageSwitchDate;
+
+  /// No description provided for @storageEntryContainerNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry container numbers'**
+  String get storageEntryContainerNumbers;
+
+  /// No description provided for @storageSealUnitCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of units'**
+  String get storageSealUnitCount;
+
+  /// No description provided for @storageOpenCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storageOpenCard;
+
+  /// No description provided for @storageWrongStage.
+  ///
+  /// In en, this message translates to:
+  /// **'This record is not in the Storage stage.'**
+  String get storageWrongStage;
+
+  /// No description provided for @storageAccountantReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Accountants can view this screen only.'**
+  String get storageAccountantReadOnly;
+
+  /// No description provided for @storageOpenDedicatedPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open storage card (input / output / seal)'**
+  String get storageOpenDedicatedPage;
+
+  /// No description provided for @storageLinkFromDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage card'**
+  String get storageLinkFromDetails;
 
   /// No description provided for @pdfFontLoadErrorPrefix.
   ///

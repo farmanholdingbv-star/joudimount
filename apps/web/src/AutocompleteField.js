@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useId, useRef, useState } from "react";
-export default function AutocompleteField({ label, value, onChange, onSelectSuggestion, suggestions, required, hint, minChars = 1, disabled = false, }) {
+export default function AutocompleteField({ label, value, onChange, onSelectSuggestion, suggestions, required, hint, minChars = 1, disabled = false, colClassName = "col-12 col-md-6", }) {
     const id = useId();
     const wrapRef = useRef(null);
     const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ export default function AutocompleteField({ label, value, onChange, onSelectSugg
         onSelectSuggestion?.(key);
         setOpen(false);
     };
-    return (_jsxs("label", { ref: wrapRef, className: "autocomplete-field", children: [label, _jsx("input", { id: id, value: value, disabled: disabled, required: required, autoComplete: "off", onChange: (e) => onChange(e.target.value), onFocus: () => {
+    return (_jsxs("div", { ref: wrapRef, className: `autocomplete-field ${colClassName}`.trim(), children: [_jsx("label", { htmlFor: id, className: "form-label mb-0", children: label }), _jsx("input", { className: "form-control mt-1", id: id, value: value, disabled: disabled, required: required, autoComplete: "off", onChange: (e) => onChange(e.target.value), onFocus: () => {
                     if (!disabled)
                         setOpen(true);
                 }, onBlur: () => {
@@ -45,5 +45,5 @@ export default function AutocompleteField({ label, value, onChange, onSelectSugg
                     else if (e.key === "Escape") {
                         setOpen(false);
                     }
-                }, "aria-autocomplete": "list", "aria-expanded": showList, "aria-controls": `${id}-listbox` }), hint ? _jsx("span", { className: "autocomplete-hint muted", children: hint }) : null, showList ? (_jsx("ul", { id: `${id}-listbox`, className: "autocomplete-dropdown", role: "listbox", children: suggestions.map((s, i) => (_jsx("li", { role: "option", "aria-selected": i === highlight, children: _jsxs("button", { type: "button", className: `autocomplete-option${i === highlight ? " is-active" : ""}`, onMouseDown: (e) => e.preventDefault(), onClick: () => pick(s.key), children: [_jsx("span", { className: "autocomplete-primary", children: s.primary }), s.secondary ? _jsx("span", { className: "autocomplete-secondary", children: s.secondary }) : null] }) }, s.key))) })) : null] }));
+                }, "aria-autocomplete": "list", "aria-expanded": showList, "aria-controls": `${id}-listbox` }), hint ? _jsx("span", { className: "autocomplete-hint muted small d-block mt-1", children: hint }) : null, showList ? (_jsx("ul", { id: `${id}-listbox`, className: "autocomplete-dropdown", role: "listbox", children: suggestions.map((s, i) => (_jsx("li", { role: "option", "aria-selected": i === highlight, children: _jsxs("button", { type: "button", className: `autocomplete-option${i === highlight ? " is-active" : ""}`, onMouseDown: (e) => e.preventDefault(), onClick: () => pick(s.key), children: [_jsx("span", { className: "autocomplete-primary", children: s.primary }), s.secondary ? _jsx("span", { className: "autocomplete-secondary", children: s.secondary }) : null] }) }, s.key))) })) : null] }));
 }

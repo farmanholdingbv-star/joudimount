@@ -105,6 +105,7 @@ interface TransactionDoc {
   goodsQuantity?: number;
   goodsQuality?: GoodsQuality;
   goodsUnit?: GoodsUnit;
+  storageSubStage?: "INPUT" | "OUTPUT" | "SEAL";
   storageEntryDate?: Date;
   storageWorkersWages?: number;
   storageWorkersCompany?: string;
@@ -114,6 +115,27 @@ interface TransactionDoc {
   storageCrossPackaging?: string;
   storageUnity?: string;
   storageSealNumber?: string;
+  storageInputEntryDate?: Date;
+  storageInputWorkersWages?: number;
+  storageInputWorkersCompany?: string;
+  storageInputStoreName?: string;
+  storageInputVolumeCbm?: number;
+  storageInputLoadingEquipmentFare?: number;
+  storageExitEntryDate?: Date;
+  storageExitWorkersWages?: number;
+  storageExitWorkersCompany?: string;
+  storageExitStoreName?: string;
+  storageExitVolumeCbm?: number;
+  storageExitLoadingEquipmentFare?: number;
+  storageExitFreightVehicleNumbers?: string;
+  storageExitCrossPackaging?: string;
+  storageExitUnity?: string;
+  storageSealReplaceContainers?: string;
+  storageSealSwitchDate?: Date;
+  storageSealEntryContainerNumbers?: string;
+  storageSealUnitCount?: number;
+  storageSealWorkersCompany?: string;
+  storageSealWorkersWages?: number;
   transactionStage: "PREPARATION" | "CUSTOMS_CLEARANCE" | "TRANSPORTATION" | "STORAGE";
   createdAt: Date;
   updatedAt: Date;
@@ -220,6 +242,7 @@ const transactionSchema = new Schema<TransactionDoc>(
       type: String,
       enum: ["kg", "ton", "piece", "carton", "pallet", "cbm", "liter", "set"],
     },
+    storageSubStage: { type: String, enum: ["INPUT", "OUTPUT", "SEAL"] },
     storageEntryDate: { type: Date },
     storageWorkersWages: { type: Number },
     storageWorkersCompany: { type: String },
@@ -229,6 +252,27 @@ const transactionSchema = new Schema<TransactionDoc>(
     storageCrossPackaging: { type: String },
     storageUnity: { type: String },
     storageSealNumber: { type: String },
+    storageInputEntryDate: { type: Date },
+    storageInputWorkersWages: { type: Number },
+    storageInputWorkersCompany: { type: String },
+    storageInputStoreName: { type: String },
+    storageInputVolumeCbm: { type: Number },
+    storageInputLoadingEquipmentFare: { type: Number },
+    storageExitEntryDate: { type: Date },
+    storageExitWorkersWages: { type: Number },
+    storageExitWorkersCompany: { type: String },
+    storageExitStoreName: { type: String },
+    storageExitVolumeCbm: { type: Number },
+    storageExitLoadingEquipmentFare: { type: Number },
+    storageExitFreightVehicleNumbers: { type: String },
+    storageExitCrossPackaging: { type: String },
+    storageExitUnity: { type: String },
+    storageSealReplaceContainers: { type: String },
+    storageSealSwitchDate: { type: Date },
+    storageSealEntryContainerNumbers: { type: String },
+    storageSealUnitCount: { type: Number },
+    storageSealWorkersCompany: { type: String },
+    storageSealWorkersWages: { type: Number },
     transactionStage: {
       type: String,
       enum: ["PREPARATION", "CUSTOMS_CLEARANCE", "TRANSPORTATION", "STORAGE"],

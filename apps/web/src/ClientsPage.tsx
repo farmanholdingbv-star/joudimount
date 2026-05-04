@@ -92,68 +92,98 @@ export default function ClientsPage({ role }: { role: Role }) {
   };
 
   return (
-    <main className="container">
+    <main className="container py-2">
       <div className="page-actions">
-        <Link to="/" className="link-button">
+        <Link to="/" className="btn btn-outline-secondary btn-sm">
           {t("clients.back")}
         </Link>
       </div>
-      <h1>{t("clients.title")}</h1>
+      <h1 className="display-6 fw-bold">{t("clients.title")}</h1>
       <p className="section-subtitle">{t("clients.managerOnly")}</p>
       {!isManager ? <p className="muted">{t("clients.managerOnly")}</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {error ? <p className="error alert alert-danger">{error}</p> : null}
 
       {isManager ? (
-        <form className="details-card form-grid" onSubmit={onSubmit}>
-          <label>
-            {t("clients.companyName")}
-            <input value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} required />
-          </label>
-          <label>
-            {t("clients.trn")}
-            <input value={form.trn} onChange={(e) => setForm({ ...form, trn: e.target.value })} required />
-          </label>
-          <label>
-            {t("clients.immigrationCode")}
-            <input value={form.immigrationCode} onChange={(e) => setForm({ ...form, immigrationCode: e.target.value })} />
-          </label>
-          <label>
-            {t("clients.clientEmail")}
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </label>
-          <label>
-            {t("clients.country")}
-            <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
-          </label>
-          <label>
-            {t("clients.creditLimit")}
-            <input
-              type="number"
-              min={0}
-              value={form.creditLimit}
-              onChange={(e) => setForm({ ...form, creditLimit: Number(e.target.value) })}
-              required
-            />
-          </label>
-          <label>
-            {t("clients.status")}
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as "active" | "suspended" })}>
-              <option value="active">{t("clients.active")}</option>
-              <option value="suspended">{t("clients.suspended")}</option>
-            </select>
-          </label>
-          <button className="primary-button" type="submit">
-            {editingId ? t("clients.update") : t("clients.create")}
-          </button>
+        <form className="card shadow-sm mb-4" onSubmit={onSubmit}>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.companyName")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.trn")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.trn}
+                  onChange={(e) => setForm({ ...form, trn: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.immigrationCode")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.immigrationCode}
+                  onChange={(e) => setForm({ ...form, immigrationCode: e.target.value })}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.clientEmail")}</label>
+                <input
+                  className="form-control mt-1"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.country")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.country}
+                  onChange={(e) => setForm({ ...form, country: e.target.value })}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.creditLimit")}</label>
+                <input
+                  className="form-control mt-1"
+                  type="number"
+                  min={0}
+                  value={form.creditLimit}
+                  onChange={(e) => setForm({ ...form, creditLimit: Number(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("clients.status")}</label>
+                <select
+                  className="form-select mt-1"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as "active" | "suspended" })}
+                >
+                  <option value="active">{t("clients.active")}</option>
+                  <option value="suspended">{t("clients.suspended")}</option>
+                </select>
+              </div>
+              <div className="col-12">
+                <button className="btn btn-primary" type="submit">
+                  {editingId ? t("clients.update") : t("clients.create")}
+                </button>
+              </div>
+            </div>
+          </div>
         </form>
       ) : null}
 
-      <div className="table-wrap">
-        <table>
+      <div className="table-wrap card shadow-sm">
+        <table className="table table-hover align-middle mb-0">
           <thead>
             <tr>
               <th>{t("clients.companyName")}</th>
@@ -184,10 +214,10 @@ export default function ClientsPage({ role }: { role: Role }) {
                 </td>
                 {isManager ? (
                   <td onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="primary-button" onClick={() => onEdit(client)}>
+                    <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => onEdit(client)}>
                       {t("clients.edit")}
                     </button>{" "}
-                    <button type="button" className="danger-button" onClick={() => onDelete(client.id)}>
+                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => onDelete(client.id)}>
                       {t("clients.delete")}
                     </button>
                   </td>

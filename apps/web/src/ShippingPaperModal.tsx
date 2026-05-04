@@ -111,11 +111,11 @@ export default function ShippingPaperModal({
       <div className="shipping-paper-modal-panel">
         <div className="shipping-paper-modal-actions no-print">
           <h2 id="shipping-paper-title">{t("details.shippingPaperTitle")}</h2>
-          <div className="shipping-paper-modal-buttons">
-            <button type="button" className="primary-button" onClick={handlePrint}>
+          <div className="shipping-paper-modal-buttons d-flex flex-wrap gap-2">
+            <button type="button" className="btn btn-primary btn-sm" onClick={handlePrint}>
               {t("details.shippingPaperPrint")}
             </button>
-            <button type="button" className="link-button" onClick={onClose}>
+            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onClose}>
               {t("details.shippingPaperClose")}
             </button>
           </div>

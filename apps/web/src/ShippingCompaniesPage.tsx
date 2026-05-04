@@ -110,75 +110,105 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
   };
 
   return (
-    <main className="container">
+    <main className="container py-2">
       <div className="page-actions">
-        <Link to="/" className="link-button">
+        <Link to="/" className="btn btn-outline-secondary btn-sm">
           {t("shipping.back")}
         </Link>
       </div>
-      <h1>{t("shipping.title")}</h1>
+      <h1 className="display-6 fw-bold">{t("shipping.title")}</h1>
       <p className="section-subtitle">{t("shipping.managerOnly")}</p>
       {!isManager ? <p className="muted">{t("shipping.managerOnly")}</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {error ? <p className="error alert alert-danger">{error}</p> : null}
 
       {isManager ? (
-        <form className="details-card form-grid" onSubmit={onSubmit}>
-          <label>
-            {t("shipping.companyName")}
-            <input value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} required />
-          </label>
-          <label>
-            {t("shipping.code")}
-            <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
-          </label>
-          <label>
-            {t("shipping.contactName")}
-            <input value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} />
-          </label>
-          <label>
-            {t("shipping.phone")}
-            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          </label>
-          <label>
-            {t("shipping.email")}
-            <input
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </label>
-          <label className="full-row">
-            {t("shipping.dispatchFormTemplate")}
-            <textarea
-              value={form.dispatchFormTemplate}
-              onChange={(e) => setForm({ ...form, dispatchFormTemplate: e.target.value })}
-              rows={5}
-            />
-          </label>
-          <p className="muted full-row">{t("shipping.dispatchFormTemplateHint")}</p>
-          <LocationMapPicker
-            latitude={form.latitude}
-            longitude={form.longitude}
-            onChange={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })}
-            hint={t("shipping.mapClickHint")}
-            clearLabel={t("shipping.clearLocation")}
-          />
-          <label>
-            {t("shipping.status")}
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as "active" | "inactive" })}>
-              <option value="active">{t("shipping.active")}</option>
-              <option value="inactive">{t("shipping.inactive")}</option>
-            </select>
-          </label>
-          <button className="primary-button" type="submit">
-            {editingId ? t("shipping.update") : t("shipping.create")}
-          </button>
+        <form className="card shadow-sm mb-4" onSubmit={onSubmit}>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("shipping.companyName")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("shipping.code")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("shipping.contactName")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.contactName}
+                  onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("shipping.phone")}</label>
+                <input
+                  className="form-control mt-1"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("shipping.email")}</label>
+                <input
+                  className="form-control mt-1"
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div className="col-12">
+                <label className="form-label mb-0">{t("shipping.dispatchFormTemplate")}</label>
+                <textarea
+                  className="form-control mt-1"
+                  value={form.dispatchFormTemplate}
+                  onChange={(e) => setForm({ ...form, dispatchFormTemplate: e.target.value })}
+                  rows={5}
+                />
+              </div>
+              <p className="col-12 text-muted small mb-0">{t("shipping.dispatchFormTemplateHint")}</p>
+              <LocationMapPicker
+                latitude={form.latitude}
+                longitude={form.longitude}
+                onChange={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })}
+                hint={t("shipping.mapClickHint")}
+                clearLabel={t("shipping.clearLocation")}
+              />
+              <div className="col-12 col-md-6">
+                <label className="form-label mb-0">{t("shipping.status")}</label>
+                <select
+                  className="form-select mt-1"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as "active" | "inactive" })}
+                >
+                  <option value="active">{t("shipping.active")}</option>
+                  <option value="inactive">{t("shipping.inactive")}</option>
+                </select>
+              </div>
+              <div className="col-12">
+                <button className="btn btn-primary" type="submit">
+                  {editingId ? t("shipping.update") : t("shipping.create")}
+                </button>
+              </div>
+            </div>
+          </div>
         </form>
       ) : null}
 
-      <div className="table-wrap">
-        <table>
+      <div className="table-wrap card shadow-sm">
+        <table className="table table-hover align-middle mb-0">
           <thead>
             <tr>
               <th>{t("shipping.companyName")}</th>
@@ -221,10 +251,10 @@ export default function ShippingCompaniesPage({ role }: { role: Role }) {
                 </td>
                 {isManager ? (
                   <td onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="primary-button" onClick={() => onEdit(item)}>
+                    <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => onEdit(item)}>
                       {t("shipping.edit")}
                     </button>{" "}
-                    <button type="button" className="danger-button" onClick={() => onDelete(item.id)}>
+                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => onDelete(item.id)}>
                       {t("shipping.delete")}
                     </button>
                   </td>
