@@ -45,6 +45,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get allStatuses => 'كل الحالات';
 
   @override
+  String get allStages => 'كل المراحل';
+
+  @override
   String get allChannels => 'كل القنوات';
 
   @override
@@ -396,19 +399,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get originalBl => 'استلام البوليصة الأصلية';
 
   @override
-  String get txDocumentStatusCopy => 'copy_received';
+  String get txDocumentStatusCopy => 'تم استلام نسخة';
 
   @override
-  String get txDocumentStatusOriginal => 'original_received';
+  String get txDocumentStatusOriginal => 'تم استلام الأصل';
 
   @override
-  String get txDocumentStatusTelex => 'telex_release';
+  String get txDocumentStatusTelex => 'تلكس الإفراج';
 
   @override
-  String get txPaymentPending => 'pending';
+  String get txPaymentPending => 'قيد الانتظار';
 
   @override
-  String get txPaymentPaid => 'paid';
+  String get txPaymentPaid => 'مدفوع';
 
   @override
   String get roleManager => 'مدير';
@@ -631,4 +634,61 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pdfFontLoadErrorPrefix => 'تعذر تحميل خط ملف PDF';
+
+  @override
+  String get txStage => 'مرحلة المعاملة';
+
+  @override
+  String get txReadOnlyFields => 'حقول المعاملة للقراءة فقط';
+
+  @override
+  String get txFileNumber => 'رقم الملف';
+
+  @override
+  String get txCustomsDeclaration => 'البيان الجمركي';
+
+  @override
+  String get txDeclarationNumber1 => 'رقم البيان (1)';
+
+  @override
+  String get txDeclarationDate => 'تاريخ البيان';
+
+  @override
+  String get txDeclarationType1 => 'نوع البيان (1)';
+
+  @override
+  String get txDeclarationNumber2 => 'رقم البيان (2)';
+
+  @override
+  String get txDeclarationType2 => 'نوع البيان (2)';
+
+  @override
+  String get txPortType => 'نوع المنفذ';
+
+  @override
+  String get txCurrency => 'العملة';
+
+  @override
+  String get stagePreparation => 'التحضير';
+
+  @override
+  String get stageCustomsClearance => 'التخليص الجمركي';
+
+  @override
+  String get stageStorage => 'التخزين';
+
+  @override
+  String get stageTransportation => 'النقل';
+
+  @override
+  String get docBillOfLading => 'بوليصة الشحن';
+
+  @override
+  String get docCertificateOfOrigin => 'شهادة المنشأ';
+
+  @override
+  String get docInvoice => 'الفاتورة';
+
+  @override
+  String get docPackingList => 'بيان التعبئة';
 }

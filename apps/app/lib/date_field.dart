@@ -65,8 +65,8 @@ class _ApiDateFieldState extends State<ApiDateField> {
     if (!widget.enabled) return;
     final ctx = context;
     final now = DateTime.now();
-    final initial =
-        apiDateParseYmd(widget.controller.text) ?? DateTime(now.year, now.month, now.day);
+    final initial = apiDateParseYmd(widget.controller.text) ??
+        DateTime(now.year, now.month, now.day);
     final picked = await showDatePicker(
       context: ctx,
       initialDate: initial,
@@ -89,7 +89,7 @@ class _ApiDateFieldState extends State<ApiDateField> {
   Widget build(BuildContext context) {
     final hasText = widget.controller.text.trim().isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: widget.controller,
         readOnly: true,

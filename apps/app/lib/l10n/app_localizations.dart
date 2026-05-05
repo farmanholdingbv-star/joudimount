@@ -167,6 +167,12 @@ abstract class AppLocalizations {
   /// **'All statuses'**
   String get allStatuses;
 
+  /// No description provided for @allStages.
+  ///
+  /// In en, this message translates to:
+  /// **'All stages'**
+  String get allStages;
+
   /// No description provided for @allChannels.
   ///
   /// In en, this message translates to:
@@ -872,31 +878,31 @@ abstract class AppLocalizations {
   /// No description provided for @txDocumentStatusCopy.
   ///
   /// In en, this message translates to:
-  /// **'copy_received'**
+  /// **'Copy received'**
   String get txDocumentStatusCopy;
 
   /// No description provided for @txDocumentStatusOriginal.
   ///
   /// In en, this message translates to:
-  /// **'original_received'**
+  /// **'Original received'**
   String get txDocumentStatusOriginal;
 
   /// No description provided for @txDocumentStatusTelex.
   ///
   /// In en, this message translates to:
-  /// **'telex_release'**
+  /// **'Telex release'**
   String get txDocumentStatusTelex;
 
   /// No description provided for @txPaymentPending.
   ///
   /// In en, this message translates to:
-  /// **'pending'**
+  /// **'Pending'**
   String get txPaymentPending;
 
   /// No description provided for @txPaymentPaid.
   ///
   /// In en, this message translates to:
-  /// **'paid'**
+  /// **'Paid'**
   String get txPaymentPaid;
 
   /// No description provided for @roleManager.
@@ -1342,6 +1348,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load PDF font'**
   String get pdfFontLoadErrorPrefix;
+
+  /// No description provided for @txStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction Stage'**
+  String get txStage;
+
+  /// No description provided for @txReadOnlyFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only Transaction Fields'**
+  String get txReadOnlyFields;
+
+  /// No description provided for @txFileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'File Number'**
+  String get txFileNumber;
+
+  /// No description provided for @txCustomsDeclaration.
+  ///
+  /// In en, this message translates to:
+  /// **'Customs Declaration'**
+  String get txCustomsDeclaration;
+
+  /// No description provided for @txDeclarationNumber1.
+  ///
+  /// In en, this message translates to:
+  /// **'Declaration Number (1)'**
+  String get txDeclarationNumber1;
+
+  /// No description provided for @txDeclarationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Declaration Date'**
+  String get txDeclarationDate;
+
+  /// No description provided for @txDeclarationType1.
+  ///
+  /// In en, this message translates to:
+  /// **'Declaration Type (1)'**
+  String get txDeclarationType1;
+
+  /// No description provided for @txDeclarationNumber2.
+  ///
+  /// In en, this message translates to:
+  /// **'Declaration Number (2)'**
+  String get txDeclarationNumber2;
+
+  /// No description provided for @txDeclarationType2.
+  ///
+  /// In en, this message translates to:
+  /// **'Declaration Type (2)'**
+  String get txDeclarationType2;
+
+  /// No description provided for @txPortType.
+  ///
+  /// In en, this message translates to:
+  /// **'Port Type'**
+  String get txPortType;
+
+  /// No description provided for @txCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get txCurrency;
+
+  /// No description provided for @stagePreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get stagePreparation;
+
+  /// No description provided for @stageCustomsClearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Customs clearance'**
+  String get stageCustomsClearance;
+
+  /// No description provided for @stageStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get stageStorage;
+
+  /// No description provided for @stageTransportation.
+  ///
+  /// In en, this message translates to:
+  /// **'Transportation'**
+  String get stageTransportation;
+
+  /// No description provided for @docBillOfLading.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill of Lading'**
+  String get docBillOfLading;
+
+  /// No description provided for @docCertificateOfOrigin.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate of Origin'**
+  String get docCertificateOfOrigin;
+
+  /// No description provided for @docInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get docInvoice;
+
+  /// No description provided for @docPackingList.
+  ///
+  /// In en, this message translates to:
+  /// **'Packing List'**
+  String get docPackingList;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

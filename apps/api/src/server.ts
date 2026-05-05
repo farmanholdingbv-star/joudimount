@@ -556,7 +556,8 @@ app.get("/api/transactions", authenticate, async (req: AuthRequest, res) => {
   const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
   if (!denied) return;
   const clientId = typeof req.query.clientId === "string" ? req.query.clientId : undefined;
-  res.json(await listTransactions(clientId));
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+  res.json(await listTransactions(clientId, limit));
 });
 
 app.post("/api/transactions", authenticate, maybeUpload, async (req: AuthRequest, res) => {
@@ -799,7 +800,8 @@ app.get("/api/transfers", authenticate, async (req: AuthRequest, res) => {
   const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
   if (!denied) return;
   const clientId = typeof req.query.clientId === "string" ? req.query.clientId : undefined;
-  res.json(await listTransfers(clientId));
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+  res.json(await listTransfers(clientId, limit));
 });
 
 app.post("/api/transfers", authenticate, maybeUpload, async (req: AuthRequest, res) => {
@@ -992,7 +994,8 @@ app.get("/api/exports", authenticate, async (req: AuthRequest, res) => {
   const denied = ensureRole(req, res, ["manager", "employee", "employee2", "accountant"]);
   if (!denied) return;
   const clientId = typeof req.query.clientId === "string" ? req.query.clientId : undefined;
-  res.json(await listExports(clientId));
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+  res.json(await listExports(clientId, limit));
 });
 
 app.post("/api/exports", authenticate, maybeUpload, async (req: AuthRequest, res) => {

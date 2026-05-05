@@ -595,8 +595,10 @@ export async function deleteShippingCompany(id: string) {
 
 type EntityModel = typeof TransactionModel;
 
-async function listEntity(model: EntityModel, clientId?: string) {
-  const docs = await model.find(clientId ? { clientId } : {}).sort({ createdAt: -1 }).lean();
+async function listEntity(model: EntityModel, clientId?: string, limit?: number) {
+  let query = model.find(clientId ? { clientId } : {}).sort({ createdAt: -1 });
+  if (limit) query = query.limit(limit);
+  const docs = await query.lean();
   return docs.map(mapTransaction);
 }
 
@@ -989,8 +991,8 @@ async function deleteEntity(model: EntityModel, id: string) {
   return Boolean(deleted);
 }
 
-export async function listTransactions(clientId?: string) {
-  return listEntity(TransactionModel, clientId);
+export async function listTransactions(clientId?: string, limit?: number) {
+  return listEntity(TransactionModel, clientId, limit);
 }
 
 export async function getTransaction(id: string) {
@@ -1109,8 +1111,8 @@ export async function deleteTransaction(id: string) {
   return deleteEntity(TransactionModel, id);
 }
 
-export async function listTransfers(clientId?: string) {
-  return listEntity(TransferModel, clientId);
+export async function listTransfers(clientId?: string, limit?: number) {
+  return listEntity(TransferModel, clientId, limit);
 }
 
 export async function getTransfer(id: string) {
@@ -1256,8 +1258,8 @@ export async function issueTransferRelease(id: string) {
   return updated ? mapTransaction(updated) : null;
 }
 
-export async function listExports(clientId?: string) {
-  return listEntity(ExportModel, clientId);
+export async function listExports(clientId?: string, limit?: number) {
+  return listEntity(ExportModel, clientId, limit);
 }
 
 export async function getExport(id: string) {

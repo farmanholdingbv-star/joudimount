@@ -27,9 +27,12 @@ class _EmployeesTabState extends State<EmployeesTab> {
   String _employeeErrorMessage(Object error, AppLocalizations l10n) {
     final raw = error.toString();
     if (raw.contains('email_taken')) return 'Email already exists.';
-    if (raw.contains('last_manager_role')) return 'At least one manager is required.';
-    if (raw.contains('last_manager_delete')) return 'Cannot delete the last manager.';
-    if (raw.contains('delete_self')) return 'You cannot delete your own account.';
+    if (raw.contains('last_manager_role'))
+      return 'At least one manager is required.';
+    if (raw.contains('last_manager_delete'))
+      return 'Cannot delete the last manager.';
+    if (raw.contains('delete_self'))
+      return 'You cannot delete your own account.';
     return raw;
   }
 
@@ -114,7 +117,8 @@ class _EmployeesTabState extends State<EmployeesTab> {
     final l10n = AppLocalizations.of(context)!;
     final prefs = await SharedPreferences.getInstance();
     final selfRaw = prefs.getString('user');
-    final selfId = selfRaw != null ? (jsonDecode(selfRaw) as Map)['id']?.toString() : null;
+    final selfId =
+        selfRaw != null ? (jsonDecode(selfRaw) as Map)['id']?.toString() : null;
     final id = e['id']?.toString() ?? '';
     if (selfId != null && id == selfId) {
       setState(() => _error = 'You cannot delete your own account.');
@@ -126,8 +130,12 @@ class _EmployeesTabState extends State<EmployeesTab> {
       builder: (ctx) => AlertDialog(
         content: Text(l10n.confirmDelete),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.delete)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -146,128 +154,191 @@ class _EmployeesTabState extends State<EmployeesTab> {
     final l10n = AppLocalizations.of(context)!;
     final isManager = widget.role == 'manager';
     final cs = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0x33FFFFFF),
-                child: Icon(Icons.badge_outlined, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.employeesTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
                   ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x33FFFFFF),
+                      child: Icon(Icons.badge_outlined, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.employeesTitle,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 10),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text('${l10n.currentRole}: ${widget.role}',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              if (!isManager)
+                Text(l10n.managerOnlyEmployees,
+                    style: const TextStyle(color: Colors.grey)),
+              if (isManager) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TextField(
+                                controller: _name,
+                                decoration:
+                                    InputDecoration(labelText: l10n.employeeName))),
+                        const SizedBox(height: 8),
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TextField(
+                                controller: _email,
+                                decoration:
+                                    InputDecoration(labelText: l10n.employeeEmail))),
+                        const SizedBox(height: 8),
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TextField(
+                              controller: _password,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                labelText: l10n.employeePassword,
+                                hintText:
+                                    _editingId != null ? l10n.passwordHintEdit : null,
+                              ),
+                            )),
+                        const SizedBox(height: 8),
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: DropdownButtonFormField<String>(
+                              key: ValueKey(
+                                  'employee-role-${_editingId ?? 'new'}-$_role'),
+                              decoration:
+                                  InputDecoration(labelText: l10n.employeeRole),
+                              initialValue: _role,
+                              items: [
+                                DropdownMenuItem(
+                                    value: 'manager', child: Text(l10n.roleManager)),
+                                DropdownMenuItem(
+                                    value: 'employee',
+                                    child: Text(l10n.roleEmployee)),
+                                const DropdownMenuItem(
+                                    value: 'employee2', child: Text('Employee 2')),
+                                DropdownMenuItem(
+                                    value: 'accountant',
+                                    child: Text(l10n.roleAccountant)),
+                              ],
+                              onChanged: (v) =>
+                                  setState(() => _role = v ?? 'employee'),
+                            )),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            FilledButton(onPressed: _save, child: Text(l10n.save)),
+                            const SizedBox(width: 12),
+                            if (_editingId != null)
+                              OutlinedButton(
+                                  onPressed: _cancelEdit,
+                                  child: Text(l10n.cancelEdit)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (_error.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Card(
+                    color: cs.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child:
+                          Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text('${l10n.currentRole}: ${widget.role}', style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (!isManager) Text(l10n.managerOnlyEmployees, style: const TextStyle(color: Colors.grey)),
-        if (isManager) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(controller: _name, decoration: InputDecoration(labelText: l10n.employeeName)),
-                  const SizedBox(height: 8),
-                  TextField(controller: _email, decoration: InputDecoration(labelText: l10n.employeeEmail)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _password,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.employeePassword,
-                      hintText: _editingId != null ? l10n.passwordHintEdit : null,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('employee-role-${_editingId ?? 'new'}-$_role'),
-                    decoration: InputDecoration(labelText: l10n.employeeRole),
-                    initialValue: _role,
-                    items: [
-                      DropdownMenuItem(value: 'manager', child: Text(l10n.roleManager)),
-                      DropdownMenuItem(value: 'employee', child: Text(l10n.roleEmployee)),
-                      const DropdownMenuItem(value: 'employee2', child: Text('Employee 2')),
-                      DropdownMenuItem(value: 'accountant', child: Text(l10n.roleAccountant)),
-                    ],
-                    onChanged: (v) => setState(() => _role = v ?? 'employee'),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      FilledButton(onPressed: _save, child: Text(l10n.save)),
-                      const SizedBox(width: 12),
-                      if (_editingId != null) OutlinedButton(onPressed: _cancelEdit, child: Text(l10n.cancelEdit)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        if (_error.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Card(
-              color: cs.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
-              ),
-            ),
-          ),
-        const SizedBox(height: 16),
-        if (_loading) const Center(child: CircularProgressIndicator()),
-        if (!_loading && _error.isEmpty && _items.isEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(l10n.noMatch, style: TextStyle(color: Colors.grey.shade700)),
-            ),
-          ),
-        ..._items.map(
-          (e) => Card(
-            child: ListTile(
-              title: Text('${e['name']}'),
-              subtitle: Text('${e['email']} • ${e['role']}'),
-              trailing: isManager
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(icon: const Icon(Icons.edit), onPressed: () => _startEdit(e)),
-                        IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _delete(e)),
-                      ],
-                    )
-                  : null,
-            ),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _loading
+                ? const Padding(
+                    key: ValueKey('loading'),
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: CircularProgressIndicator()))
+                : _items.isEmpty
+                    ? ListView(
+                        key: const ValueKey('empty'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        children: [
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(l10n.noMatch,
+                                  style: TextStyle(color: Colors.grey.shade700)),
+                            ),
+                          )
+                        ],
+                      )
+                    : ListView.builder(
+                        key: const ValueKey('list'),
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        itemCount: _items.length,
+                        itemBuilder: (context, index) {
+                          final e = _items[index];
+                          return Card(
+                            child: ListTile(
+                              title: Text('${e['name']}'),
+                              subtitle: Text('${e['email']} • ${e['role']}'),
+                              trailing: isManager
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            onPressed: () => _startEdit(e)),
+                                        IconButton(
+                                            icon: const Icon(Icons.delete_outline),
+                                            onPressed: () => _delete(e)),
+                                      ],
+                                    )
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
           ),
         ),
       ],

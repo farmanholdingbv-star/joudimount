@@ -106,25 +106,41 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
     if (!['INPUT', 'OUTPUT', 'SEAL'].contains(_subStage)) _subStage = 'INPUT';
 
     _inDate.text = _iso(tx['storageInputEntryDate'] ?? tx['storageEntryDate']);
-    _inWages.text = _numStr(tx['storageInputWorkersWages'] ?? tx['storageWorkersWages']);
-    _inCompany.text = (tx['storageInputWorkersCompany'] ?? tx['storageWorkersCompany'] ?? '').toString();
-    _inStore.text = (tx['storageInputStoreName'] ?? tx['storageStoreName'] ?? '').toString();
+    _inWages.text =
+        _numStr(tx['storageInputWorkersWages'] ?? tx['storageWorkersWages']);
+    _inCompany.text =
+        (tx['storageInputWorkersCompany'] ?? tx['storageWorkersCompany'] ?? '')
+            .toString();
+    _inStore.text =
+        (tx['storageInputStoreName'] ?? tx['storageStoreName'] ?? '')
+            .toString();
     _inCbm.text = _numStr(tx['storageInputVolumeCbm'] ?? tx['storageSizeCbm']);
     _inFare.text = _numStr(tx['storageInputLoadingEquipmentFare']);
 
     _outDate.text = _iso(tx['storageExitEntryDate'] ?? tx['storageEntryDate']);
-    _outWages.text = _numStr(tx['storageExitWorkersWages'] ?? tx['storageWorkersWages']);
-    _outCompany.text = (tx['storageExitWorkersCompany'] ?? tx['storageWorkersCompany'] ?? '').toString();
-    _outStore.text = (tx['storageExitStoreName'] ?? tx['storageStoreName'] ?? '').toString();
+    _outWages.text =
+        _numStr(tx['storageExitWorkersWages'] ?? tx['storageWorkersWages']);
+    _outCompany.text =
+        (tx['storageExitWorkersCompany'] ?? tx['storageWorkersCompany'] ?? '')
+            .toString();
+    _outStore.text =
+        (tx['storageExitStoreName'] ?? tx['storageStoreName'] ?? '').toString();
     _outCbm.text = _numStr(tx['storageExitVolumeCbm'] ?? tx['storageSizeCbm']);
     _outFare.text = _numStr(tx['storageExitLoadingEquipmentFare']);
-    _outVehicles.text = (tx['storageExitFreightVehicleNumbers'] ?? tx['storageFreightVehicleNumbers'] ?? '').toString();
-    _outCross.text = (tx['storageExitCrossPackaging'] ?? tx['storageCrossPackaging'] ?? '').toString();
-    _outUnity.text = (tx['storageExitUnity'] ?? tx['storageUnity'] ?? '').toString();
+    _outVehicles.text = (tx['storageExitFreightVehicleNumbers'] ??
+            tx['storageFreightVehicleNumbers'] ??
+            '')
+        .toString();
+    _outCross.text =
+        (tx['storageExitCrossPackaging'] ?? tx['storageCrossPackaging'] ?? '')
+            .toString();
+    _outUnity.text =
+        (tx['storageExitUnity'] ?? tx['storageUnity'] ?? '').toString();
 
     _sealReplace.text = (tx['storageSealReplaceContainers'] ?? '').toString();
     _sealSwitch.text = _iso(tx['storageSealSwitchDate']);
-    _sealContainers.text = (tx['storageSealEntryContainerNumbers'] ?? '').toString();
+    _sealContainers.text =
+        (tx['storageSealEntryContainerNumbers'] ?? '').toString();
     _sealUnits.text = _numStr(tx['storageSealUnitCount']);
     _sealCompany.text = (tx['storageSealWorkersCompany'] ?? '').toString();
     _sealWages.text = _numStr(tx['storageSealWorkersWages']);
@@ -136,7 +152,8 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
       _error = '';
     });
     try {
-      final tx = await Api.get('$_modulePath/${widget.transactionId}') as Map<String, dynamic>;
+      final tx = await Api.get('$_modulePath/${widget.transactionId}')
+          as Map<String, dynamic>;
       if (mounted) {
         setState(() {
           _tx = tx;
@@ -199,13 +216,15 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
       _putStr(body, 'storageSealWorkersCompany', _sealCompany);
       _putNum(body, 'storageSealWorkersWages', _sealWages);
 
-      final tx = await Api.put('$_modulePath/${widget.transactionId}', body) as Map<String, dynamic>;
+      final tx = await Api.put('$_modulePath/${widget.transactionId}', body)
+          as Map<String, dynamic>;
       if (mounted) {
         setState(() {
           _tx = tx;
           _fillFromTx(tx);
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.save)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.save)));
       }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -215,7 +234,9 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
   }
 
   Widget _field(TextEditingController c, String label,
-      {TextInputType keyboard = TextInputType.text, int maxLines = 1, bool enabled = true}) {
+      {TextInputType keyboard = TextInputType.text,
+      int maxLines = 1,
+      bool enabled = true}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: TextField(
@@ -237,7 +258,9 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(dec.isEmpty ? l10n.storageCardTitle : '${l10n.storageCardTitle} · $dec'),
+        title: Text(dec.isEmpty
+            ? l10n.storageCardTitle
+            : '${l10n.storageCardTitle} · $dec'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -253,13 +276,15 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
                     color: cs.errorContainer,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+                      child: Text(_error,
+                          style: TextStyle(color: cs.onErrorContainer)),
                     ),
                   ),
                 if (_tx != null && !atStorage)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(l10n.storageWrongStage, style: TextStyle(color: Colors.grey.shade700)),
+                    child: Text(l10n.storageWrongStage,
+                        style: TextStyle(color: Colors.grey.shade700)),
                   ),
                 if (_tx != null) ...[
                   _kv(l10n.client, '${_tx!['clientName']}'),
@@ -274,7 +299,8 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
                           onSelected: !_canEdit
                               ? null
                               : (selected) {
-                                  if (selected) setState(() => _subStage = 'INPUT');
+                                  if (selected)
+                                    setState(() => _subStage = 'INPUT');
                                 },
                         ),
                         ChoiceChip(
@@ -283,7 +309,8 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
                           onSelected: !_canEdit
                               ? null
                               : (selected) {
-                                  if (selected) setState(() => _subStage = 'OUTPUT');
+                                  if (selected)
+                                    setState(() => _subStage = 'OUTPUT');
                                 },
                         ),
                         ChoiceChip(
@@ -292,71 +319,101 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
                           onSelected: !_canEdit
                               ? null
                               : (selected) {
-                                  if (selected) setState(() => _subStage = 'SEAL');
+                                  if (selected)
+                                    setState(() => _subStage = 'SEAL');
                                 },
                         ),
                       ],
                     ),
                     if (_subStage == 'INPUT') ...[
                       const SizedBox(height: 8),
-                      Text(l10n.storageSectionInput, style: Theme.of(context).textTheme.titleSmall),
+                      Text(l10n.storageSectionInput,
+                          style: Theme.of(context).textTheme.titleSmall),
                       ApiDateField(
                         controller: _inDate,
                         label: l10n.storageEntryDate,
                         enabled: _canEdit,
                       ),
                       _field(_inWages, l10n.storageWorkersWages,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
-                      _field(_inCompany, l10n.storageWorkersCompany, enabled: _canEdit),
-                      _field(_inStore, l10n.storageStoreName, enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
+                      _field(_inCompany, l10n.storageWorkersCompany,
+                          enabled: _canEdit),
+                      _field(_inStore, l10n.storageStoreName,
+                          enabled: _canEdit),
                       _field(_inCbm, l10n.storageSizeCbm,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
                       _field(_inFare, l10n.storageLoadingEquipmentFare,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
                     ],
                     if (_subStage == 'OUTPUT') ...[
                       const SizedBox(height: 8),
-                      Text(l10n.storageSectionExit, style: Theme.of(context).textTheme.titleSmall),
+                      Text(l10n.storageSectionExit,
+                          style: Theme.of(context).textTheme.titleSmall),
                       ApiDateField(
                         controller: _outDate,
                         label: l10n.storageEntryDate,
                         enabled: _canEdit,
                       ),
                       _field(_outWages, l10n.storageWorkersWages,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
-                      _field(_outCompany, l10n.storageWorkersCompany, enabled: _canEdit),
-                      _field(_outStore, l10n.storageStoreName, enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
+                      _field(_outCompany, l10n.storageWorkersCompany,
+                          enabled: _canEdit),
+                      _field(_outStore, l10n.storageStoreName,
+                          enabled: _canEdit),
                       _field(_outCbm, l10n.storageSizeCbm,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
                       _field(_outFare, l10n.storageLoadingEquipmentFare,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
-                      _field(_outVehicles, l10n.storageFreightVehicleNumbers, maxLines: 3, enabled: _canEdit),
-                      _field(_outCross, l10n.storageCrossPackaging, enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
+                      _field(_outVehicles, l10n.storageFreightVehicleNumbers,
+                          maxLines: 3, enabled: _canEdit),
+                      _field(_outCross, l10n.storageCrossPackaging,
+                          enabled: _canEdit),
                       _field(_outUnity, l10n.storageUnity, enabled: _canEdit),
                     ],
                     if (_subStage == 'SEAL') ...[
                       const SizedBox(height: 8),
-                      Text(l10n.storageSectionSeal, style: Theme.of(context).textTheme.titleSmall),
-                      _field(_sealReplace, l10n.storageReplaceContainers, maxLines: 3, enabled: _canEdit),
+                      Text(l10n.storageSectionSeal,
+                          style: Theme.of(context).textTheme.titleSmall),
+                      _field(_sealReplace, l10n.storageReplaceContainers,
+                          maxLines: 3, enabled: _canEdit),
                       ApiDateField(
                         controller: _sealSwitch,
                         label: l10n.storageSwitchDate,
                         enabled: _canEdit,
                       ),
-                      _field(_sealContainers, l10n.storageEntryContainerNumbers, maxLines: 3, enabled: _canEdit),
-                      _field(_sealUnits, l10n.storageSealUnitCount, keyboard: TextInputType.number, enabled: _canEdit),
-                      _field(_sealCompany, l10n.storageWorkersCompany, enabled: _canEdit),
+                      _field(_sealContainers, l10n.storageEntryContainerNumbers,
+                          maxLines: 3, enabled: _canEdit),
+                      _field(_sealUnits, l10n.storageSealUnitCount,
+                          keyboard: TextInputType.number, enabled: _canEdit),
+                      _field(_sealCompany, l10n.storageWorkersCompany,
+                          enabled: _canEdit),
                       _field(_sealWages, l10n.storageWorkersWages,
-                          keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: _canEdit),
+                          keyboard: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          enabled: _canEdit),
                     ],
                     if (!_canEdit)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
-                        child: Text(l10n.storageAccountantReadOnly, style: Theme.of(context).textTheme.bodySmall),
+                        child: Text(l10n.storageAccountantReadOnly,
+                            style: Theme.of(context).textTheme.bodySmall),
                       ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: (!_canEdit || _saving || !atStorage) ? null : _save,
+                      onPressed:
+                          (!_canEdit || _saving || !atStorage) ? null : _save,
                       child: Text(_saving ? l10n.saving : l10n.save),
                     ),
                   ],
@@ -372,7 +429,10 @@ class _TransactionStoragePageState extends State<TransactionStoragePage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 120, child: Text(k, style: const TextStyle(fontWeight: FontWeight.w600))),
+          SizedBox(
+              width: 120,
+              child:
+                  Text(k, style: const TextStyle(fontWeight: FontWeight.w600))),
           Expanded(child: Text(v)),
         ],
       ),

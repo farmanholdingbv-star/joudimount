@@ -9,7 +9,8 @@ class ShippingCompanyDetailPage extends StatefulWidget {
   const ShippingCompanyDetailPage({super.key, required this.id});
 
   @override
-  State<ShippingCompanyDetailPage> createState() => _ShippingCompanyDetailPageState();
+  State<ShippingCompanyDetailPage> createState() =>
+      _ShippingCompanyDetailPageState();
 }
 
 class _ShippingCompanyDetailPageState extends State<ShippingCompanyDetailPage> {
@@ -29,7 +30,8 @@ class _ShippingCompanyDetailPageState extends State<ShippingCompanyDetailPage> {
       _error = '';
     });
     try {
-      final data = await Api.get('/api/shipping-companies/${widget.id}') as Map<String, dynamic>;
+      final data = await Api.get('/api/shipping-companies/${widget.id}')
+          as Map<String, dynamic>;
       if (mounted) setState(() => _item = data);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -39,7 +41,8 @@ class _ShippingCompanyDetailPageState extends State<ShippingCompanyDetailPage> {
   }
 
   Future<void> _openMap(double lat, double lng) async {
-    final uri = Uri.parse('https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=14/$lat/$lng');
+    final uri = Uri.parse(
+        'https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=14/$lat/$lng');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
@@ -107,13 +110,20 @@ class _ShippingCompanyDetailPageState extends State<ShippingCompanyDetailPage> {
                         _kv(l10n.contactName, '${s['contactName'] ?? '—'}'),
                         _kv(l10n.phone, '${s['phone'] ?? '—'}'),
                         _kv(l10n.shippingEmailOptional, '${s['email'] ?? '—'}'),
-                        if ((s['dispatchFormTemplate'] ?? '').toString().trim().isNotEmpty)
-                          _kv('Dispatch template', '${s['dispatchFormTemplate']}'),
+                        if ((s['dispatchFormTemplate'] ?? '')
+                            .toString()
+                            .trim()
+                            .isNotEmpty)
+                          _kv('Dispatch template',
+                              '${s['dispatchFormTemplate']}'),
                         if (s['latitude'] != null && s['longitude'] != null)
                           Card(
                             child: ListTile(
-                              title: Text(l10n.latitudeOptional, style: const TextStyle(fontWeight: FontWeight.w600)),
-                              subtitle: Text('${s['latitude']}, ${s['longitude']}'),
+                              title: Text(l10n.latitudeOptional,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
+                              subtitle:
+                                  Text('${s['latitude']}, ${s['longitude']}'),
                               trailing: IconButton(
                                 icon: const Icon(Icons.map_outlined),
                                 tooltip: 'OpenStreetMap',

@@ -45,6 +45,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allStatuses => 'All statuses';
 
   @override
+  String get allStages => 'All stages';
+
+  @override
   String get allChannels => 'All channels';
 
   @override
@@ -396,19 +399,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get originalBl => 'Original BL received';
 
   @override
-  String get txDocumentStatusCopy => 'copy_received';
+  String get txDocumentStatusCopy => 'Copy received';
 
   @override
-  String get txDocumentStatusOriginal => 'original_received';
+  String get txDocumentStatusOriginal => 'Original received';
 
   @override
-  String get txDocumentStatusTelex => 'telex_release';
+  String get txDocumentStatusTelex => 'Telex release';
 
   @override
-  String get txPaymentPending => 'pending';
+  String get txPaymentPending => 'Pending';
 
   @override
-  String get txPaymentPaid => 'paid';
+  String get txPaymentPaid => 'Paid';
 
   @override
   String get roleManager => 'manager';
@@ -631,4 +634,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pdfFontLoadErrorPrefix => 'Could not load PDF font';
+
+  @override
+  String get txStage => 'Transaction Stage';
+
+  @override
+  String get txReadOnlyFields => 'Read-only Transaction Fields';
+
+  @override
+  String get txFileNumber => 'File Number';
+
+  @override
+  String get txCustomsDeclaration => 'Customs Declaration';
+
+  @override
+  String get txDeclarationNumber1 => 'Declaration Number (1)';
+
+  @override
+  String get txDeclarationDate => 'Declaration Date';
+
+  @override
+  String get txDeclarationType1 => 'Declaration Type (1)';
+
+  @override
+  String get txDeclarationNumber2 => 'Declaration Number (2)';
+
+  @override
+  String get txDeclarationType2 => 'Declaration Type (2)';
+
+  @override
+  String get txPortType => 'Port Type';
+
+  @override
+  String get txCurrency => 'Currency';
+
+  @override
+  String get stagePreparation => 'Preparation';
+
+  @override
+  String get stageCustomsClearance => 'Customs clearance';
+
+  @override
+  String get stageStorage => 'Storage';
+
+  @override
+  String get stageTransportation => 'Transportation';
+
+  @override
+  String get docBillOfLading => 'Bill of Lading';
+
+  @override
+  String get docCertificateOfOrigin => 'Certificate of Origin';
+
+  @override
+  String get docInvoice => 'Invoice';
+
+  @override
+  String get docPackingList => 'Packing List';
 }

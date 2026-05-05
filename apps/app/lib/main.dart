@@ -55,6 +55,12 @@ class _TrackerMobileAppState extends State<TrackerMobileApp> {
               brightness: Brightness.light,
             ),
             scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: ZoomPageTransitionsBuilder(),
+                TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              },
+            ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Colors.white,
               foregroundColor: Color(0xFF1e3a8a),
@@ -113,15 +119,15 @@ class _TrackerMobileAppState extends State<TrackerMobileApp> {
               ),
             ),
           ),
-        locale: Locale(value),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: const AuthGate(),
+          locale: Locale(value),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const AuthGate(),
         );
       },
     );
@@ -162,15 +168,25 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
+    Widget child;
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      child = const Scaffold(
+          key: ValueKey('loading'),
+          body: Center(child: CircularProgressIndicator()));
+    } else if (_user == null) {
+      child = LoginPage(
+          key: const ValueKey('login'),
+          onLogin: (user) => setState(() => _user = user));
+    } else {
+      child = HomePage(
+        key: const ValueKey('home'),
+        user: _user!,
+        onLogout: () => setState(() => _user = null),
+      );
     }
-    if (_user == null) {
-      return LoginPage(onLogin: (user) => setState(() => _user = user));
-    }
-    return HomePage(
-      user: _user!,
-      onLogout: () => setState(() => _user = null),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: child,
     );
   }
 }
@@ -301,15 +317,20 @@ class _LoginPageState extends State<LoginPage> {
                             style: const TextStyle(
                                 fontSize: 24, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 14),
-                        TextField(
-                            controller: _emailCtrl,
-                            decoration: InputDecoration(labelText: l10n.email)),
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TextField(
+                                controller: _emailCtrl,
+                                decoration:
+                                    InputDecoration(labelText: l10n.email))),
                         const SizedBox(height: 10),
-                        TextField(
-                            controller: _passCtrl,
-                            decoration:
-                                InputDecoration(labelText: l10n.password),
-                            obscureText: true),
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TextField(
+                                controller: _passCtrl,
+                                decoration:
+                                    InputDecoration(labelText: l10n.password),
+                                obscureText: true)),
                         const SizedBox(height: 6),
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
@@ -323,7 +344,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 14),
                         if (_error.isNotEmpty)
-                          Text(_error, style: const TextStyle(color: Colors.red)),
+                          Text(_error,
+                              style: const TextStyle(color: Colors.red)),
                         FilledButton(
                           onPressed: _loading ? null : _submit,
                           child: Text(_loading ? l10n.signingIn : l10n.login),
@@ -431,8 +453,10 @@ class _HomePageState extends State<HomePage> {
                     child: DropdownButton<String>(
                       value: Lang.locale.value,
                       items: [
-                        DropdownMenuItem(value: 'ar', child: Text(l10n.languageAr)),
-                        DropdownMenuItem(value: 'en', child: Text(l10n.languageEn)),
+                        DropdownMenuItem(
+                            value: 'ar', child: Text(l10n.languageAr)),
+                        DropdownMenuItem(
+                            value: 'en', child: Text(l10n.languageEn)),
                       ],
                       onChanged: (v) {
                         if (v != null) Lang.setLocale(v);
@@ -442,7 +466,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-      body: IndexedStack(index: _index, children: pages),
+      body: FadeIndexedStack(index: _index, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _index,
@@ -457,7 +481,8 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.receipt_long_outlined),
               label: l10n.transactions),
           BottomNavigationBarItem(
-              icon: const Icon(Icons.swap_horiz_outlined), label: l10n.transfers),
+              icon: const Icon(Icons.swap_horiz_outlined),
+              label: l10n.transfers),
           BottomNavigationBarItem(
               icon: const Icon(Icons.outbox_outlined), label: l10n.exports),
           BottomNavigationBarItem(
@@ -472,8 +497,10 @@ class _HomePageState extends State<HomePage> {
         ],
         // Swap module labels to Arabic at runtime.
         // We keep item count and order identical to web modules.
-        selectedLabelStyle: isAr ? const TextStyle(fontFamily: 'NotoSansArabic') : null,
-        unselectedLabelStyle: isAr ? const TextStyle(fontFamily: 'NotoSansArabic') : null,
+        selectedLabelStyle:
+            isAr ? const TextStyle(fontFamily: 'NotoSansArabic') : null,
+        unselectedLabelStyle:
+            isAr ? const TextStyle(fontFamily: 'NotoSansArabic') : null,
       ),
     );
   }
@@ -574,99 +601,137 @@ class _ClientsTabState extends State<ClientsTab> {
     final l10n = AppLocalizations.of(context)!;
     final isManager = widget.role == 'manager';
     final cs = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0x33FFFFFF),
-                child: Icon(Icons.groups_outlined, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.clients,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
                   ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x33FFFFFF),
+                      child: Icon(Icons.groups_outlined, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.clients,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 10),
+              if (isManager)
+                FilledButton.icon(
+                    onPressed: _createClient,
+                    icon: const Icon(Icons.add),
+                    label: Text(l10n.addClient)),
+              if (!isManager)
+                Text(l10n.managerOnlyClients,
+                    style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        if (isManager)
-          FilledButton.icon(
-              onPressed: _createClient,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.addClient)),
-        if (!isManager)
-          Text(l10n.managerOnlyClients,
-              style: const TextStyle(color: Colors.grey)),
-        if (_loading)
-          const Center(
-              child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator())),
-        if (_error.isNotEmpty)
-          Card(
-            color: cs.errorContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
-            ),
-          ),
-        if (!_loading && _error.isEmpty && _items.isEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.noMatch,
-                style: TextStyle(color: Colors.grey.shade700),
-              ),
-            ),
-          ),
-        ..._items.map((c) => Card(
-              child: ListTile(
-                onTap: () {
-                  Navigator.of(context).push<void>(
-                    MaterialPageRoute(
-                        builder: (_) => ClientDetailPage(id: _entityId(c))),
-                  );
-                },
-                title: Text('${c['companyName']}'),
-                subtitle: Text(_clientListSubtitle(c, l10n)),
-                trailing: isManager
-                    ? PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _editClient(c);
-                          } else if (value == 'delete') {
-                            _deleteClient(_entityId(c));
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
-                          PopupMenuItem(
-                              value: 'delete', child: Text(l10n.delete)),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _loading
+                ? const Padding(
+                    key: ValueKey('loading'),
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: CircularProgressIndicator()))
+                : _error.isNotEmpty
+                    ? ListView(
+                        key: const ValueKey('error'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        children: [
+                          Card(
+                            color: cs.errorContainer,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Text(_error,
+                                  style: TextStyle(color: cs.onErrorContainer)),
+                            ),
+                          )
                         ],
                       )
-                    : null,
-              ),
-            )),
+                    : _items.isEmpty
+                        ? ListView(
+                            key: const ValueKey('empty'),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            children: [
+                              Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Text(
+                                    l10n.noMatch,
+                                    style: TextStyle(color: Colors.grey.shade700),
+                                  ),
+                                ),
+                              )
+                            ],
+                          )
+                        : ListView.builder(
+                            key: const ValueKey('list'),
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            itemCount: _items.length,
+                            itemBuilder: (context, index) {
+                              final c = _items[index];
+                              return Card(
+                                child: ListTile(
+                                  onTap: () {
+                                    Navigator.of(context).push<void>(
+                                      MaterialPageRoute(
+                                          builder: (_) => ClientDetailPage(
+                                              id: _entityId(c))),
+                                    );
+                                  },
+                                  title: Text('${c['companyName']}'),
+                                  subtitle:
+                                      Text(_clientListSubtitle(c, l10n)),
+                                  trailing: isManager
+                                      ? PopupMenuButton<String>(
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _editClient(c);
+                                            } else if (value == 'delete') {
+                                              _deleteClient(_entityId(c));
+                                            }
+                                          },
+                                          itemBuilder: (_) => [
+                                            PopupMenuItem(
+                                                value: 'edit',
+                                                child: Text(l10n.edit)),
+                                            PopupMenuItem(
+                                                value: 'delete',
+                                                child: Text(l10n.delete)),
+                                          ],
+                                        )
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+          ),
+        ),
       ],
     );
   }
@@ -746,39 +811,55 @@ class _ClientFormPageState extends State<ClientFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          TextField(
-              controller: _name,
-              decoration: InputDecoration(labelText: l10n.companyName)),
-          TextField(
-            controller: _trn,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(labelText: l10n.trn),
-          ),
-          TextField(
-              controller: _imm,
-              decoration: InputDecoration(labelText: l10n.immigrationCode)),
-          TextField(
-            controller: _email,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(labelText: l10n.clientEmail),
-          ),
-          TextField(
-              controller: _country,
-              decoration: InputDecoration(labelText: l10n.country)),
-          TextField(
-              controller: _credit,
-              decoration: InputDecoration(labelText: l10n.creditLimit)),
-          DropdownButtonFormField<String>(
-            key: ValueKey('client-status-$_status'),
-            decoration: InputDecoration(labelText: l10n.clientStatus),
-            initialValue: _status,
-            items: [
-              DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
-              DropdownMenuItem(
-                  value: 'suspended', child: Text(l10n.statusSuspended)),
-            ],
-            onChanged: (v) => setState(() => _status = v ?? 'active'),
-          ),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _name,
+                  decoration: InputDecoration(labelText: l10n.companyName))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                controller: _trn,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(labelText: l10n.trn),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _imm,
+                  decoration:
+                      InputDecoration(labelText: l10n.immigrationCode))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(labelText: l10n.clientEmail),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _country,
+                  decoration: InputDecoration(labelText: l10n.country))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _credit,
+                  decoration: InputDecoration(labelText: l10n.creditLimit))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('client-status-$_status'),
+                decoration: InputDecoration(labelText: l10n.clientStatus),
+                initialValue: _status,
+                items: [
+                  DropdownMenuItem(
+                      value: 'active', child: Text(l10n.statusActive)),
+                  DropdownMenuItem(
+                      value: 'suspended', child: Text(l10n.statusSuspended)),
+                ],
+                onChanged: (v) => setState(() => _status = v ?? 'active'),
+              )),
           if (_error.isNotEmpty)
             Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),
@@ -883,100 +964,137 @@ class _ShippingTabState extends State<ShippingTab> {
     final l10n = AppLocalizations.of(context)!;
     final isManager = widget.role == 'manager';
     final cs = Theme.of(context).colorScheme;
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0x33FFFFFF),
-                child: Icon(Icons.local_shipping_outlined, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.shipping,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
                   ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x33FFFFFF),
+                      child: Icon(Icons.local_shipping_outlined, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.shipping,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 10),
+              if (isManager)
+                FilledButton.icon(
+                    onPressed: _createShipping,
+                    icon: const Icon(Icons.add),
+                    label: Text(l10n.addShipping)),
+              if (!isManager)
+                Text(l10n.managerOnlyShipping,
+                    style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        if (isManager)
-          FilledButton.icon(
-              onPressed: _createShipping,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.addShipping)),
-        if (!isManager)
-          Text(l10n.managerOnlyShipping,
-              style: const TextStyle(color: Colors.grey)),
-        if (_loading)
-          const Center(
-              child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator())),
-        if (_error.isNotEmpty)
-          Card(
-            color: cs.errorContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
-            ),
-          ),
-        if (!_loading && _error.isEmpty && _items.isEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.noMatch,
-                style: TextStyle(color: Colors.grey.shade700),
-              ),
-            ),
-          ),
-        ..._items.map((s) => Card(
-              child: ListTile(
-                onTap: () {
-                  Navigator.of(context).push<void>(
-                    MaterialPageRoute(
-                        builder: (_) =>
-                            ShippingCompanyDetailPage(id: _entityId(s))),
-                  );
-                },
-                title: Text('${s['companyName']}'),
-                subtitle: Text(_shippingSubtitle(s)),
-                trailing: isManager
-                    ? PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _editShipping(s);
-                          } else if (value == 'delete') {
-                            _deleteShipping(_entityId(s));
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
-                          PopupMenuItem(
-                              value: 'delete', child: Text(l10n.delete)),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _loading
+                ? const Padding(
+                    key: ValueKey('loading'),
+                    padding: EdgeInsets.all(20),
+                    child: Center(child: CircularProgressIndicator()))
+                : _error.isNotEmpty
+                    ? ListView(
+                        key: const ValueKey('error'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        children: [
+                          Card(
+                            color: cs.errorContainer,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Text(_error,
+                                  style: TextStyle(color: cs.onErrorContainer)),
+                            ),
+                          )
                         ],
                       )
-                    : null,
-              ),
-            )),
+                    : _items.isEmpty
+                        ? ListView(
+                            key: const ValueKey('empty'),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            children: [
+                              Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Text(
+                                    l10n.noMatch,
+                                    style: TextStyle(color: Colors.grey.shade700),
+                                  ),
+                                ),
+                              )
+                            ],
+                          )
+                        : ListView.builder(
+                            key: const ValueKey('list'),
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            itemCount: _items.length,
+                            itemBuilder: (context, index) {
+                              final s = _items[index];
+                              return Card(
+                                child: ListTile(
+                                  onTap: () {
+                                    Navigator.of(context).push<void>(
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              ShippingCompanyDetailPage(
+                                                  id: _entityId(s))),
+                                    );
+                                  },
+                                  title: Text('${s['companyName']}'),
+                                  subtitle: Text(_shippingSubtitle(s)),
+                                  trailing: isManager
+                                      ? PopupMenuButton<String>(
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _editShipping(s);
+                                            } else if (value == 'delete') {
+                                              _deleteShipping(_entityId(s));
+                                            }
+                                          },
+                                          itemBuilder: (_) => [
+                                            PopupMenuItem(
+                                                value: 'edit',
+                                                child: Text(l10n.edit)),
+                                            PopupMenuItem(
+                                                value: 'delete',
+                                                child: Text(l10n.delete)),
+                                          ],
+                                        )
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+          ),
+        ),
       ],
     );
   }
@@ -1108,53 +1226,73 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          TextField(
-              controller: _name,
-              decoration: InputDecoration(labelText: l10n.companyName)),
-          TextField(
-              controller: _code,
-              decoration: InputDecoration(labelText: l10n.code)),
-          TextField(
-              controller: _contact,
-              decoration: InputDecoration(labelText: l10n.contactName)),
-          TextField(
-              controller: _phone,
-              decoration: InputDecoration(labelText: l10n.phone)),
-          TextField(
-            controller: _email,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(labelText: l10n.shippingEmailOptional),
-          ),
-          TextField(
-            controller: _dispatchTemplate,
-            minLines: 3,
-            maxLines: 5,
-            decoration: InputDecoration(
-                labelText: l10n.shippingDispatchTemplateOptional),
-          ),
-          TextField(
-            controller: _lat,
-            keyboardType: const TextInputType.numberWithOptions(
-                decimal: true, signed: true),
-            decoration: InputDecoration(labelText: l10n.latitudeOptional),
-          ),
-          TextField(
-            controller: _lng,
-            keyboardType: const TextInputType.numberWithOptions(
-                decimal: true, signed: true),
-            decoration: InputDecoration(labelText: l10n.longitudeOptional),
-          ),
-          DropdownButtonFormField<String>(
-            key: ValueKey('shipping-status-$_shipStatus'),
-            decoration: InputDecoration(labelText: l10n.shippingStatus),
-            initialValue: _shipStatus,
-            items: [
-              DropdownMenuItem(value: 'active', child: Text(l10n.statusActive)),
-              DropdownMenuItem(
-                  value: 'inactive', child: Text(l10n.statusInactive)),
-            ],
-            onChanged: (v) => setState(() => _shipStatus = v ?? 'active'),
-          ),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _name,
+                  decoration: InputDecoration(labelText: l10n.companyName))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _code,
+                  decoration: InputDecoration(labelText: l10n.code))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _contact,
+                  decoration: InputDecoration(labelText: l10n.contactName))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                  controller: _phone,
+                  decoration: InputDecoration(labelText: l10n.phone))),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                decoration:
+                    InputDecoration(labelText: l10n.shippingEmailOptional),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                controller: _dispatchTemplate,
+                minLines: 3,
+                maxLines: 5,
+                decoration: InputDecoration(
+                    labelText: l10n.shippingDispatchTemplateOptional),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                controller: _lat,
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true, signed: true),
+                decoration: InputDecoration(labelText: l10n.latitudeOptional),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextField(
+                controller: _lng,
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true, signed: true),
+                decoration: InputDecoration(labelText: l10n.longitudeOptional),
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('shipping-status-$_shipStatus'),
+                decoration: InputDecoration(labelText: l10n.shippingStatus),
+                initialValue: _shipStatus,
+                items: [
+                  DropdownMenuItem(
+                      value: 'active', child: Text(l10n.statusActive)),
+                  DropdownMenuItem(
+                      value: 'inactive', child: Text(l10n.statusInactive)),
+                ],
+                onChanged: (v) => setState(() => _shipStatus = v ?? 'active'),
+              )),
           if (_error.isNotEmpty)
             Text(_error, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 8),
@@ -1221,6 +1359,59 @@ class ProfileTab extends StatelessWidget {
           child: Text(l10n.logout),
         ),
       ],
+    );
+  }
+}
+
+class FadeIndexedStack extends StatefulWidget {
+  final int index;
+  final List<Widget> children;
+  final Duration duration;
+
+  const FadeIndexedStack({
+    super.key,
+    required this.index,
+    required this.children,
+    this.duration = const Duration(milliseconds: 250),
+  });
+
+  @override
+  State<FadeIndexedStack> createState() => _FadeIndexedStackState();
+}
+
+class _FadeIndexedStackState extends State<FadeIndexedStack>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(FadeIndexedStack oldWidget) {
+    if (widget.index != oldWidget.index) {
+      _controller.forward(from: 0.0);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _controller,
+      child: IndexedStack(
+        index: widget.index,
+        children: widget.children,
+      ),
     );
   }
 }

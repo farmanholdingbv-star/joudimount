@@ -28,7 +28,8 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
       _error = '';
     });
     try {
-      final data = await Api.get('/api/clients/${widget.id}') as Map<String, dynamic>;
+      final data =
+          await Api.get('/api/clients/${widget.id}') as Map<String, dynamic>;
       if (mounted) setState(() => _client = data);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -97,7 +98,8 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                         const SizedBox(height: 10),
                         _kv(l10n.companyName, '${_client!['companyName']}'),
                         _kv(l10n.trn, '${_client!['trn']}'),
-                        _kv(l10n.immigrationCode, '${_client!['immigrationCode'] ?? '—'}'),
+                        _kv(l10n.immigrationCode,
+                            '${_client!['immigrationCode'] ?? '—'}'),
                         _kv(l10n.clientEmail, '${_client!['email'] ?? '—'}'),
                         _kv(l10n.country, '${_client!['country'] ?? '—'}'),
                         _kv(l10n.creditLimit, '${_client!['creditLimit']}'),

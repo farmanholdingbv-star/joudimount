@@ -9,7 +9,8 @@ import 'transaction_storage_page.dart';
 class TransactionsTab extends StatefulWidget {
   final String role;
   final String module;
-  const TransactionsTab({super.key, required this.role, this.module = 'transactions'});
+  const TransactionsTab(
+      {super.key, required this.role, this.module = 'transactions'});
 
   @override
   State<TransactionsTab> createState() => _TransactionsTabState();
@@ -21,6 +22,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
   String _error = '';
   String _query = '';
   String _status = 'all';
+  String _stage = 'all';
 
   String get _modulePath => '/api/${widget.module}';
 
@@ -55,153 +57,257 @@ class _TransactionsTabState extends State<TransactionsTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final statuses = _items.map((e) => (e['clearanceStatus'] ?? '').toString()).where((e) => e.isNotEmpty).toSet().toList();
+    final statuses = _items
+        .map((e) => (e['clearanceStatus'] ?? '').toString())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
+    final stages = _items
+        .map((e) => (e['transactionStage'] ?? 'PREPARATION').toString())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
     final filtered = _items.where((tx) {
       final q = _query.toLowerCase();
       final matchesQ = q.isEmpty ||
           (tx['clientName'] ?? '').toString().toLowerCase().contains(q) ||
-          (tx['shippingCompanyName'] ?? '').toString().toLowerCase().contains(q) ||
-          (tx['declarationNumber'] ?? '').toString().toLowerCase().contains(q) ||
-          (tx['declarationNumber2'] ?? '').toString().toLowerCase().contains(q) ||
+          (tx['shippingCompanyName'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(q) ||
+          (tx['declarationNumber'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(q) ||
+          (tx['declarationNumber2'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(q) ||
           (tx['airwayBill'] ?? '').toString().toLowerCase().contains(q);
-      final matchesS = _status == 'all' || (tx['clearanceStatus'] ?? '') == _status;
-      return matchesQ && matchesS;
+      final matchesS =
+          _status == 'all' || (tx['clearanceStatus'] ?? '') == _status;
+      final stage = (tx['transactionStage'] ?? 'PREPARATION').toString();
+      final matchesStage = _stage == 'all' || stage == _stage;
+      return matchesQ && matchesS && matchesStage;
     }).toList();
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  backgroundColor: Color(0x33FFFFFF),
-                  child: Icon(Icons.receipt_long_outlined, color: Colors.white),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1e3a8a), Color(0xFF2563eb)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _moduleTitle(l10n),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x33FFFFFF),
+                      child: Icon(Icons.receipt_long_outlined, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _moduleTitle(l10n),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: l10n.search),
+                      onChanged: (v) => setState(() => _query = v),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: l10n.search),
-                  onChanged: (v) => setState(() => _query = v),
-                ),
+                  const SizedBox(width: 8),
+                  if (widget.role == 'manager' || widget.role == 'employee')
+                    FilledButton.icon(
+                      onPressed: () async {
+                        final created = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => TransactionFormPage(
+                              role: widget.role,
+                              module: widget.module,
+                            ),
+                          ),
+                        );
+                        if (created == true) _load();
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.newLabel),
+                    ),
+                ],
               ),
-              const SizedBox(width: 8),
-              if (widget.role == 'manager' || widget.role == 'employee')
-                FilledButton.icon(
-                  onPressed: () async {
-                    final created = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(
-                        builder: (_) => TransactionFormPage(
-                          role: widget.role,
-                          module: widget.module,
-                        ),
-                      ),
-                    );
-                    if (created == true) _load();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: Text(l10n.newLabel),
-                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey('tx-list-status-$_status'),
+                          isExpanded: true,
+                          initialValue: _status,
+                          items: ['all', ...statuses]
+                              .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e == 'all' ? l10n.allStatuses : e,
+                                      overflow: TextOverflow.ellipsis)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _status = v ?? 'all'),
+                        )),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey('tx-list-stage-$_stage'),
+                          isExpanded: true,
+                          initialValue: _stage,
+                          items: ['all', ...stages].map((e) {
+                            String label = e;
+                            if (e == 'all') {
+                              label = l10n.allStages;
+                            } else if (e == 'PREPARATION') {
+                              label = l10n.stagePreparation;
+                            } else if (e == 'CUSTOMS_CLEARANCE') {
+                              label = l10n.stageCustomsClearance;
+                            } else if (e == 'STORAGE') {
+                              label = l10n.stageStorage;
+                            } else if (e == 'TRANSPORTATION') {
+                              label = l10n.stageTransportation;
+                            }
+                            return DropdownMenuItem(
+                                value: e,
+                                child:
+                                    Text(label, overflow: TextOverflow.ellipsis));
+                          }).toList(),
+                          onChanged: (v) => setState(() => _stage = v ?? 'all'),
+                        )),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: ValueKey('tx-list-status-$_status'),
-            initialValue: _status,
-            items: ['all', ...statuses]
-                .map((e) => DropdownMenuItem(value: e, child: Text(e == 'all' ? l10n.allStatuses : e)))
-                .toList(),
-            onChanged: (v) => setState(() => _status = v ?? 'all'),
-          ),
-          const SizedBox(height: 8),
-          if (_loading) const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-          if (_error.isNotEmpty)
-            Card(
-              color: cs.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
-              ),
-            ),
-          ...filtered.map(
-            (tx) {
-              final stage = (tx['transactionStage'] ?? 'PREPARATION').toString();
-              final showStorage = stage == 'STORAGE' &&
-                  (widget.module == 'transactions' || widget.module == 'transfers');
-              return Card(
-                child: ListTile(
-                  title: Text('${tx['clientName']}'),
-                  subtitle: Text(
-                      '${tx['shippingCompanyName']} • $stage • ${tx['clearanceStatus']}'),
-                  trailing: showStorage
-                      ? IconButton(
-                          icon: const Icon(Icons.warehouse_outlined),
-                          tooltip: AppLocalizations.of(context)!.storageOpenCard,
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => TransactionStoragePage(
-                                  role: widget.role,
-                                  transactionId: tx['id'] as String,
-                                  module: widget.module,
-                                ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _loading
+                  ? const Padding(
+                      key: ValueKey('loading'),
+                      padding: EdgeInsets.all(20),
+                      child: Center(child: CircularProgressIndicator()))
+                  : _error.isNotEmpty
+                      ? ListView(
+                          key: const ValueKey('error'),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          children: [
+                            Card(
+                              color: cs.errorContainer,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(_error,
+                                    style: TextStyle(color: cs.onErrorContainer)),
                               ),
-                            );
-                          },
+                            )
+                          ],
                         )
-                      : null,
-                  onTap: () async {
-                    await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(
-                        builder: (_) => TransactionDetailsPage(
-                          id: tx['id'] as String,
-                          role: widget.role,
-                          module: widget.module,
-                        ),
-                      ),
-                    );
-                    _load();
-                  },
-                ),
-              );
-            },
-          ),
-          if (!_loading && filtered.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(l10n.noMatch, style: TextStyle(color: Colors.grey.shade700)),
-              ),
+                      : filtered.isEmpty
+                          ? ListView(
+                              key: const ValueKey('empty'),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              children: [
+                                Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text(l10n.noMatch,
+                                        style: TextStyle(color: Colors.grey.shade700)),
+                                  ),
+                                )
+                              ],
+                            )
+                          : ListView.builder(
+                              key: const ValueKey('list'),
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final tx = filtered[index];
+                                final stage =
+                                    (tx['transactionStage'] ?? 'PREPARATION')
+                                        .toString();
+                                final showStorage = stage == 'STORAGE' &&
+                                    (widget.module == 'transactions' ||
+                                        widget.module == 'transfers');
+                                return Card(
+                                  child: ListTile(
+                                    title: Text('${tx['clientName']}'),
+                                    subtitle: Text(
+                                        '${tx['shippingCompanyName']} • $stage • ${tx['clearanceStatus']}'),
+                                    trailing: showStorage
+                                        ? IconButton(
+                                            icon: const Icon(
+                                                Icons.warehouse_outlined),
+                                            tooltip: AppLocalizations.of(context)!
+                                                .storageOpenCard,
+                                            onPressed: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute<void>(
+                                                  builder: (_) =>
+                                                      TransactionStoragePage(
+                                                    role: widget.role,
+                                                    transactionId:
+                                                        tx['id'] as String,
+                                                    module: widget.module,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : null,
+                                    onTap: () async {
+                                      await Navigator.of(context).push<bool>(
+                                        MaterialPageRoute(
+                                          builder: (_) => TransactionDetailsPage(
+                                            id: tx['id'] as String,
+                                            role: widget.role,
+                                            module: widget.module,
+                                          ),
+                                        ),
+                                      );
+                                      _load();
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
             ),
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }

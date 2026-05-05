@@ -45,11 +45,14 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     load();
   }
 
-  Map<String, List<Map<String, dynamic>>> _groupAttachments(List<Map<String, dynamic>> attachments) {
+  Map<String, List<Map<String, dynamic>>> _groupAttachments(
+      List<Map<String, dynamic>> attachments) {
     final out = <String, List<Map<String, dynamic>>>{};
     for (final a in attachments) {
       final category = (a['category'] ?? '').toString();
-      final key = category.isEmpty ? AppLocalizations.of(context)!.uncategorized : _docCategoryLabel(category);
+      final key = category.isEmpty
+          ? AppLocalizations.of(context)!.uncategorized
+          : _docCategoryLabel(category, AppLocalizations.of(context)!);
       out.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(a);
     }
     return out;
@@ -69,7 +72,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     }
   }
 
-  String _declarationHeaderTitle(Map<String, dynamic> t, AppLocalizations l10n) {
+  String _declarationHeaderTitle(
+      Map<String, dynamic> t, AppLocalizations l10n) {
     final d1 = (t['declarationNumber'] ?? '').toString().trim();
     final d2 = (t['declarationNumber2'] ?? '').toString().trim();
     if (d1.isEmpty && d2.isEmpty) return l10n.details;
@@ -84,7 +88,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       await load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -97,8 +102,12 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         title: Text(l10n.deleteTransaction),
         content: Text(l10n.confirmDeleteTransaction),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.delete)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -107,7 +116,9 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       await Api.delete('$_modulePath/${widget.id}');
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -115,15 +126,18 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final l10n = AppLocalizations.of(context)!;
     final t = tx!;
     final isRtl = Directionality.of(context) == TextDirection.rtl;
-    final forceLatinTemplate = Localizations.localeOf(context).languageCode == 'ar';
-    final heading = forceLatinTemplate ? 'Shipping Paper' : l10n.shippingPaperHeading;
+    final forceLatinTemplate =
+        Localizations.localeOf(context).languageCode == 'ar';
+    final heading =
+        forceLatinTemplate ? 'Shipping Paper' : l10n.shippingPaperHeading;
     final subheading = forceLatinTemplate
         ? 'Please process and release this shipment as soon as possible.'
         : l10n.shippingPaperSub;
     // Embed Unicode fonts to keep Arabic/English text readable on all viewers.
     final pw.Font arabicFont;
     try {
-      arabicFont = pw.Font.ttf(await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf'));
+      arabicFont = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf'));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -158,26 +172,56 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
             style: pw.TextStyle(font: arabicFont, fontSize: 12),
           ),
           pw.SizedBox(height: 12),
-          _pdfRow(forceLatinTemplate ? 'To shipping company' : l10n.toShippingCompany, '${t['shippingCompanyName']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'From client' : l10n.fromClient, '${t['clientName']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'Declaration' : l10n.declaration, '${t['declarationNumber']}', arabicFont),
+          _pdfRow(
+              forceLatinTemplate
+                  ? 'To shipping company'
+                  : l10n.toShippingCompany,
+              '${t['shippingCompanyName']}',
+              arabicFont),
+          _pdfRow(forceLatinTemplate ? 'From client' : l10n.fromClient,
+              '${t['clientName']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Declaration' : l10n.declaration,
+              '${t['declarationNumber']}', arabicFont),
           if ((t['declarationNumber2'] ?? '').toString().trim().isNotEmpty)
             _pdfRow(
-              forceLatinTemplate ? 'Declaration (2)' : '${l10n.declaration} (2)',
+              forceLatinTemplate
+                  ? 'Declaration (2)'
+                  : '${l10n.declaration} (2)',
               '${t['declarationNumber2']}',
               arabicFont,
             ),
           if ((t['declarationType'] ?? '').toString().trim().isNotEmpty)
-            _pdfRow('Declaration type (1)', '${t['declarationType']}', arabicFont),
+            _pdfRow(
+                forceLatinTemplate
+                    ? 'Declaration type (1)'
+                    : l10n.txDeclarationType1,
+                '${t['declarationType']}',
+                arabicFont),
           if ((t['declarationType2'] ?? '').toString().trim().isNotEmpty)
-            _pdfRow('Declaration type (2)', '${t['declarationType2']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'Airway bill' : l10n.airwayBillShort, '${t['airwayBill']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'HS code' : l10n.hsCode, '${t['hsCode']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'Origin' : l10n.origin, '${t['originCountry']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'Value (AED)' : l10n.valueAed, '${t['invoiceValue']}', arabicFont),
-          _pdfRow(forceLatinTemplate ? 'Release code' : l10n.releaseCode, '${t['releaseCode'] ?? (forceLatinTemplate ? 'Not issued' : l10n.notIssued)}', arabicFont),
-          if (t['goodsWeightKg'] != null) _pdfRow(forceLatinTemplate ? 'Weight (kg)' : l10n.weightKg, '${t['goodsWeightKg']}', arabicFont),
-          if (t['goodsQuantity'] != null) _pdfRow(forceLatinTemplate ? 'Quantity' : l10n.quantity, '${t['goodsQuantity']}', arabicFont),
+            _pdfRow(
+                forceLatinTemplate
+                    ? 'Declaration type (2)'
+                    : l10n.txDeclarationType2,
+                '${t['declarationType2']}',
+                arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Airway bill' : l10n.airwayBillShort,
+              '${t['airwayBill']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'HS code' : l10n.hsCode,
+              '${t['hsCode']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Origin' : l10n.origin,
+              '${t['originCountry']}', arabicFont),
+          _pdfRow(forceLatinTemplate ? 'Value (AED)' : l10n.valueAed,
+              '${t['invoiceValue']}', arabicFont),
+          _pdfRow(
+              forceLatinTemplate ? 'Release code' : l10n.releaseCode,
+              '${t['releaseCode'] ?? (forceLatinTemplate ? 'Not issued' : l10n.notIssued)}',
+              arabicFont),
+          if (t['goodsWeightKg'] != null)
+            _pdfRow(forceLatinTemplate ? 'Weight (kg)' : l10n.weightKg,
+                '${t['goodsWeightKg']}', arabicFont),
+          if (t['goodsQuantity'] != null)
+            _pdfRow(forceLatinTemplate ? 'Quantity' : l10n.quantity,
+                '${t['goodsQuantity']}', arabicFont),
           pw.SizedBox(height: 8),
           pw.Text(
             forceLatinTemplate ? 'Goods' : l10n.goods,
@@ -204,7 +248,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       _showUnsupportedShareMessage();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -241,10 +286,12 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final numberFormat = intl.NumberFormat.decimalPattern(locale);
     final canEdit = widget.role != 'accountant';
-    final canAccounting = widget.role == 'manager' || widget.role == 'accountant';
+    final canAccounting =
+        widget.role == 'manager' || widget.role == 'accountant';
     final paid = tx?['paymentStatus'] == 'paid';
     final doc = tx?['documentStatus']?.toString() ?? '';
-    final canRelease = paid && (doc == 'original_received' || doc == 'telex_release');
+    final canRelease =
+        paid && (doc == 'original_received' || doc == 'telex_release');
 
     return Scaffold(
       appBar: AppBar(
@@ -333,9 +380,13 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                     ),
                     const SizedBox(height: 10),
                     _kv(l10n.client, '${tx!['clientName']}'),
-                    _kv('Stage', _stageLabel('${tx!['transactionStage'] ?? 'PREPARATION'}')),
+                    _kv(
+                        l10n.txStage,
+                        _stageLabel(
+                            '${tx!['transactionStage'] ?? 'PREPARATION'}', l10n)),
                     if ('${tx!['transactionStage'] ?? ''}' == 'STORAGE' &&
-                        (widget.module == 'transactions' || widget.module == 'transfers'))
+                        (widget.module == 'transactions' ||
+                            widget.module == 'transfers'))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: FilledButton(
@@ -354,22 +405,38 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                         ),
                       ),
                     _kv(l10n.shippingCompany, '${tx!['shippingCompanyName']}'),
-                    if ('${tx!['transactionStage'] ?? 'PREPARATION'}' != 'PREPARATION') ...[
-                      _kv('${l10n.declaration} (1)', '${tx!['declarationNumber']}'),
+                    if ('${tx!['transactionStage'] ?? 'PREPARATION'}' !=
+                        'PREPARATION') ...[
+                      _kv(l10n.txDeclarationNumber1,
+                          '${tx!['declarationNumber']}'),
                       if (tx!['declarationNumber2'] != null &&
-                          tx!['declarationNumber2'].toString().trim().isNotEmpty)
-                        _kv('${l10n.declaration} (2)', '${tx!['declarationNumber2']}'),
+                          tx!['declarationNumber2']
+                              .toString()
+                              .trim()
+                              .isNotEmpty)
+                        _kv(l10n.txDeclarationNumber2,
+                            '${tx!['declarationNumber2']}'),
                       if (tx!['declarationDate'] != null)
-                        _kv('Declaration Date', _formatDateTime('${tx!['declarationDate']}', locale)),
-                      if (tx!['declarationType'] != null && tx!['declarationType'].toString().isNotEmpty)
-                        _kv('Declaration Type (1)', '${tx!['declarationType']}'),
-                      if (tx!['declarationType2'] != null && tx!['declarationType2'].toString().isNotEmpty)
-                        _kv('Declaration Type (2)', '${tx!['declarationType2']}'),
-                      if (tx!['portType'] != null && tx!['portType'].toString().isNotEmpty)
-                        _kv('Port Type', '${tx!['portType']}'),
+                        _kv(
+                            l10n.txDeclarationDate,
+                            _formatDateTime(
+                                '${tx!['declarationDate']}', locale)),
+                      if (tx!['declarationType'] != null &&
+                          tx!['declarationType'].toString().isNotEmpty)
+                        _kv(l10n.txDeclarationType1,
+                            '${tx!['declarationType']}'),
+                      if (tx!['declarationType2'] != null &&
+                          tx!['declarationType2'].toString().isNotEmpty)
+                        _kv(l10n.txDeclarationType2,
+                            '${tx!['declarationType2']}'),
+                      if (tx!['portType'] != null &&
+                          tx!['portType'].toString().isNotEmpty)
+                        _kv(l10n.txPortType, '${tx!['portType']}'),
                     ],
-                    if (tx!['shippingCompanyId'] != null && tx!['shippingCompanyId'].toString().isNotEmpty)
-                      _kv(l10n.shippingCompanyIdOptional, '${tx!['shippingCompanyId']}'),
+                    if (tx!['shippingCompanyId'] != null &&
+                        tx!['shippingCompanyId'].toString().isNotEmpty)
+                      _kv(l10n.shippingCompanyIdOptional,
+                          '${tx!['shippingCompanyId']}'),
                     _kv(l10n.airwayBill, '${tx!['airwayBill']}'),
                     _kv(l10n.hsCode, '${tx!['hsCode']}'),
                     _kv(l10n.goods, '${tx!['goodsDescription']}'),
@@ -378,63 +445,102 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                       l10n.invoiceValue,
                       '${numberFormat.format(tx!['invoiceValue'] ?? 0)} ${tx!['invoiceCurrency'] ?? 'AED'}',
                     ),
-                    _kv(l10n.document, '${tx!['documentStatus']}'),
+                    _kv(l10n.document, _docStatusLabel('${tx!['documentStatus']}', l10n)),
                     _kv(l10n.status, '${tx!['clearanceStatus']}'),
-                    _kv(l10n.payment, '${tx!['paymentStatus']}'),
-                    if (tx!['containerCount'] != null) _kv(l10n.txContainerCount, '${tx!['containerCount']}'),
-                    if (tx!['goodsWeightKg'] != null) _kv(l10n.txGoodsWeightKg, '${tx!['goodsWeightKg']}'),
+                    _kv(l10n.payment, _paymentStatusLabel('${tx!['paymentStatus']}', l10n)),
+                    if (tx!['containerCount'] != null)
+                      _kv(l10n.txContainerCount, '${tx!['containerCount']}'),
+                    if (tx!['goodsWeightKg'] != null)
+                      _kv(l10n.txGoodsWeightKg, '${tx!['goodsWeightKg']}'),
                     if (tx!['invoiceToWeightRateAedPerKg'] != null)
-                      _kv(l10n.txRateAedPerKg, '${tx!['invoiceToWeightRateAedPerKg']}'),
-                    if (tx!['containerArrivalDate'] != null) _kv(l10n.txContainerArrival, '${tx!['containerArrivalDate']}'),
-                    if (tx!['documentArrivalDate'] != null) _kv(l10n.txDocumentArrival, '${tx!['documentArrivalDate']}'),
-                    if ('${tx!['transactionStage'] ?? 'PREPARATION'}' != 'PREPARATION' &&
+                      _kv(l10n.txRateAedPerKg,
+                          '${tx!['invoiceToWeightRateAedPerKg']}'),
+                    if (tx!['containerArrivalDate'] != null)
+                      _kv(l10n.txContainerArrival,
+                          '${tx!['containerArrivalDate']}'),
+                    if (tx!['documentArrivalDate'] != null)
+                      _kv(l10n.txDocumentArrival,
+                          '${tx!['documentArrivalDate']}'),
+                    if ('${tx!['transactionStage'] ?? 'PREPARATION'}' !=
+                            'PREPARATION' &&
                         tx!['fileNumber'] != null &&
                         tx!['fileNumber'].toString().isNotEmpty)
-                      _kv('File Number', '${tx!['fileNumber']}'),
-                    if (tx!['containerNumbers'] is List && (tx!['containerNumbers'] as List).isNotEmpty)
-                      _kv('Container Numbers', (tx!['containerNumbers'] as List).map((e) => '$e').join(', ')),
-                    if (tx!['unitCount'] != null) _kv('Number of Units', '${tx!['unitCount']}'),
-                    _kv('Stopped', tx!['isStopped'] == true ? 'Yes' : 'No'),
-                    if (tx!['isStopped'] == true && tx!['stopReason'] != null && tx!['stopReason'].toString().isNotEmpty)
-                      _kv('Stop Reason', '${tx!['stopReason']}'),
-                    if (tx!['goodsQuantity'] != null) _kv(l10n.txGoodsQty, '${tx!['goodsQuantity']}'),
-                    if (tx!['goodsQuality'] != null) _kv(l10n.txGoodsQuality, _qualityLabel('${tx!['goodsQuality']}', l10n)),
-                    if (tx!['goodsUnit'] != null) _kv(l10n.txGoodsUnit, _unitLabel('${tx!['goodsUnit']}', l10n)),
-                    if (tx!['storageEntryDate'] != null && tx!['storageEntryDate'].toString().isNotEmpty)
-                      _kv(l10n.storageEntryDate, tx!['storageEntryDate'].toString()),
+                      _kv(l10n.txFileNumber, '${tx!['fileNumber']}'),
+                    if (tx!['containerNumbers'] is List &&
+                        (tx!['containerNumbers'] as List).isNotEmpty)
+                      _kv(
+                          l10n.containerNumbers,
+                          (tx!['containerNumbers'] as List)
+                              .map((e) => '$e')
+                              .join(', ')),
+                    if (tx!['unitCount'] != null)
+                      _kv(l10n.txNumberOfUnits, '${tx!['unitCount']}'),
+                    _kv(l10n.stopTransaction, tx!['isStopped'] == true ? l10n.optionYes : l10n.optionNo),
+                    if (tx!['isStopped'] == true &&
+                        tx!['stopReason'] != null &&
+                        tx!['stopReason'].toString().isNotEmpty)
+                      _kv(l10n.stopReason, '${tx!['stopReason']}'),
+                    if (tx!['goodsQuantity'] != null)
+                      _kv(l10n.txGoodsQty, '${tx!['goodsQuantity']}'),
+                    if (tx!['goodsQuality'] != null)
+                      _kv(l10n.txGoodsQuality,
+                          _qualityLabel('${tx!['goodsQuality']}', l10n)),
+                    if (tx!['goodsUnit'] != null)
+                      _kv(l10n.txGoodsUnit,
+                          _unitLabel('${tx!['goodsUnit']}', l10n)),
+                    if (tx!['storageEntryDate'] != null &&
+                        tx!['storageEntryDate'].toString().isNotEmpty)
+                      _kv(l10n.storageEntryDate,
+                          tx!['storageEntryDate'].toString()),
                     if (tx!['storageWorkersWages'] != null)
-                      _kv(l10n.storageWorkersWages, '${tx!['storageWorkersWages']}'),
+                      _kv(l10n.storageWorkersWages,
+                          '${tx!['storageWorkersWages']}'),
                     if (tx!['storageWorkersCompany'] != null &&
                         tx!['storageWorkersCompany'].toString().isNotEmpty)
-                      _kv(l10n.storageWorkersCompany, '${tx!['storageWorkersCompany']}'),
-                    if (tx!['storageStoreName'] != null && tx!['storageStoreName'].toString().isNotEmpty)
+                      _kv(l10n.storageWorkersCompany,
+                          '${tx!['storageWorkersCompany']}'),
+                    if (tx!['storageStoreName'] != null &&
+                        tx!['storageStoreName'].toString().isNotEmpty)
                       _kv(l10n.storageStoreName, '${tx!['storageStoreName']}'),
                     if (tx!['storageSizeCbm'] != null)
                       _kv(l10n.storageSizeCbm, '${tx!['storageSizeCbm']}'),
                     if (tx!['storageFreightVehicleNumbers'] != null &&
-                        tx!['storageFreightVehicleNumbers'].toString().isNotEmpty)
-                      _kv(l10n.storageFreightVehicleNumbers, '${tx!['storageFreightVehicleNumbers']}'),
+                        tx!['storageFreightVehicleNumbers']
+                            .toString()
+                            .isNotEmpty)
+                      _kv(l10n.storageFreightVehicleNumbers,
+                          '${tx!['storageFreightVehicleNumbers']}'),
                     if (tx!['storageCrossPackaging'] != null &&
                         tx!['storageCrossPackaging'].toString().isNotEmpty)
-                      _kv(l10n.storageCrossPackaging, '${tx!['storageCrossPackaging']}'),
-                    if (tx!['storageUnity'] != null && tx!['storageUnity'].toString().isNotEmpty)
+                      _kv(l10n.storageCrossPackaging,
+                          '${tx!['storageCrossPackaging']}'),
+                    if (tx!['storageUnity'] != null &&
+                        tx!['storageUnity'].toString().isNotEmpty)
                       _kv(l10n.storageUnity, '${tx!['storageUnity']}'),
-                    if (tx!['storageSealNumber'] != null && tx!['storageSealNumber'].toString().isNotEmpty)
-                      _kv(l10n.storageSealNumber, '${tx!['storageSealNumber']}'),
-                    _kv(l10n.createdAt, _formatDateTime('${tx!['createdAt']}', locale)),
+                    if (tx!['storageSealNumber'] != null &&
+                        tx!['storageSealNumber'].toString().isNotEmpty)
+                      _kv(l10n.storageSealNumber,
+                          '${tx!['storageSealNumber']}'),
+                    _kv(l10n.createdAt,
+                        _formatDateTime('${tx!['createdAt']}', locale)),
                     const SizedBox(height: 12),
-                    if ((tx!['documentAttachments'] as List?)?.isNotEmpty ?? false) ...[
-                      Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
+                    if ((tx!['documentAttachments'] as List?)?.isNotEmpty ??
+                        false) ...[
+                      Text(l10n.documentPhotosSection,
+                          style: Theme.of(context).textTheme.titleSmall),
                       const SizedBox(height: 8),
-                      ..._groupAttachments((tx!['documentAttachments'] as List).cast<Map<String, dynamic>>())
+                      ..._groupAttachments((tx!['documentAttachments'] as List)
+                              .cast<Map<String, dynamic>>())
                           .entries
                           .expand(
                             (entry) => [
                               Padding(
-                                padding: const EdgeInsets.only(top: 6, bottom: 2),
+                                padding:
+                                    const EdgeInsets.only(top: 6, bottom: 2),
                                 child: Text(
                                   entry.key,
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700),
                                 ),
                               ),
                               ...entry.value.map(_attachmentTile),
@@ -459,7 +565,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                             child: Text(l10n.markPaid),
                           ),
                           FilledButton(
-                            onPressed: !canRelease ? null : () => _action('release'),
+                            onPressed:
+                                !canRelease ? null : () => _action('release'),
                             child: Text(l10n.release),
                           ),
                         ],
@@ -474,10 +581,12 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     final path = (a['path'] ?? '').toString();
     final name = (a['originalName'] ?? '').toString();
     final category = (a['category'] ?? '').toString();
-    final isImg = RegExp(r'\.(png|jpe?g|gif|webp)$', caseSensitive: false).hasMatch(name);
+    final isImg =
+        RegExp(r'\.(png|jpe?g|gif|webp)$', caseSensitive: false).hasMatch(name);
     return Card(
       child: ListTile(
-        title: Text(category.isEmpty ? name : '$name (${_docCategoryLabel(category)})'),
+        title: Text(
+            category.isEmpty ? name : '$name (${_docCategoryLabel(category, AppLocalizations.of(context)!)})'),
         onTap: () => _openAttachment(path, name),
         subtitle: isImg
             ? SizedBox(
@@ -486,7 +595,8 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
                   future: Api.getBytes(path),
                   builder: (context, snap) {
                     if (snap.hasError) return Text('${snap.error}');
-                    if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                    if (!snap.hasData)
+                      return const Center(child: CircularProgressIndicator());
                     return Image.memory(snap.data!, fit: BoxFit.contain);
                   },
                 ),
@@ -496,19 +606,32 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     );
   }
 
-  String _docCategoryLabel(String value) {
+  String _docCategoryLabel(String value, AppLocalizations l10n) {
     switch (value) {
       case 'bill_of_lading':
-        return 'Bill of Lading';
+        return l10n.docBillOfLading;
       case 'certificate_of_origin':
-        return 'Certificate of Origin';
+        return l10n.docCertificateOfOrigin;
       case 'invoice':
-        return 'Invoice';
+        return l10n.docInvoice;
       case 'packing_list':
-        return 'Packing List';
+        return l10n.docPackingList;
       default:
         return value;
     }
+  }
+
+  String _docStatusLabel(String status, AppLocalizations l10n) {
+    if (status == 'copy_received') return l10n.txDocumentStatusCopy;
+    if (status == 'original_received') return l10n.txDocumentStatusOriginal;
+    if (status == 'telex_release') return l10n.txDocumentStatusTelex;
+    return status;
+  }
+
+  String _paymentStatusLabel(String status, AppLocalizations l10n) {
+    if (status == 'pending') return l10n.txPaymentPending;
+    if (status == 'paid') return l10n.txPaymentPaid;
+    return status;
   }
 
   String _formatDateTime(String raw, String locale) {
@@ -559,16 +682,16 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     }
   }
 
-  String _stageLabel(String stage) {
+  String _stageLabel(String stage, AppLocalizations l10n) {
     switch (stage) {
       case 'PREPARATION':
-        return 'Preparation';
+        return l10n.stagePreparation;
       case 'CUSTOMS_CLEARANCE':
-        return 'Customs clearance';
+        return l10n.stageCustomsClearance;
       case 'STORAGE':
-        return 'Storage';
+        return l10n.stageStorage;
       case 'TRANSPORTATION':
-        return 'Transportation';
+        return l10n.stageTransportation;
       default:
         return stage;
     }

@@ -45,14 +45,8 @@ class _DashboardHomeState extends State<DashboardHome> {
   Future<void> _loadRecent() async {
     setState(() => _loading = true);
     try {
-      final data = await Api.get('/api/transactions') as List<dynamic>;
-      final list = data.cast<Map<String, dynamic>>();
-      list.sort((a, b) {
-        final da = DateTime.tryParse('${a['createdAt']}') ?? DateTime(1970);
-        final db = DateTime.tryParse('${b['createdAt']}') ?? DateTime(1970);
-        return db.compareTo(da);
-      });
-      if (mounted) setState(() => _recent = list.take(8).toList());
+      final data = await Api.get('/api/transactions?limit=8') as List<dynamic>;
+      if (mounted) setState(() => _recent = data.cast<Map<String, dynamic>>());
     } catch (_) {
       if (mounted) setState(() => _recent = []);
     } finally {
@@ -145,9 +139,8 @@ class _DashboardHomeState extends State<DashboardHome> {
         label: l10n.dashboardNewExport,
         icon: Icons.outbox_outlined,
         color: const Color(0xFF0EA5E9),
-        onTap: canCreateTransaction
-            ? _openNewExport
-            : () => widget.onSwitchTab(3),
+        onTap:
+            canCreateTransaction ? _openNewExport : () => widget.onSwitchTab(3),
       ),
       _GridItem(
         label: l10n.clients,
@@ -260,8 +253,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     welcomeText: '$welcomePrefix${_userName()}!',
                     avatarLetter: _avatarLetter(),
                     onBell: () => ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(l10n.dashboardNoNewNotifications)),
+                      SnackBar(content: Text(l10n.dashboardNoNewNotifications)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -335,33 +327,36 @@ class _DashboardHomeState extends State<DashboardHome> {
                       itemCount: gridItems.length,
                       itemBuilder: (context, i) {
                         final item = gridItems[i];
-                        return InkWell(
-                          onTap: item.onTap,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: item.color.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(14),
+                        return _StaggeredAnim(
+                          index: i,
+                          child: InkWell(
+                            onTap: item.onTap,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: item.color.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(item.icon,
+                                      color: item.color, size: 26),
                                 ),
-                                child: Icon(item.icon,
-                                    color: item.color, size: 26),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                item.label,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 11,
-                                    height: 1.15,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  item.label,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      height: 1.15,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -426,8 +421,10 @@ class _DashboardHomeState extends State<DashboardHome> {
                   itemBuilder: (context, i) {
                     final tx = _recent[i];
                     final id = '${tx['id'] ?? tx['_id'] ?? ''}';
-                    final d1 = (tx['declarationNumber'] ?? '').toString().trim();
-                    final d2 = (tx['declarationNumber2'] ?? '').toString().trim();
+                    final d1 =
+                        (tx['declarationNumber'] ?? '').toString().trim();
+                    final d2 =
+                        (tx['declarationNumber2'] ?? '').toString().trim();
                     final dec = d1.isEmpty && d2.isEmpty
                         ? '—'
                         : d2.isEmpty
@@ -436,53 +433,57 @@ class _DashboardHomeState extends State<DashboardHome> {
                                 ? d2
                                 : '$d1 · $d2';
                     final client = (tx['clientName'] ?? '').toString();
-                    return SizedBox(
-                      width: 160,
-                      child: Material(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
+                    return _StaggeredAnim(
+                      index: i,
+                      child: SizedBox(
+                        width: 160,
+                        child: Material(
+                          color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(14),
-                          onTap: id.isEmpty
-                              ? null
-                              : () {
-                                  Navigator.of(context).push<void>(
-                                    MaterialPageRoute(
-                                        builder: (_) => TransactionDetailsPage(
-                                            id: id, role: widget.role)),
-                                  );
-                                },
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  dec,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  client,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  (tx['clearanceStatus'] ?? '').toString(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 11, color: Color(0xFF1e3a8a)),
-                                ),
-                              ],
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: id.isEmpty
+                                ? null
+                                : () {
+                                    Navigator.of(context).push<void>(
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              TransactionDetailsPage(
+                                                  id: id, role: widget.role)),
+                                    );
+                                  },
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    dec,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    client,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    (tx['clearanceStatus'] ?? '').toString(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: Color(0xFF1e3a8a)),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -585,6 +586,54 @@ class _WelcomeBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StaggeredAnim extends StatefulWidget {
+  final Widget child;
+  final int index;
+  const _StaggeredAnim({required this.child, required this.index});
+  @override
+  State<_StaggeredAnim> createState() => _StaggeredAnimState();
+}
+
+class _StaggeredAnimState extends State<_StaggeredAnim>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 350));
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    Future.delayed(Duration(milliseconds: 40 * widget.index), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - _anim.value)),
+          child: Opacity(
+            opacity: _anim.value,
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

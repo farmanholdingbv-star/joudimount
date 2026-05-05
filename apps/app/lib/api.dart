@@ -28,7 +28,8 @@ class Api {
     final s = raw.trim().toLowerCase();
     if (s.isEmpty) return true;
     // Common mistake: copying doc text instead of an actual IP.
-    if (s.contains('your_pc') || s.contains('<') || s.contains('>')) return true;
+    if (s.contains('your_pc') || s.contains('<') || s.contains('>'))
+      return true;
     final uri = Uri.tryParse(raw.trim());
     if (uri == null || !uri.hasScheme || uri.host.isEmpty) return true;
     return false;
@@ -94,7 +95,8 @@ class Api {
     );
   }
 
-  static Future<Map<String, String>> _authHeaders({bool jsonBody = true}) async {
+  static Future<Map<String, String>> _authHeaders(
+      {bool jsonBody = true}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final headers = <String, String>{};
@@ -114,8 +116,11 @@ class Api {
     return _handle(res);
   }
 
+  static final Map<String, Uint8List> _byteCache = {};
+
   /// Authenticated GET for binary assets (e.g. document attachment images).
   static Future<Uint8List> getBytes(String path) async {
+    if (_byteCache.containsKey(path)) return _byteCache[path]!;
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final headers = <String, String>{};
@@ -126,7 +131,10 @@ class Api {
       (uri) => http.get(uri, headers: headers),
       path: path,
     );
-    if (res.statusCode >= 200 && res.statusCode < 300) return res.bodyBytes;
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      _byteCache[path] = res.bodyBytes;
+      return res.bodyBytes;
+    }
     _clearSessionIfUnauthorized(res.statusCode);
     throw Exception('Failed to load asset');
   }
@@ -158,7 +166,8 @@ class Api {
     return _handle(res);
   }
 
-  static Future<dynamic> postMultipart(String path, Map<String, String> fields, List<PlatformFile> files) async {
+  static Future<dynamic> postMultipart(
+      String path, Map<String, String> fields, List<PlatformFile> files) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final res = await _sendWithFallback((uri) async {
@@ -169,7 +178,8 @@ class Api {
       fields.forEach((k, v) => req.fields[k] = v);
       for (final pf in files) {
         if (pf.path != null) {
-          req.files.add(await http.MultipartFile.fromPath('documentPhotos', pf.path!));
+          req.files.add(
+              await http.MultipartFile.fromPath('documentPhotos', pf.path!));
         }
       }
       final streamed = await req.send();
@@ -178,7 +188,8 @@ class Api {
     return _handle(res);
   }
 
-  static Future<dynamic> putMultipart(String path, Map<String, String> fields, List<PlatformFile> files) async {
+  static Future<dynamic> putMultipart(
+      String path, Map<String, String> fields, List<PlatformFile> files) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final res = await _sendWithFallback((uri) async {
@@ -189,7 +200,8 @@ class Api {
       fields.forEach((k, v) => req.fields[k] = v);
       for (final pf in files) {
         if (pf.path != null) {
-          req.files.add(await http.MultipartFile.fromPath('documentPhotos', pf.path!));
+          req.files.add(
+              await http.MultipartFile.fromPath('documentPhotos', pf.path!));
         }
       }
       final streamed = await req.send();

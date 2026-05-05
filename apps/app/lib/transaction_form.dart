@@ -48,7 +48,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     'Transit',
     'Temporary Admission',
   ];
-  static const List<String> _portTypeOptions = ['Seaports', 'Free Zones', 'Mainland'];
+  static const List<String> _portTypeOptions = [
+    'Seaports',
+    'Free Zones',
+    'Mainland'
+  ];
 
   final _client = TextEditingController();
   final _shippingName = TextEditingController();
@@ -146,33 +150,46 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _error = '';
     });
     try {
-      final tx = await Api.get('$_modulePath/${widget.transactionId}') as Map<String, dynamic>;
+      final tx = await Api.get('$_modulePath/${widget.transactionId}')
+          as Map<String, dynamic>;
       _client.text = (tx['clientName'] ?? '').toString();
       _shippingName.text = (tx['shippingCompanyName'] ?? '').toString();
       _shippingId.text = (tx['shippingCompanyId'] ?? '').toString();
       _declarationNumberInput.text = (tx['declarationNumber'] ?? '').toString();
-      _declarationNumberInput2.text = (tx['declarationNumber2'] ?? '').toString();
+      _declarationNumberInput2.text =
+          (tx['declarationNumber2'] ?? '').toString();
       _declarationDateInput.text = _isoToDateInput(tx['declarationDate']);
       final loadedDeclarationType = (tx['declarationType'] ?? '').toString();
-      _declarationType = _declarationTypeOptions.contains(loadedDeclarationType) ? loadedDeclarationType : '';
+      _declarationType = _declarationTypeOptions.contains(loadedDeclarationType)
+          ? loadedDeclarationType
+          : '';
       final loadedDeclarationType2 = (tx['declarationType2'] ?? '').toString();
-      _declarationType2 = _declarationTypeOptions.contains(loadedDeclarationType2) ? loadedDeclarationType2 : '';
+      _declarationType2 =
+          _declarationTypeOptions.contains(loadedDeclarationType2)
+              ? loadedDeclarationType2
+              : '';
       final loadedPortType = (tx['portType'] ?? '').toString();
-      _portType = _portTypeOptions.contains(loadedPortType) ? loadedPortType : '';
+      _portType =
+          _portTypeOptions.contains(loadedPortType) ? loadedPortType : '';
       _awb.text = (tx['airwayBill'] ?? '').toString();
       _hs.text = (tx['hsCode'] ?? '').toString();
       _goods.text = (tx['goodsDescription'] ?? '').toString();
       _origin.text = (tx['originCountry'] ?? 'AE').toString();
       _value.text = (tx['invoiceValue'] ?? '').toString();
-      final loadedCurrency = (tx['invoiceCurrency'] ?? 'AED').toString().toUpperCase();
-      _currency = const ['AED', 'USD', 'EUR', 'SAR'].contains(loadedCurrency) ? loadedCurrency : 'AED';
+      final loadedCurrency =
+          (tx['invoiceCurrency'] ?? 'AED').toString().toUpperCase();
+      _currency = const ['AED', 'USD', 'EUR', 'SAR'].contains(loadedCurrency)
+          ? loadedCurrency
+          : 'AED';
       _docStatus = (tx['documentStatus'] ?? 'copy_received').toString();
       _paymentStatus = (tx['paymentStatus'] ?? 'pending').toString();
       if (tx['invoiceToWeightRateAedPerKg'] != null) {
         _rate.text = tx['invoiceToWeightRateAedPerKg'].toString();
       }
-      if (tx['goodsWeightKg'] != null) _weight.text = tx['goodsWeightKg'].toString();
-      if (tx['containerCount'] != null) _containers.text = tx['containerCount'].toString();
+      if (tx['goodsWeightKg'] != null)
+        _weight.text = tx['goodsWeightKg'].toString();
+      if (tx['containerCount'] != null)
+        _containers.text = tx['containerCount'].toString();
       _containerArrival.text = _isoToDateInput(tx['containerArrivalDate']);
       _documentArrival.text = _isoToDateInput(tx['documentArrivalDate']);
       _fileNumber.text = (tx['fileNumber'] ?? '').toString();
@@ -183,7 +200,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       if (tx['unitCount'] != null) _unitCount.text = tx['unitCount'].toString();
       _isStopped = tx['isStopped'] == true;
       _stopReason.text = (tx['stopReason'] ?? '').toString();
-      if (tx['goodsQuantity'] != null) _qty.text = tx['goodsQuantity'].toString();
+      if (tx['goodsQuantity'] != null)
+        _qty.text = tx['goodsQuantity'].toString();
       _quality = tx['goodsQuality']?.toString();
       if (_quality != null && _quality!.isEmpty) _quality = null;
       _unit = tx['goodsUnit']?.toString();
@@ -191,7 +209,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       _releaseCode = tx['releaseCode']?.toString();
       _clearanceStatus = tx['clearanceStatus']?.toString();
       final loadedStage = (tx['transactionStage'] ?? 'PREPARATION').toString();
-      _stage = _stageOptions.contains(loadedStage) ? loadedStage : 'PREPARATION';
+      _stage =
+          _stageOptions.contains(loadedStage) ? loadedStage : 'PREPARATION';
       final att = tx['documentAttachments'];
       if (att is List) {
         _retainedDocs = att.cast<Map<String, dynamic>>();
@@ -226,9 +245,12 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     };
     final sid = _shippingId.text.trim();
     if (sid.isNotEmpty) body['shippingCompanyId'] = sid;
-    if (_declarationNumberInput.text.trim().isEmpty) body.remove('declarationNumber');
-    if (_declarationNumberInput2.text.trim().isEmpty) body.remove('declarationNumber2');
-    if (_declarationDateInput.text.trim().isEmpty) body.remove('declarationDate');
+    if (_declarationNumberInput.text.trim().isEmpty)
+      body.remove('declarationNumber');
+    if (_declarationNumberInput2.text.trim().isEmpty)
+      body.remove('declarationNumber2');
+    if (_declarationDateInput.text.trim().isEmpty)
+      body.remove('declarationDate');
     if (_declarationType.trim().isEmpty) body.remove('declarationType');
     if (_declarationType2.trim().isEmpty) body.remove('declarationType2');
     if (_portType.trim().isEmpty) body.remove('portType');
@@ -254,21 +276,27 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     addD('goodsWeightKg', _weight);
     addI('containerCount', _containers);
     addD('goodsQuantity', _qty);
-    if (_quality != null && _quality!.isNotEmpty) body['goodsQuality'] = _quality;
+    if (_quality != null && _quality!.isNotEmpty)
+      body['goodsQuality'] = _quality;
     if (_unit != null && _unit!.isNotEmpty) body['goodsUnit'] = _unit;
-    if (_containerArrival.text.trim().isNotEmpty) body['containerArrivalDate'] = _containerArrival.text.trim();
-    if (_documentArrival.text.trim().isNotEmpty) body['documentArrivalDate'] = _documentArrival.text.trim();
-    if (_fileNumber.text.trim().isNotEmpty) body['fileNumber'] = _fileNumber.text.trim();
+    if (_containerArrival.text.trim().isNotEmpty)
+      body['containerArrivalDate'] = _containerArrival.text.trim();
+    if (_documentArrival.text.trim().isNotEmpty)
+      body['documentArrivalDate'] = _documentArrival.text.trim();
+    if (_fileNumber.text.trim().isNotEmpty)
+      body['fileNumber'] = _fileNumber.text.trim();
     final containerNumbers = _containerNumbers.text
         .split(RegExp(r'[\n,]+'))
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
-    if (containerNumbers.isNotEmpty) body['containerNumbers'] = containerNumbers;
+    if (containerNumbers.isNotEmpty)
+      body['containerNumbers'] = containerNumbers;
     final unitCount = int.tryParse(_unitCount.text.trim());
     if (unitCount != null) body['unitCount'] = unitCount;
     body['isStopped'] = _isStopped;
-    if (_stopReason.text.trim().isNotEmpty) body['stopReason'] = _stopReason.text.trim();
+    if (_stopReason.text.trim().isNotEmpty)
+      body['stopReason'] = _stopReason.text.trim();
     return body;
   }
 
@@ -304,11 +332,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         .toList();
   }
 
-  Map<String, List<Map<String, dynamic>>> _groupRetainedDocs() {
+  Map<String, List<Map<String, dynamic>>> _groupRetainedDocs(AppLocalizations l10n) {
     final out = <String, List<Map<String, dynamic>>>{};
     for (final d in _retainedDocs) {
       final raw = (d['category'] ?? '').toString();
-      final key = raw.isEmpty ? 'Uncategorized' : _docCategoryLabel(raw);
+      final key = raw.isEmpty ? l10n.uncategorized : _docCategoryLabel(raw, l10n);
       out.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(d);
     }
     return out;
@@ -376,7 +404,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   Future<void> _changeStage(String value) async {
     if (!_isEdit) return;
     try {
-      await Api.post('$_modulePath/${widget.transactionId}/stage', {'stage': value});
+      await Api.post(
+          '$_modulePath/${widget.transactionId}/stage', {'stage': value});
       if (mounted) await _loadTransaction();
     } catch (e) {
       if (!mounted) return;
@@ -416,14 +445,23 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final cs = Theme.of(context).colorScheme;
     if (_loadingTx) {
       return Scaffold(
-        appBar: AppBar(title: Text(_isEdit ? '${_editLabel(context)} ${_moduleNoun(context)}' : '${_newLabel(context)} ${_moduleNoun(context)}')),
+        appBar: AppBar(
+            title: Text(_isEdit
+                ? '${_editLabel(context)} ${_moduleNoun(context)}'
+                : '${_newLabel(context)} ${_moduleNoun(context)}')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    if ((widget.role == 'accountant' || widget.role == 'employee2') && !_isEdit) {
+    if ((widget.role == 'accountant' || widget.role == 'employee2') &&
+        !_isEdit) {
       return Scaffold(
-        appBar: AppBar(title: Text('${_newLabel(context)} ${_moduleNoun(context)}')),
-        body: Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(l10n.accountantNoTransactionForm, textAlign: TextAlign.center))),
+        appBar: AppBar(
+            title: Text('${_newLabel(context)} ${_moduleNoun(context)}')),
+        body: Center(
+            child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(l10n.accountantNoTransactionForm,
+                    textAlign: TextAlign.center))),
       );
     }
 
@@ -431,7 +469,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final shipOpts = _filterShipping();
     final invoice = double.tryParse(_value.text.trim());
     final rate = double.tryParse(_rate.text.trim());
-    final derivedWeight = (invoice != null && rate != null && rate > 0) ? (invoice / rate) : null;
+    final derivedWeight =
+        (invoice != null && rate != null && rate > 0) ? (invoice / rate) : null;
     final storageWarehouseOnly = _isEdit &&
         _stage == 'STORAGE' &&
         (widget.module == 'transactions' || widget.module == 'transfers');
@@ -443,16 +482,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             _stage == 'PREPARATION' ||
             _stage == 'CUSTOMS_CLEARANCE') &&
         !storageWarehouseOnly;
-    final storageEditable = (!_isEdit ||
-            _stage == 'PREPARATION' ||
-            _stage == 'STORAGE') &&
-        !storageWarehouseOnly;
+    final storageEditable =
+        (!_isEdit || _stage == 'PREPARATION' || _stage == 'STORAGE') &&
+            !storageWarehouseOnly;
     final canSetStage = widget.role == 'manager' || widget.role == 'employee2';
     final showCustomsDeclarationSection = _isEdit && _stage != 'PREPARATION';
-    final groupedRetained = _groupRetainedDocs();
+    final groupedRetained = _groupRetainedDocs(l10n);
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? '${_editLabel(context)} ${_moduleNoun(context)}' : '${_newLabel(context)} ${_moduleNoun(context)}')),
+      appBar: AppBar(
+          title: Text(_isEdit
+              ? '${_editLabel(context)} ${_moduleNoun(context)}'
+              : '${_newLabel(context)} ${_moduleNoun(context)}')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -475,7 +516,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    _isEdit ? '${_editLabel(context)} ${_moduleNoun(context)}' : '${_newLabel(context)} ${_moduleNoun(context)}',
+                    _isEdit
+                        ? '${_editLabel(context)} ${_moduleNoun(context)}'
+                        : '${_newLabel(context)} ${_moduleNoun(context)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -487,28 +530,36 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           ),
           const SizedBox(height: 10),
           if (_isEdit) ...[
-            DropdownButtonFormField<String>(
-              key: ValueKey('tx-stage-$_stage'),
-              decoration: const InputDecoration(labelText: 'Transaction Stage'),
-              initialValue: _stage,
-              items: _stageOptions
-                  .map((s) => DropdownMenuItem(value: s, child: Text(_stageLabel(s))))
-                  .toList(),
-              onChanged: !canSetStage
-                  ? null
-                  : (v) {
-                      if (v != null && v != _stage) _changeStage(v);
-                    },
-            ),
+            Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey('tx-stage-$_stage'),
+                  decoration:
+                      InputDecoration(labelText: l10n.txStage),
+                  initialValue: _stage,
+                  items: _stageOptions
+                      .map((s) => DropdownMenuItem(
+                          value: s, child: Text(_stageLabel(s, l10n))))
+                      .toList(),
+                  onChanged: !canSetStage
+                      ? null
+                      : (v) {
+                          if (v != null && v != _stage) _changeStage(v);
+                        },
+                )),
             const SizedBox(height: 8),
-            Text('Read-only Transaction Fields', style: Theme.of(context).textTheme.titleMedium),
-            if ((_releaseCode ?? '').isNotEmpty) _readonlyField(l10n.releaseCode, _releaseCode!),
-            if ((_clearanceStatus ?? '').isNotEmpty) _readonlyField(l10n.status, _clearanceStatus!),
+            Text(l10n.txReadOnlyFields,
+                style: Theme.of(context).textTheme.titleMedium),
+            if ((_releaseCode ?? '').isNotEmpty)
+              _readonlyField(l10n.releaseCode, _releaseCode!),
+            if ((_clearanceStatus ?? '').isNotEmpty)
+              _readonlyField(l10n.status, _clearanceStatus!),
             const SizedBox(height: 8),
           ],
           if (showCustomsDeclarationSection)
-            _field(_fileNumber, 'File Number', enabled: customsEditable),
-          _field(_client, l10n.client, enabled: prepEditable, onChanged: (_) => setState(() {})),
+            _field(_fileNumber, l10n.txFileNumber, enabled: customsEditable),
+          _field(_client, l10n.client,
+              enabled: prepEditable, onChanged: (_) => setState(() {})),
           if (clientOpts.isNotEmpty)
             Card(
               child: Column(
@@ -517,13 +568,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                       (c) => ListTile(
                         dense: true,
                         title: Text('${c['companyName']}'),
-                        subtitle: Text('${c['trn'] ?? ''} ${c['immigrationCode'] ?? ''}'.trim()),
+                        subtitle: Text(
+                            '${c['trn'] ?? ''} ${c['immigrationCode'] ?? ''}'
+                                .trim()),
                         onTap: !prepEditable
                             ? null
                             : () {
-                          _client.text = c['companyName'].toString();
-                          setState(() {});
-                        },
+                                _client.text = c['companyName'].toString();
+                                setState(() {});
+                              },
                       ),
                     )
                     .toList(),
@@ -531,7 +584,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ),
           Text(l10n.typeToSearch, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 8),
-          _field(_shippingName, l10n.shippingCompany, enabled: prepEditable, onChanged: (_) => setState(() {})),
+          _field(_shippingName, l10n.shippingCompany,
+              enabled: prepEditable, onChanged: (_) => setState(() {})),
           if (shipOpts.isNotEmpty)
             Card(
               child: Column(
@@ -544,92 +598,131 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                         onTap: !prepEditable
                             ? null
                             : () {
-                          _shippingName.text = s['companyName'].toString();
-                          _shippingId.text = s['id']?.toString() ?? '';
-                          setState(() {});
-                        },
+                                _shippingName.text =
+                                    s['companyName'].toString();
+                                _shippingId.text = s['id']?.toString() ?? '';
+                                setState(() {});
+                              },
                       ),
                     )
                     .toList(),
               ),
             ),
-          _field(_shippingId, l10n.shippingCompanyIdOptional, enabled: prepEditable),
+          _field(_shippingId, l10n.shippingCompanyIdOptional,
+              enabled: prepEditable),
           if (showCustomsDeclarationSection) ...[
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 4),
               child: Text(
-                'Customs Declaration',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                l10n.txCustomsDeclaration,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            _field(_declarationNumberInput, 'Declaration Number (1)',
+            _field(_declarationNumberInput, l10n.txDeclarationNumber1,
                 enabled: customsEditable, maxLength: 120),
             ApiDateField(
               controller: _declarationDateInput,
-              label: 'Declaration Date',
+              label: l10n.txDeclarationDate,
               enabled: customsEditable,
             ),
-            DropdownButtonFormField<String>(
-              key: ValueKey('tx-declaration-type-${_declarationType.isEmpty ? 'none' : _declarationType}'),
-              decoration: const InputDecoration(labelText: 'Declaration Type (1)'),
-              initialValue: _declarationType.isEmpty ? null : _declarationType,
-              items: [
-                DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
-                ..._declarationTypeOptions.map(
-                  (type) => DropdownMenuItem<String>(value: type, child: Text(type)),
-                ),
-              ],
-              onChanged: customsEditable ? (v) => setState(() => _declarationType = v ?? '') : null,
-            ),
-            _field(_declarationNumberInput2, 'Declaration Number (2)',
+            Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey(
+                      'tx-declaration-type-${_declarationType.isEmpty ? 'none' : _declarationType}'),
+                  decoration:
+                      InputDecoration(labelText: l10n.txDeclarationType1),
+                  initialValue:
+                      _declarationType.isEmpty ? null : _declarationType,
+                  items: [
+                    DropdownMenuItem<String>(
+                        value: null, child: Text(l10n.optionalSelect)),
+                    ..._declarationTypeOptions.map(
+                      (type) => DropdownMenuItem<String>(
+                          value: type, child: Text(type)),
+                    ),
+                  ],
+                  onChanged: customsEditable
+                      ? (v) => setState(() => _declarationType = v ?? '')
+                      : null,
+                )),
+            _field(_declarationNumberInput2, l10n.txDeclarationNumber2,
                 enabled: customsEditable, maxLength: 120),
-            DropdownButtonFormField<String>(
-              key: ValueKey('tx-declaration-type2-${_declarationType2.isEmpty ? 'none' : _declarationType2}'),
-              decoration: const InputDecoration(labelText: 'Declaration Type (2)'),
-              initialValue: _declarationType2.isEmpty ? null : _declarationType2,
-              items: [
-                DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
-                ..._declarationTypeOptions.map(
-                  (type) => DropdownMenuItem<String>(value: type, child: Text(type)),
-                ),
-              ],
-              onChanged: customsEditable ? (v) => setState(() => _declarationType2 = v ?? '') : null,
-            ),
-            DropdownButtonFormField<String>(
-              key: ValueKey('tx-port-type-${_portType.isEmpty ? 'none' : _portType}'),
-              decoration: const InputDecoration(labelText: 'Port Type'),
-              initialValue: _portType.isEmpty ? null : _portType,
-              items: [
-                DropdownMenuItem<String>(value: null, child: Text(l10n.optionalSelect)),
-                ..._portTypeOptions.map(
-                  (type) => DropdownMenuItem<String>(value: type, child: Text(type)),
-                ),
-              ],
-              onChanged: customsEditable ? (v) => setState(() => _portType = v ?? '') : null,
-            ),
+            Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey(
+                      'tx-declaration-type2-${_declarationType2.isEmpty ? 'none' : _declarationType2}'),
+                  decoration:
+                      InputDecoration(labelText: l10n.txDeclarationType2),
+                  initialValue:
+                      _declarationType2.isEmpty ? null : _declarationType2,
+                  items: [
+                    DropdownMenuItem<String>(
+                        value: null, child: Text(l10n.optionalSelect)),
+                    ..._declarationTypeOptions.map(
+                      (type) => DropdownMenuItem<String>(
+                          value: type, child: Text(type)),
+                    ),
+                  ],
+                  onChanged: customsEditable
+                      ? (v) => setState(() => _declarationType2 = v ?? '')
+                      : null,
+                )),
+            Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey(
+                      'tx-port-type-${_portType.isEmpty ? 'none' : _portType}'),
+                  decoration: InputDecoration(labelText: l10n.txPortType),
+                  initialValue: _portType.isEmpty ? null : _portType,
+                  items: [
+                    DropdownMenuItem<String>(
+                        value: null, child: Text(l10n.optionalSelect)),
+                    ..._portTypeOptions.map(
+                      (type) => DropdownMenuItem<String>(
+                          value: type, child: Text(type)),
+                    ),
+                  ],
+                  onChanged: customsEditable
+                      ? (v) => setState(() => _portType = v ?? '')
+                      : null,
+                )),
           ],
           _field(_awb, l10n.airwayBill, enabled: prepEditable),
           _field(_hs, l10n.hsCode, enabled: prepEditable),
           _field(_origin, l10n.originCountry, enabled: prepEditable),
-          DropdownButtonFormField<String>(
-            key: ValueKey('tx-currency-$_currency'),
-            decoration: const InputDecoration(labelText: 'Currency'),
-            initialValue: _currency,
-            items: const [
-              DropdownMenuItem(value: 'AED', child: Text('AED')),
-              DropdownMenuItem(value: 'USD', child: Text('USD')),
-              DropdownMenuItem(value: 'EUR', child: Text('EUR')),
-              DropdownMenuItem(value: 'SAR', child: Text('SAR')),
-            ],
-            onChanged: prepEditable ? (v) => setState(() => _currency = v ?? 'AED') : null,
-          ),
-          _field(_weight, l10n.txGoodsWeightKg, keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: prepEditable),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('tx-currency-$_currency'),
+                decoration: InputDecoration(labelText: l10n.txCurrency),
+                initialValue: _currency,
+                items: const [
+                  DropdownMenuItem(value: 'AED', child: Text('AED')),
+                  DropdownMenuItem(value: 'USD', child: Text('USD')),
+                  DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+                  DropdownMenuItem(value: 'SAR', child: Text('SAR')),
+                ],
+                onChanged: prepEditable
+                    ? (v) => setState(() => _currency = v ?? 'AED')
+                    : null,
+              )),
+          _field(_weight, l10n.txGoodsWeightKg,
+              keyboard: const TextInputType.numberWithOptions(decimal: true),
+              enabled: prepEditable),
           if (derivedWeight != null && _weight.text.trim().isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text('${l10n.weightKg}: ${derivedWeight.toStringAsFixed(3)}', style: Theme.of(context).textTheme.bodySmall),
+              child: Text(
+                  '${l10n.weightKg}: ${derivedWeight.toStringAsFixed(3)}',
+                  style: Theme.of(context).textTheme.bodySmall),
             ),
-          _field(_containers, l10n.txContainerCount, keyboard: TextInputType.number, enabled: prepEditable),
+          _field(_containers, l10n.txContainerCount,
+              keyboard: TextInputType.number, enabled: prepEditable),
           ApiDateField(
             controller: _containerArrival,
             label: l10n.txContainerArrival,
@@ -640,34 +733,54 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             label: l10n.txDocumentArrival,
             enabled: customsEditable,
           ),
-          _field(_containerNumbers, l10n.containerNumbers, maxLines: 3, enabled: storageEditable),
-          DropdownButtonFormField<bool>(
-            key: ValueKey('tx-stop-$_isStopped'),
-            decoration: InputDecoration(labelText: l10n.stopTransaction),
-            initialValue: _isStopped,
-            items: [
-              DropdownMenuItem(value: false, child: Text(l10n.optionNo)),
-              DropdownMenuItem(value: true, child: Text(l10n.optionYes)),
-            ],
-            onChanged: storageEditable ? (v) => setState(() => _isStopped = v ?? false) : null,
-          ),
-          if (_isStopped) _field(_stopReason, l10n.stopReason, maxLines: 2, enabled: storageEditable),
-          _field(_qty, l10n.txGoodsQty, keyboard: const TextInputType.numberWithOptions(decimal: true), enabled: prepEditable),
-          DropdownButtonFormField<String?>(
-            key: ValueKey('tx-quality-${_quality ?? 'none'}'),
-            decoration: InputDecoration(labelText: l10n.txGoodsQuality),
-            initialValue: _quality,
-            items: [
-              DropdownMenuItem<String?>(value: null, child: Text(l10n.optionalSelect)),
-              DropdownMenuItem(value: 'new', child: Text(l10n.txQualityNew)),
-              DropdownMenuItem(value: 'like_new', child: Text(l10n.txQualityLikeNew)),
-              DropdownMenuItem(value: 'used', child: Text(l10n.txQualityUsed)),
-              DropdownMenuItem(value: 'refurbished', child: Text(l10n.txQualityRefurbished)),
-              DropdownMenuItem(value: 'damaged', child: Text(l10n.txQualityDamaged)),
-              DropdownMenuItem(value: 'mixed', child: Text(l10n.txQualityMixed)),
-            ],
-            onChanged: prepEditable ? (v) => setState(() => _quality = v) : null,
-          ),
+          _field(_containerNumbers, l10n.containerNumbers,
+              maxLines: 3, enabled: storageEditable),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<bool>(
+                key: ValueKey('tx-stop-$_isStopped'),
+                decoration: InputDecoration(labelText: l10n.stopTransaction),
+                initialValue: _isStopped,
+                items: [
+                  DropdownMenuItem(value: false, child: Text(l10n.optionNo)),
+                  DropdownMenuItem(value: true, child: Text(l10n.optionYes)),
+                ],
+                onChanged: storageEditable
+                    ? (v) => setState(() => _isStopped = v ?? false)
+                    : null,
+              )),
+          if (_isStopped)
+            _field(_stopReason, l10n.stopReason,
+                maxLines: 2, enabled: storageEditable),
+          _field(_qty, l10n.txGoodsQty,
+              keyboard: const TextInputType.numberWithOptions(decimal: true),
+              enabled: prepEditable),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String?>(
+                key: ValueKey('tx-quality-${_quality ?? 'none'}'),
+                decoration: InputDecoration(labelText: l10n.txGoodsQuality),
+                initialValue: _quality,
+                items: [
+                  DropdownMenuItem<String?>(
+                      value: null, child: Text(l10n.optionalSelect)),
+                  DropdownMenuItem(
+                      value: 'new', child: Text(l10n.txQualityNew)),
+                  DropdownMenuItem(
+                      value: 'like_new', child: Text(l10n.txQualityLikeNew)),
+                  DropdownMenuItem(
+                      value: 'used', child: Text(l10n.txQualityUsed)),
+                  DropdownMenuItem(
+                      value: 'refurbished',
+                      child: Text(l10n.txQualityRefurbished)),
+                  DropdownMenuItem(
+                      value: 'damaged', child: Text(l10n.txQualityDamaged)),
+                  DropdownMenuItem(
+                      value: 'mixed', child: Text(l10n.txQualityMixed)),
+                ],
+                onChanged:
+                    prepEditable ? (v) => setState(() => _quality = v) : null,
+              )),
           if (_isEdit)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -675,74 +788,113 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      key: ValueKey('tx-unit-edit-${_unit ?? 'none'}'),
-                      decoration: InputDecoration(labelText: l10n.txGoodsUnit),
-                      initialValue: _unit,
-                      items: [
-                        DropdownMenuItem<String?>(value: null, child: Text(l10n.optionalSelect)),
-                        DropdownMenuItem(value: 'kg', child: Text(l10n.txUnitKg)),
-                        DropdownMenuItem(value: 'ton', child: Text(l10n.txUnitTon)),
-                        DropdownMenuItem(value: 'piece', child: Text(l10n.txUnitPiece)),
-                        DropdownMenuItem(value: 'carton', child: Text(l10n.txUnitCarton)),
-                        DropdownMenuItem(value: 'pallet', child: Text(l10n.txUnitPallet)),
-                        DropdownMenuItem(value: 'cbm', child: Text(l10n.txUnitCbm)),
-                        DropdownMenuItem(value: 'liter', child: Text(l10n.txUnitLiter)),
-                        DropdownMenuItem(value: 'set', child: Text(l10n.txUnitSet)),
-                      ],
-                      onChanged: prepEditable ? (v) => setState(() => _unit = v) : null,
-                    ),
+                    child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: DropdownButtonFormField<String?>(
+                          key: ValueKey('tx-unit-edit-${_unit ?? 'none'}'),
+                          decoration:
+                              InputDecoration(labelText: l10n.txGoodsUnit),
+                          initialValue: _unit,
+                          items: [
+                            DropdownMenuItem<String?>(
+                                value: null, child: Text(l10n.optionalSelect)),
+                            DropdownMenuItem(
+                                value: 'kg', child: Text(l10n.txUnitKg)),
+                            DropdownMenuItem(
+                                value: 'ton', child: Text(l10n.txUnitTon)),
+                            DropdownMenuItem(
+                                value: 'piece', child: Text(l10n.txUnitPiece)),
+                            DropdownMenuItem(
+                                value: 'carton',
+                                child: Text(l10n.txUnitCarton)),
+                            DropdownMenuItem(
+                                value: 'pallet',
+                                child: Text(l10n.txUnitPallet)),
+                            DropdownMenuItem(
+                                value: 'cbm', child: Text(l10n.txUnitCbm)),
+                            DropdownMenuItem(
+                                value: 'liter', child: Text(l10n.txUnitLiter)),
+                            DropdownMenuItem(
+                                value: 'set', child: Text(l10n.txUnitSet)),
+                          ],
+                          onChanged: prepEditable
+                              ? (v) => setState(() => _unit = v)
+                              : null,
+                        )),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: TextFormField(
-                      controller: _unitCount,
-                      keyboardType: TextInputType.number,
-                      enabled: storageEditable,
-                      decoration: InputDecoration(labelText: l10n.txNumberOfUnits),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: TextFormField(
+                        controller: _unitCount,
+                        keyboardType: TextInputType.number,
+                        enabled: storageEditable,
+                        decoration:
+                            InputDecoration(labelText: l10n.txNumberOfUnits),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          DropdownButtonFormField<String>(
-            key: ValueKey('tx-doc-status-$_docStatus'),
-            decoration: InputDecoration(labelText: l10n.documentStatus),
-            initialValue: _docStatus,
-            items: [
-              DropdownMenuItem(value: 'copy_received', child: Text(l10n.txDocumentStatusCopy)),
-              DropdownMenuItem(value: 'original_received', child: Text(l10n.txDocumentStatusOriginal)),
-              DropdownMenuItem(value: 'telex_release', child: Text(l10n.txDocumentStatusTelex)),
-            ],
-            onChanged: customsEditable ? (v) => setState(() => _docStatus = v ?? 'copy_received') : null,
-          ),
-          DropdownButtonFormField<String>(
-            key: ValueKey('tx-payment-status-$_paymentStatus'),
-            decoration: InputDecoration(labelText: l10n.paymentStatus),
-            initialValue: _paymentStatus,
-            items: [
-              DropdownMenuItem(value: 'pending', child: Text(l10n.txPaymentPending)),
-              DropdownMenuItem(value: 'paid', child: Text(l10n.txPaymentPaid)),
-            ],
-            onChanged: (!customsEditable ||
-                    widget.role == 'employee' ||
-                    widget.role == 'employee2')
-                ? null
-                : (v) => setState(() => _paymentStatus = v ?? 'pending'),
-          ),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('tx-doc-status-$_docStatus'),
+                decoration: InputDecoration(labelText: l10n.documentStatus),
+                initialValue: _docStatus,
+                items: [
+                  DropdownMenuItem(
+                      value: 'copy_received',
+                      child: Text(l10n.txDocumentStatusCopy)),
+                  DropdownMenuItem(
+                      value: 'original_received',
+                      child: Text(l10n.txDocumentStatusOriginal)),
+                  DropdownMenuItem(
+                      value: 'telex_release',
+                      child: Text(l10n.txDocumentStatusTelex)),
+                ],
+                onChanged: customsEditable
+                    ? (v) => setState(() => _docStatus = v ?? 'copy_received')
+                    : null,
+              )),
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('tx-payment-status-$_paymentStatus'),
+                decoration: InputDecoration(labelText: l10n.paymentStatus),
+                initialValue: _paymentStatus,
+                items: [
+                  DropdownMenuItem(
+                      value: 'pending', child: Text(l10n.txPaymentPending)),
+                  DropdownMenuItem(
+                      value: 'paid', child: Text(l10n.txPaymentPaid)),
+                ],
+                onChanged: (!customsEditable ||
+                        widget.role == 'employee' ||
+                        widget.role == 'employee2')
+                    ? null
+                    : (v) => setState(() => _paymentStatus = v ?? 'pending'),
+              )),
           const SizedBox(height: 8),
-          _field(_goods, l10n.goodsDescription, maxLines: 3, enabled: prepEditable),
+          _field(_goods, l10n.goodsDescription,
+              maxLines: 3, enabled: prepEditable),
           if (!_isEdit)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
-                      controller: _unitCount,
-                      keyboardType: TextInputType.number,
-                      enabled: storageEditable,
-                      decoration: InputDecoration(labelText: l10n.txNumberOfUnits),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: TextFormField(
+                        controller: _unitCount,
+                        keyboardType: TextInputType.number,
+                        enabled: storageEditable,
+                        decoration:
+                            InputDecoration(labelText: l10n.txNumberOfUnits),
+                      ),
                     ),
                   ),
                 ],
@@ -750,7 +902,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ),
           if (storageWarehouseOnly && widget.transactionId != null) ...[
             const SizedBox(height: 8),
-            Text(l10n.storageReadOnlyHint, style: Theme.of(context).textTheme.bodySmall),
+            Text(l10n.storageReadOnlyHint,
+                style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: () {
@@ -768,7 +921,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ),
           ],
           const SizedBox(height: 12),
-          Text(l10n.documentPhotosSection, style: Theme.of(context).textTheme.titleSmall),
+          Text(l10n.documentPhotosSection,
+              style: Theme.of(context).textTheme.titleSmall),
           Text(l10n.txAttachDocs, style: Theme.of(context).textTheme.bodySmall),
           if (_isEdit && _retainedDocs.isNotEmpty)
             ...groupedRetained.entries.map(
@@ -786,7 +940,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                     (d) {
                       final path = (d['path'] ?? '').toString();
                       final name = (d['originalName'] ?? '').toString();
-                      final isImg = RegExp(r'\.(png|jpe?g|gif|webp)$', caseSensitive: false).hasMatch(name);
+                      final isImg = RegExp(r'\.(png|jpe?g|gif|webp)$',
+                              caseSensitive: false)
+                          .hasMatch(name);
                       return Card(
                         child: ListTile(
                           leading: isImg
@@ -798,8 +954,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                                     builder: (context, snap) {
                                       if (snap.hasData) {
                                         return ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Image.memory(snap.data!, fit: BoxFit.cover),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          child: Image.memory(snap.data!,
+                                              fit: BoxFit.cover),
                                         );
                                       }
                                       return const Icon(Icons.image_outlined);
@@ -811,7 +969,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                           trailing: IconButton(
                             icon: const Icon(Icons.close),
                             onPressed: prepEditable
-                                ? () => setState(() => _retainedDocs.removeWhere((x) => x['path'] == d['path']))
+                                ? () => setState(() => _retainedDocs
+                                    .removeWhere((x) => x['path'] == d['path']))
                                 : null,
                           ),
                         ),
@@ -821,7 +980,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 ],
               ),
             ),
-          OutlinedButton.icon(onPressed: prepEditable ? _pickFiles : null, icon: const Icon(Icons.attach_file), label: Text(l10n.txPickFiles)),
+          OutlinedButton.icon(
+              onPressed: prepEditable ? _pickFiles : null,
+              icon: const Icon(Icons.attach_file),
+              label: Text(l10n.txPickFiles)),
           if (_picked.isNotEmpty) ...[
             Text('${_picked.length} ${l10n.txPickFiles}'),
             const SizedBox(height: 8),
@@ -829,21 +991,28 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               final f = _picked[idx];
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: DropdownButtonFormField<String?>(
-                  key: ValueKey('doc-cat-$idx-${_pickedCategories[idx] ?? 'none'}'),
-                  decoration: InputDecoration(labelText: '${f.name} - Category'),
-                  initialValue: _pickedCategories[idx],
-                  items: [
-                    DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text(l10n.selectCategory),
-                    ),
+                child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: DropdownButtonFormField<String?>(
+                      key: ValueKey(
+                          'doc-cat-$idx-${_pickedCategories[idx] ?? 'none'}'),
+                      decoration:
+                          InputDecoration(labelText: '${f.name} - Category'),
+                      initialValue: _pickedCategories[idx],
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(l10n.selectCategory),
+                        ),
                     ..._documentCategoryOptions.map(
-                      (c) => DropdownMenuItem<String?>(value: c, child: Text(_docCategoryLabel(c))),
+                      (c) => DropdownMenuItem<String?>(
+                          value: c, child: Text(_docCategoryLabel(c, l10n))),
                     ),
-                  ],
-                  onChanged: prepEditable ? (v) => setState(() => _pickedCategories[idx] = v) : null,
-                ),
+                      ],
+                      onChanged: prepEditable
+                          ? (v) => setState(() => _pickedCategories[idx] = v)
+                          : null,
+                    )),
               );
             }),
           ],
@@ -852,7 +1021,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               color: cs.errorContainer,
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text(_error, style: TextStyle(color: cs.onErrorContainer)),
+                child:
+                    Text(_error, style: TextStyle(color: cs.onErrorContainer)),
               ),
             ),
           const SizedBox(height: 8),
@@ -865,16 +1035,16 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     );
   }
 
-  String _stageLabel(String stage) {
+  String _stageLabel(String stage, AppLocalizations l10n) {
     switch (stage) {
       case 'PREPARATION':
-        return 'Preparation';
+        return l10n.stagePreparation;
       case 'CUSTOMS_CLEARANCE':
-        return 'Customs clearance';
+        return l10n.stageCustomsClearance;
       case 'STORAGE':
-        return 'Storage';
+        return l10n.stageStorage;
       case 'TRANSPORTATION':
-        return 'Transportation';
+        return l10n.stageTransportation;
       default:
         return stage;
     }
@@ -887,7 +1057,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       bool enabled = true,
       void Function(String)? onChanged}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: c,
         enabled: enabled,
@@ -912,16 +1082,16 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     );
   }
 
-  String _docCategoryLabel(String value) {
+  String _docCategoryLabel(String value, AppLocalizations l10n) {
     switch (value) {
       case 'bill_of_lading':
-        return 'Bill of Lading';
+        return l10n.docBillOfLading;
       case 'certificate_of_origin':
-        return 'Certificate of Origin';
+        return l10n.docCertificateOfOrigin;
       case 'invoice':
-        return 'Invoice';
+        return l10n.docInvoice;
       case 'packing_list':
-        return 'Packing List';
+        return l10n.docPackingList;
       default:
         return value;
     }
