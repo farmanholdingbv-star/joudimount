@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { transactionListPath, type TransactionListModule } from "./paths";
 import AutocompleteField, { type AutocompleteSuggestion } from "./AutocompleteField";
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
@@ -39,8 +40,7 @@ const QUALITY_OPTIONS: { value: GoodsQuality; labelKey: string }[] = [
 ];
 
 const CURRENCY_OPTIONS: InvoiceCurrency[] = ["AED", "USD", "EUR", "SAR"];
-type TransactionModule = "transactions" | "transfers" | "exports";
-const DECLARATION_TYPE_OPTIONS_BY_MODULE: Record<TransactionModule, Array<{ value: string; labelKey: MessageKey }>> = {
+const DECLARATION_TYPE_OPTIONS_BY_MODULE: Record<TransactionListModule, Array<{ value: string; labelKey: MessageKey }>> = {
   transactions: [
     { value: "Import", labelKey: "form.declarationType.import" },
     { value: "Import to Free Zone", labelKey: "form.declarationType.import_free_zone" },
@@ -224,7 +224,7 @@ export default function TransactionForm({
   module = "transactions",
 }: {
   role: Role;
-  module?: TransactionModule;
+  module?: TransactionListModule;
 }) {
   const { t, numberLocale } = useI18n();
   const navigate = useNavigate();
@@ -492,7 +492,7 @@ export default function TransactionForm({
         return;
       }
       const data = (await res.json()) as Transaction;
-      navigate(`/${module}/${data.id}`);
+      navigate(`${transactionListPath(module)}/${data.id}`);
     } catch {
       setError(t("form.saveError"));
     } finally {
@@ -1019,7 +1019,7 @@ export default function TransactionForm({
   return (
     <main className="container py-2">
       <div className="page-actions">
-        <Link to={`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/"} className="btn btn-outline-secondary btn-sm">
+        <Link to={transactionListPath(module)} className="btn btn-outline-secondary btn-sm">
           {t("form.back")}
         </Link>
       </div>

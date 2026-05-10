@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { transactionListPath } from "./paths";
 import { apiFetch } from "./api";
 import { useI18n } from "./i18n/I18nContext";
 function isoToDateInput(iso) {
@@ -115,7 +116,7 @@ export default function TransactionStoragePage({ role, module, }) {
     const [form, setForm] = useState(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const backHref = `/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/";
+    const backHref = transactionListPath(module);
     const detailHref = `/${module}/${id}`;
     const canEdit = role !== "accountant";
     useEffect(() => {

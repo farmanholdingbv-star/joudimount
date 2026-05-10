@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
+import { DashboardHome, DashboardSidebar, DASHBOARD_MODULES } from "./DashboardHome";
 import TransactionDetails from "./TransactionDetails";
 import TransactionForm from "./TransactionForm";
 import TransactionStoragePage from "./TransactionStoragePage";
@@ -14,20 +15,8 @@ import { apiFetch, getCurrentUser, logout } from "./api";
 import { useI18n } from "./i18n/I18nContext";
 import type { MessageKey } from "./i18n/messages";
 import { AuthUser, Role, Transaction } from "./types";
-
-function roleLabel(role: Role, t: (key: MessageKey) => string) {
-  if (role === "manager") return t("role.manager");
-  if (role === "employee") return t("role.employee");
-  if (role === "employee2") return t("app.roleEmployee2");
-  return t("role.accountant");
-}
-
-type TransactionModule = "transactions" | "transfers" | "exports";
-const MODULES: Array<{ id: TransactionModule; route: string; titleKey: MessageKey; descKey: MessageKey }> = [
-  { id: "transactions", route: "/", titleKey: "app.title", descKey: "dashboard.transactionsDesc" as MessageKey },
-  { id: "transfers", route: "/transfers", titleKey: "transfer.app.title" as MessageKey, descKey: "dashboard.transfersDesc" as MessageKey },
-  { id: "exports", route: "/exports", titleKey: "export.app.title" as MessageKey, descKey: "dashboard.exportsDesc" as MessageKey },
-];
+import type { TransactionListModule } from "./paths";
+import { transactionListPath } from "./paths";
 
 function TransactionsList({
   role,
@@ -38,7 +27,7 @@ function TransactionsList({
   role: Role;
   user: AuthUser;
   onLogout: () => void;
-  module?: TransactionModule;
+  module?: TransactionListModule;
 }) {
   const { t, numberLocale } = useI18n();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -97,7 +86,7 @@ function TransactionsList({
         <section className="dashboard-top-tools card shadow-sm border-0 mb-3 p-3 p-md-4">
           <h2 className="h6 small text-uppercase text-secondary fw-semibold mb-3 dashboard-tools-heading">{t("dashboard.toolsHeading" as MessageKey)}</h2>
           <div className="module-cards dashboard-top-module-cards">
-            {MODULES.map((item) => (
+            {DASHBOARD_MODULES.map((item) => (
               <Link
                 key={item.id}
                 to={item.route}
@@ -146,38 +135,7 @@ function TransactionsList({
         </section>
 
         <div className="dashboard-layout-split">
-          <aside className="sidebar-panel card shadow-sm border-0">
-            <div className="sidebar-user">
-              <span className="muted">{t("app.loggedInAs")}</span>
-              <strong>{user.name}</strong>
-              <span className="muted">{roleLabel(role, t)}</span>
-            </div>
-            <nav className="sidebar-links list-group">
-              <Link to="/employees" className="list-group-item list-group-item-action sidebar-link">
-                {t("nav.employeeSection")}
-              </Link>
-              <Link to="/clients" className="list-group-item list-group-item-action sidebar-link">
-                {t("nav.clients")}
-              </Link>
-              <Link to="/shipping-companies" className="list-group-item list-group-item-action sidebar-link">
-                {t("nav.shippingCompanies")}
-              </Link>
-              <Link to="/transfers" className="list-group-item list-group-item-action sidebar-link">
-                {t("nav.transfers" as MessageKey)}
-              </Link>
-              <Link to="/exports" className="list-group-item list-group-item-action sidebar-link">
-                {t("nav.exports" as MessageKey)}
-              </Link>
-            </nav>
-            {role === "manager" || role === "employee" ? (
-              <Link to={`/${module}/new`} className="btn btn-primary sidebar-cta">
-                {t((module === "transactions" ? "nav.addTransaction" : module === "transfers" ? "nav.addTransfer" : "nav.addExport") as MessageKey)}
-              </Link>
-            ) : null}
-            <button className="btn btn-outline-danger sidebar-logout" onClick={onLogout}>
-              {t("nav.logout")}
-            </button>
-          </aside>
+          <DashboardSidebar highlight={module} user={user} role={role} onLogout={onLogout} addModule={module} />
 
           <section className="dashboard-list-column card shadow-sm border-0">
             <div className="dashboard-list-toolbar d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-body-tertiary">
@@ -197,7 +155,7 @@ function TransactionsList({
                 </thead>
                 <tbody>
                   {pagedTransactions.map((tx) => (
-                    <tr key={tx.id} className="clickable-row" onClick={() => navigate(`/${module}/${tx.id}`)}>
+                    <tr key={tx.id} className="clickable-row" onClick={() => navigate(`${transactionListPath(module)}/${tx.id}`)}>
                       <td>{tx.clientName}</td>
                       <td>{tx.shippingCompanyName}</td>
                       <td>
@@ -207,7 +165,7 @@ function TransactionsList({
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         {tx.transactionStage === "STORAGE" && (module === "transactions" || module === "transfers") ? (
-                          <Link to={`/${module}/${tx.id}/storage`} className="btn btn-sm btn-outline-primary">
+                          <Link to={`${transactionListPath(module)}/${tx.id}/storage`} className="btn btn-sm btn-outline-primary">
                             {t("storagePage.openCard" as MessageKey)}
                           </Link>
                         ) : (
@@ -313,7 +271,8 @@ function AuthenticatedRoutes({ user, onLogout }: { user: AuthUser; onLogout: () 
   const role = user.role;
   return (
     <Routes>
-      <Route path="/" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="transactions" />} />
+      <Route path="/" element={<DashboardHome user={user} role={role} onLogout={onLogout} />} />
+      <Route path="/transactions" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="transactions" />} />
       <Route path="/transfers" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="transfers" />} />
       <Route path="/exports" element={<TransactionsList role={role} user={user} onLogout={onLogout} module="exports" />} />
       <Route path="/employees" element={<EmployeeSection role={role} />} />

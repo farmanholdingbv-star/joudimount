@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { transactionListPath } from "./paths";
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
@@ -109,7 +110,7 @@ export default function TransactionDetails({
     try {
       const res = await apiFetch(`/api/${module}/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("delete-failed");
-      navigate(`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/");
+      navigate(transactionListPath(module));
     } catch {
       setError(t("details.deleteError"));
     } finally {
@@ -140,7 +141,7 @@ export default function TransactionDetails({
   return (
     <main className="container py-2">
       <div className="page-actions">
-        <Link to={`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/"} className="btn btn-outline-secondary btn-sm">
+        <Link to={transactionListPath(module)} className="btn btn-outline-secondary btn-sm">
           {t("details.back")}
         </Link>
         {id ? (

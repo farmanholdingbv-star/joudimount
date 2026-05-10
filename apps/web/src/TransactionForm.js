@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { transactionListPath } from "./paths";
 import AutocompleteField from "./AutocompleteField";
 import { apiFetch } from "./api";
 import { useI18n } from "./i18n/I18nContext";
@@ -419,7 +420,7 @@ export default function TransactionForm({ role, module = "transactions", }) {
                 return;
             }
             const data = (await res.json());
-            navigate(`/${module}/${data.id}`);
+            navigate(`${transactionListPath(module)}/${data.id}`);
         }
         catch {
             setError(t("form.saveError"));
@@ -491,7 +492,7 @@ export default function TransactionForm({ role, module = "transactions", }) {
                                                 category: "",
                                             }))) }), newDocFiles.length > 0 ? (_jsx("div", { className: "col-12", children: newDocFiles.map((item, idx) => (_jsxs("label", { className: "col-12 col-md-6 form-label w-100 mb-0", children: [item.file.name, _jsxs("select", { className: "form-select mt-1", value: item.category, disabled: transferWarehouseOnly, onChange: (e) => setNewDocFiles((prev) => prev.map((p, i) => (i === idx ? { ...p, category: e.target.value } : p))), required: true, children: [_jsx("option", { value: "", children: t("form.selectDocumentCategory") }), DOCUMENT_CATEGORY_OPTIONS.map((option) => (_jsx("option", { value: option.value, children: t(option.labelKey) }, option.value)))] })] }, `${item.file.name}-${idx}`))) })) : null] }), _jsx("div", { className: "col-12", children: _jsx("button", { className: "btn btn-primary", type: "submit", disabled: loading || transferWarehouseOnly, children: loading ? t("form.saving") : t("form.save") }) })] }) }) })] }));
     }
-    return (_jsxs("main", { className: "container py-2", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: `/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/", className: "btn btn-outline-secondary btn-sm", children: t("form.back") }) }), _jsx("h1", { className: "display-6 fw-bold mb-3", children: module === "transactions"
+    return (_jsxs("main", { className: "container py-2", children: [_jsx("div", { className: "page-actions", children: _jsx(Link, { to: transactionListPath(module), className: "btn btn-outline-secondary btn-sm", children: t("form.back") }) }), _jsx("h1", { className: "display-6 fw-bold mb-3", children: module === "transactions"
                     ? isEdit
                         ? t("form.editTitle")
                         : t("form.newTitle")

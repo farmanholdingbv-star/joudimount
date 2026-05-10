@@ -270,7 +270,7 @@ export default function EmployeeSection({ role }: Props) {
       </div>
 
       <div className="page-actions">
-        <Link to="/" className="btn btn-primary">
+        <Link to="/transactions" className="btn btn-primary">
           {t("employees.goTracker")}
         </Link>
       </div>

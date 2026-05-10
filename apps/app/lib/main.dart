@@ -9,6 +9,7 @@ import 'client_detail.dart';
 import 'employees.dart';
 import 'home_dashboard.dart';
 import 'l10n/app_localizations.dart';
+import 'location_map_picker.dart';
 import 'shipping_detail.dart';
 import 'transactions_list.dart';
 
@@ -1115,8 +1116,8 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
   late final TextEditingController _phone;
   late final TextEditingController _email;
   late final TextEditingController _dispatchTemplate;
-  late final TextEditingController _lat;
-  late final TextEditingController _lng;
+  double? _latitude;
+  double? _longitude;
   String _shipStatus = 'active';
   bool _saving = false;
   String _error = '';
@@ -1133,12 +1134,8 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
     _email = TextEditingController(text: (e?['email'] ?? '').toString());
     _dispatchTemplate = TextEditingController(
         text: (e?['dispatchFormTemplate'] ?? '').toString());
-    _lat = TextEditingController(
-      text: e != null && e['latitude'] != null ? '${e['latitude']}' : '',
-    );
-    _lng = TextEditingController(
-      text: e != null && e['longitude'] != null ? '${e['longitude']}' : '',
-    );
+    _latitude = e != null && e['latitude'] != null ? (e['latitude'] as num).toDouble() : null;
+    _longitude = e != null && e['longitude'] != null ? (e['longitude'] as num).toDouble() : null;
     _shipStatus = (e?['status'] ?? 'active').toString();
   }
 
@@ -1153,8 +1150,6 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
     _phone.dispose();
     _email.dispose();
     _dispatchTemplate.dispose();
-    _lat.dispose();
-    _lng.dispose();
     super.dispose();
   }
 
@@ -1165,9 +1160,7 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
       _error = '';
     });
     try {
-      final latStr = _lat.text.trim();
-      final lngStr = _lng.text.trim();
-      if (latStr.isEmpty != lngStr.isEmpty) {
+      if ((_latitude == null && _longitude != null) || (_latitude != null && _longitude == null)) {
         setState(() => _error = l10n.shippingLatLngBothOrEmpty);
         return;
       }
@@ -1190,15 +1183,9 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
       } else if (_existingId.isNotEmpty) {
         body['dispatchFormTemplate'] = null;
       }
-      if (latStr.isNotEmpty && lngStr.isNotEmpty) {
-        final lat = double.tryParse(latStr);
-        final lng = double.tryParse(lngStr);
-        if (lat == null || lng == null) {
-          setState(() => _error = l10n.shippingInvalidLatLng);
-          return;
-        }
-        body['latitude'] = lat;
-        body['longitude'] = lng;
+      if (_latitude != null && _longitude != null) {
+        body['latitude'] = _latitude;
+        body['longitude'] = _longitude;
       } else if (_existingId.isNotEmpty) {
         body['latitude'] = null;
         body['longitude'] = null;
@@ -1265,19 +1252,13 @@ class _ShippingFormPageState extends State<ShippingFormPage> {
               )),
           Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: TextField(
-                controller: _lat,
-                keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true, signed: true),
-                decoration: InputDecoration(labelText: l10n.latitudeOptional),
-              )),
-          Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: TextField(
-                controller: _lng,
-                keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true, signed: true),
-                decoration: InputDecoration(labelText: l10n.longitudeOptional),
+              child: LocationMapPicker(
+                latitude: _latitude,
+                longitude: _longitude,
+                onChanged: (lat, lng) => setState(() {
+                  _latitude = lat;
+                  _longitude = lng;
+                }),
               )),
           Padding(
               padding: const EdgeInsets.only(bottom: 16),

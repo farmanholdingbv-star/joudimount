@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { transactionListPath } from "./paths";
 import { apiFetch } from "./api";
 import type { MessageKey } from "./i18n/messages";
 import { useI18n } from "./i18n/I18nContext";
@@ -146,7 +147,7 @@ export default function TransactionStoragePage({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const backHref = `/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/";
+  const backHref = transactionListPath(module);
   const detailHref = `/${module}/${id}`;
 
   const canEdit = role !== "accountant";

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'app_lang.dart';
 import 'l10n/app_localizations.dart';
+import 'main.dart'; // To access ClientFormPage and ShippingFormPage
 import 'transaction_detail.dart';
 import 'transaction_form.dart';
 
@@ -170,13 +171,35 @@ class _DashboardHomeState extends State<DashboardHome> {
         label: l10n.dashboardAddClient,
         icon: Icons.person_add_alt_1_outlined,
         color: const Color(0xFFEC4899),
-        onTap: () => widget.onSwitchTab(4),
+        onTap: () async {
+          if (widget.role != 'manager') {
+            widget.onSwitchTab(4);
+            return;
+          }
+          final ok = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(builder: (_) => const ClientFormPage()),
+          );
+          if (ok == true) {
+            widget.onSwitchTab(4);
+          }
+        },
       ),
       _GridItem(
         label: l10n.dashboardShippingCo,
         icon: Icons.add_business_outlined,
         color: const Color(0xFF64748B),
-        onTap: () => widget.onSwitchTab(5),
+        onTap: () async {
+          if (widget.role != 'manager') {
+            widget.onSwitchTab(5);
+            return;
+          }
+          final ok = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(builder: (_) => const ShippingFormPage()),
+          );
+          if (ok == true) {
+            widget.onSwitchTab(5);
+          }
+        },
       ),
       _GridItem(
         label: l10n.dashboardHelpSupport,

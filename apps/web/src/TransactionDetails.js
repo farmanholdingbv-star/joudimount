@@ -1,6 +1,7 @@
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { transactionListPath } from "./paths";
 import { apiFetch } from "./api";
 import { useI18n } from "./i18n/I18nContext";
 import ShippingPaperModal from "./ShippingPaperModal";
@@ -99,7 +100,7 @@ export default function TransactionDetails({ role, module = "transactions", }) {
             const res = await apiFetch(`/api/${module}/${id}`, { method: "DELETE" });
             if (!res.ok)
                 throw new Error("delete-failed");
-            navigate(`/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/");
+            navigate(transactionListPath(module));
         }
         catch {
             setError(t("details.deleteError"));
@@ -130,7 +131,7 @@ export default function TransactionDetails({ role, module = "transactions", }) {
             setProcessing(false);
         }
     };
-    return (_jsxs("main", { className: "container py-2", children: [_jsxs("div", { className: "page-actions", children: [_jsx(Link, { to: `/${module === "transactions" ? "" : module}`.replace(/\/$/, "") || "/", className: "btn btn-outline-secondary btn-sm", children: t("details.back") }), id ? (_jsxs(_Fragment, { children: [" | ", role !== "accountant" ? (_jsxs(_Fragment, { children: [_jsx(Link, { to: `/${module}/${id}/edit`, className: "btn btn-outline-primary btn-sm", children: t("details.edit") }), " | ", _jsx("button", { className: "btn btn-outline-danger btn-sm", onClick: onDelete, disabled: deleting, children: deleting ? t("details.deleting") : t("details.delete") })] })) : null, role === "manager" || role === "accountant" ? (_jsxs(_Fragment, { children: [" | ", _jsx("button", { className: "btn btn-primary btn-sm", onClick: () => onAccountingAction("pay"), disabled: processing || transaction?.paymentStatus === "paid", children: t("details.markPaid") }), " ", _jsx("button", { className: "btn btn-primary btn-sm", onClick: () => onAccountingAction("release"), disabled: processing ||
+    return (_jsxs("main", { className: "container py-2", children: [_jsxs("div", { className: "page-actions", children: [_jsx(Link, { to: transactionListPath(module), className: "btn btn-outline-secondary btn-sm", children: t("details.back") }), id ? (_jsxs(_Fragment, { children: [" | ", role !== "accountant" ? (_jsxs(_Fragment, { children: [_jsx(Link, { to: `/${module}/${id}/edit`, className: "btn btn-outline-primary btn-sm", children: t("details.edit") }), " | ", _jsx("button", { className: "btn btn-outline-danger btn-sm", onClick: onDelete, disabled: deleting, children: deleting ? t("details.deleting") : t("details.delete") })] })) : null, role === "manager" || role === "accountant" ? (_jsxs(_Fragment, { children: [" | ", _jsx("button", { className: "btn btn-primary btn-sm", onClick: () => onAccountingAction("pay"), disabled: processing || transaction?.paymentStatus === "paid", children: t("details.markPaid") }), " ", _jsx("button", { className: "btn btn-primary btn-sm", onClick: () => onAccountingAction("release"), disabled: processing ||
                                             transaction?.paymentStatus !== "paid" ||
                                             (transaction?.documentStatus !== "original_received" && transaction?.documentStatus !== "telex_release"), children: t("details.release") })] })) : null, transaction ? (_jsxs(_Fragment, { children: [" | ", _jsx("button", { type: "button", className: "btn btn-primary btn-sm", onClick: () => setShippingPaperOpen(true), children: t("details.shippingPaperButton") })] })) : null] })) : null] }), _jsx("h1", { className: "display-6 fw-bold mb-3", children: module === "transactions"
                     ? t("details.title")
