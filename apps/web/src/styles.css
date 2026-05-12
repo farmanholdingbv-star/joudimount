@@ -67,6 +67,15 @@ body {
   max-width: 1400px;
 }
 
+.dashboard-top-bar {
+  width: 100%;
+}
+
+.dashboard-top-bar-heading {
+  font-size: clamp(1.35rem, 2.6vw, 2.35rem);
+  line-height: 1.25;
+}
+
 .dashboard-shell {
   max-width: 1400px;
 }

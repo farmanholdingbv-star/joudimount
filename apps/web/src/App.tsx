@@ -11,6 +11,7 @@ import ShippingCompanyDetailPage from "./ShippingCompanyDetailPage";
 import EmployeeSection from "./EmployeeSection";
 import Login from "./Login";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { DashboardTopBar } from "./DashboardTopBar";
 import { apiFetch, getCurrentUser, logout } from "./api";
 import { useI18n } from "./i18n/I18nContext";
 import type { MessageKey } from "./i18n/messages";
@@ -75,10 +76,7 @@ function TransactionsList({
 
   return (
     <main className="dashboard-page py-3 px-2 px-md-3">
-      <div className="dashboard-page-header mx-auto mb-3 px-1">
-        <h1 className="display-6 fw-bold mb-1 text-body">{moduleTitle}</h1>
-        <p className="section-subtitle mb-0">{moduleTagline}</p>
-      </div>
+      <DashboardTopBar user={user} title={moduleTitle} subtitle={moduleTagline} />
 
       <div className="dashboard-shell mx-auto">
         {error ? <p className="error alert alert-danger mb-3">{error}</p> : null}
@@ -235,17 +233,16 @@ export default function App() {
 
   return (
     <>
-      <header className="app-header container py-3">
-        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-          <img src="/logo.png" alt="Project logo" width={66} height={66} className="app-logo flex-shrink-0" />
-          <div className="d-flex align-items-center flex-wrap gap-3 justify-content-end ms-auto">
-            <div className="app-header-user-wrap min-w-0">
-              {user ? <span className="app-header-user badge text-bg-light border">{user.name}</span> : null}
+      {!user ? (
+        <header className="app-header container py-3">
+          <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <img src="/logo.png" alt="Project logo" width={66} height={66} className="app-logo flex-shrink-0" />
+            <div className="d-flex align-items-center flex-wrap gap-3 justify-content-end ms-auto">
+              <LanguageSwitcher />
             </div>
-            <LanguageSwitcher />
           </div>
-        </div>
-      </header>
+        </header>
+      ) : null}
       {!user ? (
         <Login onLogin={setUser} />
       ) : (

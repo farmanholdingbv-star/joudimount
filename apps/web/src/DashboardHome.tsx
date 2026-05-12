@@ -6,6 +6,7 @@ import type { MessageKey } from "./i18n/messages";
 import type { AuthUser, Role, Transaction } from "./types";
 import type { TransactionListModule } from "./paths";
 import { transactionListPath } from "./paths";
+import { DashboardTopBar } from "./DashboardTopBar";
 
 type Highlight = "home" | TransactionListModule;
 
@@ -155,10 +156,7 @@ export function DashboardHome({
 
   return (
     <main className="dashboard-page py-3 px-2 px-md-3">
-      <div className="dashboard-page-header mx-auto mb-3 px-1">
-        <h1 className="display-6 fw-bold mb-1 text-body">{t("home.title")}</h1>
-        <p className="section-subtitle mb-0">{t("home.tagline")}</p>
-      </div>
+      <DashboardTopBar user={user} title={t("home.title")} subtitle={t("home.tagline")} />
 
       <div className="dashboard-shell mx-auto">
         {error ? <p className="error alert alert-danger mb-3">{error}</p> : null}
