@@ -150,6 +150,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
       bold: arabicFont,
       italic: arabicFont,
       boldItalic: arabicFont,
+      fontFallback: [pw.Font.helvetica()],
     );
     final pdf = pw.Document();
     pdf.addPage(
@@ -161,7 +162,6 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           pw.Text(
             heading,
             style: pw.TextStyle(
-              font: arabicFont,
               fontSize: 20,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -169,71 +169,64 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           pw.SizedBox(height: 6),
           pw.Text(
             subheading,
-            style: pw.TextStyle(font: arabicFont, fontSize: 12),
+            style: const pw.TextStyle(fontSize: 12),
           ),
           pw.SizedBox(height: 12),
           _pdfRow(
               forceLatinTemplate
                   ? 'To shipping company'
                   : l10n.toShippingCompany,
-              '${t['shippingCompanyName']}',
-              arabicFont),
+              '${t['shippingCompanyName']}'),
           _pdfRow(forceLatinTemplate ? 'From client' : l10n.fromClient,
-              '${t['clientName']}', arabicFont),
+              '${t['clientName']}'),
           _pdfRow(forceLatinTemplate ? 'Declaration' : l10n.declaration,
-              '${t['declarationNumber']}', arabicFont),
+              '${t['declarationNumber']}'),
           if ((t['declarationNumber2'] ?? '').toString().trim().isNotEmpty)
             _pdfRow(
               forceLatinTemplate
                   ? 'Declaration (2)'
                   : '${l10n.declaration} (2)',
               '${t['declarationNumber2']}',
-              arabicFont,
             ),
           if ((t['declarationType'] ?? '').toString().trim().isNotEmpty)
             _pdfRow(
                 forceLatinTemplate
                     ? 'Declaration type (1)'
                     : l10n.txDeclarationType1,
-                '${t['declarationType']}',
-                arabicFont),
+                '${t['declarationType']}'),
           if ((t['declarationType2'] ?? '').toString().trim().isNotEmpty)
             _pdfRow(
                 forceLatinTemplate
                     ? 'Declaration type (2)'
                     : l10n.txDeclarationType2,
-                '${t['declarationType2']}',
-                arabicFont),
+                '${t['declarationType2']}'),
           _pdfRow(forceLatinTemplate ? 'Airway bill' : l10n.airwayBillShort,
-              '${t['airwayBill']}', arabicFont),
+              '${t['airwayBill']}'),
           _pdfRow(forceLatinTemplate ? 'HS code' : l10n.hsCode,
-              '${t['hsCode']}', arabicFont),
+              '${t['hsCode']}'),
           _pdfRow(forceLatinTemplate ? 'Origin' : l10n.origin,
-              '${t['originCountry']}', arabicFont),
+              '${t['originCountry']}'),
           _pdfRow(forceLatinTemplate ? 'Value (AED)' : l10n.valueAed,
-              '${t['invoiceValue']}', arabicFont),
+              '${t['invoiceValue']}'),
           _pdfRow(
               forceLatinTemplate ? 'Release code' : l10n.releaseCode,
-              '${t['releaseCode'] ?? (forceLatinTemplate ? 'Not issued' : l10n.notIssued)}',
-              arabicFont),
+              '${t['releaseCode'] ?? (forceLatinTemplate ? 'Not issued' : l10n.notIssued)}'),
           if (t['goodsWeightKg'] != null)
             _pdfRow(forceLatinTemplate ? 'Weight (kg)' : l10n.weightKg,
-                '${t['goodsWeightKg']}', arabicFont),
+                '${t['goodsWeightKg']}'),
           if (t['goodsQuantity'] != null)
             _pdfRow(forceLatinTemplate ? 'Quantity' : l10n.quantity,
-                '${t['goodsQuantity']}', arabicFont),
+                '${t['goodsQuantity']}'),
           pw.SizedBox(height: 8),
           pw.Text(
             forceLatinTemplate ? 'Goods' : l10n.goods,
             style: pw.TextStyle(
-              font: arabicFont,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
           pw.SizedBox(height: 4),
           pw.Text(
             '${t['goodsDescription']}',
-            style: pw.TextStyle(font: arabicFont),
           ),
         ],
       ),
@@ -254,7 +247,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
     }
   }
 
-  pw.Widget _pdfRow(String k, String v, pw.Font font) => pw.Padding(
+  pw.Widget _pdfRow(String k, String v) => pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 4),
         child: pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -264,7 +257,6 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
               child: pw.Text(
                 '$k:',
                 style: pw.TextStyle(
-                  font: font,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -272,7 +264,6 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
             pw.Expanded(
               child: pw.Text(
                 v,
-                style: pw.TextStyle(font: font),
               ),
             ),
           ],
